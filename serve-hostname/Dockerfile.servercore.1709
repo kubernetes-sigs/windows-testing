@@ -1,0 +1,5 @@
+#Dockerfile.servercore.1709
+FROM microsoft/windowsservercore:1709
+COPY serve_hostname.exe /
+EXPOSE 9376
+ENTRYPOINT ["/serve_hostname.exe"]
