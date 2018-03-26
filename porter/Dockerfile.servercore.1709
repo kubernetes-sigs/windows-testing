@@ -1,0 +1,5 @@
+FROM microsoft/windowsservercore:1709
+ADD localhost.crt localhost.crt
+ADD localhost.key localhost.key
+ADD porter.exe porter.exe
+ENTRYPOINT ["/porter.exe"]
