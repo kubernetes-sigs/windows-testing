@@ -1,0 +1,3 @@
+FROM microsoft/windowsservercore:1709
+ADD port-forward-tester.exe port-forward-tester.exe
+ENTRYPOINT ["/port-forward-tester.exe"]
