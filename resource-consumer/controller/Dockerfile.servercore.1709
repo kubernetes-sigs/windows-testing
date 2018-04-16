@@ -1,0 +1,5 @@
+FROM microsoft/windowsservercore:1709
+USER ContainerAdministrator
+EXPOSE 8080
+ADD controller.exe controller
+ENTRYPOINT ["/controller"]
