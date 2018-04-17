@@ -8,5 +8,8 @@ FROM atuvenie/curl:1709
 COPY --from=prep /busybox/ /busybox
 USER ContainerAdministrator
 RUN setx /M PATH "C:\busybox;%PATH%"
+RUN powershell -Command \
+mkdir bin; \
+cp C:\busybox\sh.exe C:\bin
 USER ContainerUser
 ENTRYPOINT ["cmd.exe", "/s", "/c"]
