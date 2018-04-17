@@ -1,0 +1,4 @@
+FROM microsoft/windowsservercore:1709
+ADD echoserver.exe /echoserver.exe
+EXPOSE 9376
+ENTRYPOINT ["/echoserver.exe"]
