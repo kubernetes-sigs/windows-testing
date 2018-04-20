@@ -6,6 +6,7 @@ RUN FOR /f "tokens=*" %i IN ('busybox --list') DO mklink C:\busybox\%i.exe busyb
 USER ContainerUser
 FROM atuvenie/curl:1709
 COPY --from=prep /busybox/ /busybox
+RUN mklink /D C:\bin C:\busybox
 USER ContainerAdministrator
 RUN setx /M PATH "C:\busybox;%PATH%"
 USER ContainerUser
