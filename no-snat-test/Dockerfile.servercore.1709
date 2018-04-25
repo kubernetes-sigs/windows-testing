@@ -1,0 +1,3 @@
+FROM microsoft/windowsservercore:1709
+ADD no-snat-test.exe /no-snat-test.exe
+ENTRYPOINT ["/no-snat-test.exe"]
