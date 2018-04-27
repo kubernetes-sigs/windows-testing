@@ -5,6 +5,6 @@ ADD https://skanthak.homepage.t-online.de/download/curl-$CURL_VERSION.cab curl.c
 RUN expand /R curl.cab /F:* .
 
 FROM microsoft/windowsservercore:1709
-COPY --from=download /curl/AMD64/ /
-COPY --from=download /curl/CURL.LIC /
+COPY --from=download /curl/AMD64/ /Windows/System32/
+COPY --from=download /curl/CURL.LIC /Windows/System32/
 ENTRYPOINT ["curl.exe"]
