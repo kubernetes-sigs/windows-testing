@@ -86,7 +86,7 @@ $images = [ordered]@{}
 # base images used to build other images.
 $images.Add("busybox", "1.24")
 $images.Add("curl", "1803")
-$images.Add("java-base", "1.8.0")
+$images.Add("java", "openjdk-8-jre")
 $images.Add("test-webserver", "1.0")
 
 $images.Add("cassandra", "v13")
