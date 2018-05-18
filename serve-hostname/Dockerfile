@@ -1,5 +1,5 @@
-#Dockerfile.servercore.1709
-FROM microsoft/windowsservercore:1709
+ARG BASE_IMAGE=microsoft/windowsservercore:1803
+FROM $BASE_IMAGE
 COPY serve_hostname.exe /
 EXPOSE 9376
 ENTRYPOINT ["/serve_hostname.exe"]

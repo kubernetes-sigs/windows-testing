@@ -1,3 +1,0 @@
-FROM microsoft/windowsservercore:1709
-ADD pause.exe pause.exe
-ENTRYPOINT ["/pause.exe"]

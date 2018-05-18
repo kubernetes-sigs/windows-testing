@@ -1,4 +1,5 @@
-FROM microsoft/windowsservercore:1709
+ARG BASE_IMAGE=microsoft/windowsservercore:1803
+FROM $BASE_IMAGE
 USER ContainerAdministrator
 EXPOSE 8080
 ADD ./consume-memory/consume-memory.exe ./consume-memory/consume-memory.exe

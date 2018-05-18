@@ -1,4 +1,6 @@
-FROM microsoft/windowsservercore:1709
+ARG BASE_IMAGE=microsoft/windowsservercore:1803
+FROM $BASE_IMAGE
+LABEL Description="Redis" Vendor="MSOpenTech" Version="3.2"
 EXPOSE 6379
 WORKDIR /redis
 RUN powershell -Command \
@@ -8,4 +10,5 @@ Expand-Archive redis.zip . ; \
 Remove-Item redis.zip -Force
 COPY redis.conf ./redis.windows-service.conf
 COPY redis.conf ./redis.windows.conf
-CMD redis-server
+COPY run.ps1 run.ps1
+CMD .\run.ps1
