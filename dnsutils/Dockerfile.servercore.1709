@@ -1,4 +1,4 @@
-FROM atuvenie/busybox:1.0
+FROM atuvenie/busybox:1.24
 USER ContainerAdministrator
 ENV chocolateyUseWindowsCompression false
 RUN powershell -Command \
