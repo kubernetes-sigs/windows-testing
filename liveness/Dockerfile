@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM microsoft/windowsservercore:1709
+ARG BASE_IMAGE=microsoft/windowsservercore:1803
+FROM $BASE_IMAGE
 
 COPY server.exe /server
