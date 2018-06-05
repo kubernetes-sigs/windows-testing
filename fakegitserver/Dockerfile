@@ -15,6 +15,6 @@
 ARG BASE_IMAGE=microsoft/windowsservercore:1803
 FROM $BASE_IMAGE
 #COPY GITHASH.txt /
-COPY fakegitserver.exe /
+COPY gitserver.exe /fakegitserver.exe
 ENTRYPOINT ["/fakegitserver.exe"]
 
