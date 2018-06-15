@@ -1,5 +1,5 @@
 ARG BASE_IMAGE=microsoft/windowsservercore:1803
-FROM atuvenie/curl:1803 AS prep
+FROM e2eteam/curl:1803 AS prep
 FROM $BASE_IMAGE
 
 COPY --from=prep /curl/ /curl

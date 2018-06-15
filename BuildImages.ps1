@@ -35,30 +35,41 @@ function BuildGoFiles($folders) {
     }
 }
 
-function BuildDockerImages($images, $baseImage, $repository, $recreate) {
+function BuildDockerImages($images, $repository, $recreate) {
     Write-Verbose "Building Docker images..."
-    $failedImages = $myArray = New-Object System.Collections.ArrayList
+    $failedImages = New-Object System.Collections.ArrayList
     $allDockerImages = docker images
 
-    foreach ($image in $images.Keys) {
-        foreach ($version in $images["$image"]) {
-            $imageName = "$repository/$image`:$version"
+    foreach ($image in $images) {
+        $imgName = $image.Name
+        foreach ($version in $image.Versions) {
+            $fullImageName = "$repository/$imgName`:$version"
 
             if (!$recreate) {
-                $imageFound = $allDockerImages | findstr "$repository/$image" | findstr $version
+                $imageFound = $allDockerImages | findstr "$repository/$imgName" | findstr $version
                 if ($imageFound) {
-                    Write-Verbose "Image ""$imageName"" already exists. Skipping."
+                    Write-Verbose "Image ""$fullImageName"" already exists. Skipping."
                     continue
                 }
             }
 
-            pushd $image
-            docker build -t "$imageName" --build-arg BASE_IMAGE="$baseImage" . | Write-Verbose
+            # check if the image is based on another already built image,
+            # like busybox. If it's not found, use the base image name as is.
+            $imgBase = $image.ImageBase
+            $imgBaseObj = $images | ? Name -eq $image.ImageBase
+            if ($imgBaseObj) {
+                $imgBaseObjVersion = $imgBaseObj[0].Versions[0]
+                $imgBase = "$repository/$imgBase`:$imgBaseObjVersion"
+            }
+
+            pushd $imgName
+            Write-Verbose "Building $fullImageName, using as base image: $imgBase."
+            docker build -t "$fullImageName" --build-arg BASE_IMAGE="$imgBase" . | Write-Verbose
             $result = $?
             popd
 
             if (!$result) {
-                $failedImages.Add($imageName)
+                $failedImages.Add($fullImageName)
             }
         }
     }
@@ -71,13 +82,14 @@ function PushDockerImages($images) {
     Write-Verbose "Pushing Docker images..."
     $failedImages = $myArray = New-Object System.Collections.ArrayList
 
-    foreach ($image in $images.Keys) {
-        foreach ($version in $images["$image"]) {
-            $imageName = "$repository/$image`:$version"
-            docker push "$imageName" | Write-Verbose
+    foreach ($image in $images) {
+        $imgName = $image.Name
+        foreach ($version in $image.Versions) {
+            $fullImageName = "$repository/$imgName`:$version"
+            docker push "$fullImageName" | Write-Verbose
 
             if (!$?) {
-                $failedImages.Add($imageName)
+                $failedImages.Add($fullImageName)
             }
         }
     }
@@ -85,47 +97,73 @@ function PushDockerImages($images) {
     return $failedImages
 }
 
-$images = [ordered]@{}
-# base images used to build other images.
-$images.Add("busybox", "1.24")
-$images.Add("curl", "1803")
-$images.Add("java", "openjdk-8-jre")
-$images.Add("test-webserver", "1.0")
 
-$images.Add("cassandra", "v13")
-$images.Add("dnsutils", "1.0")
-$images.Add("echoserver", "1.10")
-$images.Add("entrypoint-tester", "1.0")
-$images.Add("fakegitserver", "1.0")
-$images.Add("gb-frontend", "v5")
-$images.Add("gb-redisslave", "v2")
-$images.Add("hazelcast-kubernetes", "3.8_1")
-$images.Add("hostexec", "1.1")
-$images.Add("jessie-dnsutils", "1.0")
-$images.Add("kitten", "1.0")
-$images.Add("k8s-sample-admission-webhook", "1.10v2")
-$images.Add("liveness", "1.0")
-$images.Add("logs-generator", "1.0")
-$images.Add("mounttest", "1.0")
-$images.Add("nautilus", "1.0")
-$images.Add("net", "1.0")
-$images.Add("netexec", "1.0")
-$images.Add("nginx-slim", @("0.20","0.21"))
-$images.Add("no-snat-test", "1.0")
-$images.Add("pause", "3.1")
-$images.Add("port-forward-tester", "1.0")
-$images.Add("porter", "1.0")
-$images.Add("redis", "1.0")
-$images.Add("resource-consumer", "1.3")
-$images.Add("serve-hostname", "1.0")
-$images.Add("spark", "1.5.2_v1")
-$images.Add("storm-nimbus", "latest")
-$images.Add("storm-worker", "latest")
-$images.Add("zookeeper", "latest")
+function DockerImage
+{
+    param
+    (
+        $Name,
+        $Versions = "1.0",
+        $ImageBase = $BaseImage
+    )
+
+    if ($Versions -is [string]) {
+        $Versions = @($Versions)
+    }
+
+    $image = New-Object -TypeName PSObject
+    $image | Add-Member -MemberType NoteProperty -Name Name -Value $Name
+    $image | Add-Member -MemberType NoteProperty -Name Versions -Value $Versions
+    $image | Add-Member -MemberType NoteProperty -Name ImageBase -Value $ImageBase
+
+    # Calling "image" below outputs it, acting as a "return" value
+    $image
+}
 
 
-BuildGoFiles $images.Keys
-$failedBuildImages = BuildDockerImages $images $BaseImage $Repository $Recreate
+$images = @(
+    # base images used to build other images.
+    DockerImage -Name "busybox" -Versions "1.24"
+    DockerImage -Name "curl" -Versions "1803"
+    DockerImage -Name "java" -Versions "openjdk-8-jre" -ImageBase "busybox"
+    DockerImage -Name "test-webserver"
+
+    DockerImage -Name "cassandra" -Versions "v13" -ImageBase "java"
+    DockerImage -Name "dnsutils" -ImageBase "busybox"
+    DockerImage -Name "echoserver" -Versions "1.10"
+    DockerImage -Name "entrypoint-tester"
+    DockerImage -Name "fakegitserver"
+    DockerImage -Name "gb-frontend" -Versions "v5"
+    DockerImage -Name "gb-redisslave" -Versions "v2"
+    DockerImage -Name "hazelcast-kubernetes" -Versions "3.8_1" -ImageBase "java"
+    DockerImage -Name "hostexec" -Versions "1.1" -ImageBase "busybox"
+    DockerImage -Name "jessie-dnsutils" -ImageBase "busybox"
+    DockerImage -Name "k8s-sample-admission-webhook" -Versions "1.10v2"
+    DockerImage -Name "kitten" -ImageBase "test-webserver"
+    DockerImage -Name "liveness"
+    DockerImage -Name "logs-generator"
+    DockerImage -Name "mounttest"
+    DockerImage -Name "nautilus" -ImageBase "test-webserver"
+    DockerImage -Name "net" -ImageBase "busybox"
+    DockerImage -Name "netexec" -ImageBase "busybox"
+    DockerImage -Name "nginx-slim" -Versions @("0.20","0.21") -ImageBase "busybox"
+    DockerImage -Name "no-snat-test"
+    DockerImage -Name "pause" -Versions "3.1"
+    DockerImage -Name "port-forward-tester"
+    DockerImage -Name "porter"
+    DockerImage -Name "redis"
+    DockerImage -Name "resource-consumer" -Versions "1.3"
+    DockerImage -Name "resource-consumer/controller"
+    DockerImage -Name "serve-hostname"
+    DockerImage -Name "spark" -Versions "1.5.2_v1" -ImageBase "java"
+    DockerImage -Name "storm-nimbus" -Versions "latest" -ImageBase "java"
+    DockerImage -Name "storm-worker" -Versions "latest" -ImageBase "java"
+    DockerImage -Name "zookeeper" -Versions "latest" -ImageBase "java"
+)
+
+
+BuildGoFiles $images.Name
+$failedBuildImages = BuildDockerImages $images $Repository $Recreate
 if ($PushToDocker) {
     $failedPushImages = PushDockerImages $images
 }

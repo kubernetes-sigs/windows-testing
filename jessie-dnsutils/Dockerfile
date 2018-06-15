@@ -1,4 +1,5 @@
-FROM atuvenie/busybox:1.24
+ARG BASE_IMAGE=e2eteam/busybox:1.24
+FROM $BASE_IMAGE
 USER ContainerAdministrator
 ENV chocolateyUseWindowsCompression false
 RUN powershell -Command \
