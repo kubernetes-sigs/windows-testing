@@ -41,41 +41,44 @@ function BuildDockerImages($images, $baseImage, $repository, $recreate) {
     $allDockerImages = docker images
 
     foreach ($image in $images.Keys) {
-        $version = $images["$image"]
-        $imageName = "$repository/$image`:$version"
+        foreach ($version in $images["$image"]) {
+            $imageName = "$repository/$image`:$version"
 
-        if (!$recreate) {
-            $imageFound = $allDockerImages | findstr "$repository/$image" | findstr $version
-            if ($imageFound) {
-                Write-Verbose "Image ""$imageName"" already exists. Skipping."
-                continue
+            if (!$recreate) {
+                $imageFound = $allDockerImages | findstr "$repository/$image" | findstr $version
+                if ($imageFound) {
+                    Write-Verbose "Image ""$imageName"" already exists. Skipping."
+                    continue
+                }
             }
-        }
 
-        pushd $image
-        docker build -t "$imageName" --build-arg BASE_IMAGE="$baseImage" . | Write-Verbose
-        $result = $?
-        popd
+            pushd $image
+            docker build -t "$imageName" --build-arg BASE_IMAGE="$baseImage" . | Write-Verbose
+            $result = $?
+            popd
 
-        if (!$result) {
-            $failedImages.Add($imageName)
+            if (!$result) {
+                $failedImages.Add($imageName)
+            }
         }
     }
 
     return $failedImages
 }
 
+
 function PushDockerImages($images) {
     Write-Verbose "Pushing Docker images..."
     $failedImages = $myArray = New-Object System.Collections.ArrayList
 
     foreach ($image in $images.Keys) {
-        $version = $images["$image"]
-        $imageName = "$repository/$image`:$version"
-        docker push "$imageName" | Write-Verbose
+        foreach ($version in $images["$image"]) {
+            $imageName = "$repository/$image`:$version"
+            docker push "$imageName" | Write-Verbose
 
-        if (!$?) {
-            $failedImages.Add($imageName)
+            if (!$?) {
+                $failedImages.Add($imageName)
+            }
         }
     }
 
@@ -107,7 +110,7 @@ $images.Add("mounttest", "1.0")
 $images.Add("nautilus", "1.0")
 $images.Add("net", "1.0")
 $images.Add("netexec", "1.0")
-$images.Add("nginx-slim", "0.20")
+$images.Add("nginx-slim", @("0.20","0.21"))
 $images.Add("no-snat-test", "1.0")
 $images.Add("pause", "3.1")
 $images.Add("port-forward-tester", "1.0")
