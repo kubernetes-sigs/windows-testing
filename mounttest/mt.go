@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -156,7 +157,7 @@ func readWriteNewFile(path string, perm os.FileMode) error {
 		return nil
 	}
 
-	fullPath := resolveFilePath(path)
+	fullPath, _ := filepath.Abs(path)
 	err := ioutil.WriteFile(fullPath, []byte(initialContent), perm)
 	if err != nil {
 		fmt.Printf("error writing new file %q: %v\n", path, err)
