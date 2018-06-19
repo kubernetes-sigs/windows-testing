@@ -146,6 +146,7 @@ $images = @(
     DockerImage -Name "nautilus" -ImageBase "test-webserver"
     DockerImage -Name "net" -ImageBase "busybox"
     DockerImage -Name "netexec" -ImageBase "busybox"
+    DockerImage -Name "nettest"
     DockerImage -Name "nginx-slim" -Versions @("0.20","0.21") -ImageBase "busybox"
     DockerImage -Name "no-snat-test"
     DockerImage -Name "pause" -Versions "3.1"
