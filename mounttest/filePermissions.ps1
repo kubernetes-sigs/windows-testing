@@ -19,8 +19,8 @@ function GetFilePermissions($path) {
 
     if ($output.ReturnValue -ne 0) {
         $retVal = $output.ReturnValue
-        echo "GetSecurityDescriptor invocation failed with code: $retVal"
-        exit $output.ReturnValue
+        Write-Error "GetSecurityDescriptor invocation failed with code: $retVal"
+        exit 1
     }
 
     $fileSD = $output.Descriptor
@@ -63,6 +63,9 @@ function GetFilePermissions($path) {
 }
 
 $mask = GetFilePermissions($FileName)
+if (-not $?) {
+    exit 1
+}
 
 # print the permission mask Linux-style.
 echo "0$mask"

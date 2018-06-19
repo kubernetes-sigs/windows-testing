@@ -32,38 +32,6 @@ import (
 )
 
 
-func resolveFilePath(path string) (string) {
-    var (
-        symlinkTarget   string
-        newPath         string
-        fi              os.FileInfo
-        err             error
-    )
-
-    fi, err = os.Lstat(path)
-    if err != nil {
-        // file might not even exist. we can't resolve. return as-is.
-        return path
-    }
-
-    if fi.Mode() & os.ModeSymlink == 0 {
-        // not a symlink. return absolute path instead..
-        newPath, err = filepath.Abs(path)
-        return newPath
-    }
-
-    newPath, _ = filepath.Split(path)
-    symlinkTarget, _ = os.Readlink(path)
-
-    bits := strings.Split(symlinkTarget, string(os.PathSeparator))
-    for _, element := range bits {
-        newPath = filepath.Join(newPath, element)
-        newPath = resolveFilePath(newPath)
-    }
-
-    return newPath
-}
-
 func Umask(mask int) (old int, err error) {
     return 0, nil
 }
@@ -73,7 +41,7 @@ func fsType(path string) error {
         return nil
     }
 
-    fullPath := resolveFilePath(path)
+    fullPath, _ := filepath.Abs(path)
 
     cmd := exec.Command("cmd.exe", "/c", "fsutil.exe", "fsinfo", "volumeInfo",
                         fullPath, "|", "find", "\"File System Name\"")
@@ -119,6 +87,7 @@ func _getFilePerm(path string) (string, error) {
     var (
         fullPath            string
         out                 bytes.Buffer
+        errOut              bytes.Buffer
         err                 error
         output              string
         val                 int
@@ -129,14 +98,15 @@ func _getFilePerm(path string) (string, error) {
         return "", nil
     }
 
-    fullPath = resolveFilePath(path)
+    fullPath, err = filepath.Abs(path)
     cmd := exec.Command("powershell.exe", "-NonInteractive", "./filePermissions.ps1",
                         "-FileName", fullPath)
     cmd.Stdout = &out
+    cmd.Stderr = &errOut
     err = cmd.Run()
 
     if err != nil {
-        fmt.Printf("error from PowerShell Script: %v\n", err)
+        fmt.Printf("error from PowerShell Script: %v, %v\n", err, errOut.String())
         return "", err
     }
 
@@ -173,7 +143,7 @@ func fileOwner(path string) error {
         return nil
     }
 
-    fullPath := resolveFilePath(path)
+    fullPath, _ := filepath.Abs(path)
 
     // we need 2 backslashes for the query.
     fullPath = strings.Replace(fullPath, "\\", "\\\\", -1)
@@ -204,8 +174,7 @@ func Chmod(path string, perm os.FileMode) error {
 }
 
 func ReadFile(filename string) ([]byte, error) {
-    // Windows containers cannot handle relative symlinks properly.
     // For the purposes of testing, we'll use the absolute path instead.
-    fullPath := resolveFilePath(filename)
+    fullPath, _ := filepath.Abs(filename)
     return ioutil.ReadFile(fullPath)
 }
