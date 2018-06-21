@@ -1,4 +1,5 @@
-FROM e2eteam/java:openjdk-8-jre
+ARG BASE_IMAGE=e2eteam/java:openjdk-8-jre
+FROM $BASE_IMAGE
 
 # install CassandraDB.
 ENV CASSANDRA_VERSION 3.11.2
