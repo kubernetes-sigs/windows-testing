@@ -154,6 +154,7 @@ $images = @(
     DockerImage -Name "redis"
     DockerImage -Name "resource-consumer" -Versions "1.3"
     DockerImage -Name "resource-consumer/controller"
+    DockerImage -Name "rethinkdb" -Version "1.16.0_1" -ImageBase "busybox"
     DockerImage -Name "serve-hostname"
     DockerImage -Name "spark" -Versions "1.5.2_v1" -ImageBase "java"
     DockerImage -Name "storm-nimbus" -Versions "latest" -ImageBase "java"
