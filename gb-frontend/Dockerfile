@@ -25,4 +25,5 @@ ADD guestbook.php /Users/ContainerAdministrator/AppData/Roaming/Apache24/htdocs/
 ADD controllers.js /Users/ContainerAdministrator/AppData/Roaming/Apache24/htdocs/controllers.js
 ADD index.html /Users/ContainerAdministrator/AppData/Roaming/Apache24/htdocs/index.html
 COPY run.ps1 run.ps1
-CMD .\run.ps1
+USER ContainerAdministrator
+CMD ["powershell", "-Command", "/run.ps1"]
