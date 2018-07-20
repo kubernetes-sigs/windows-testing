@@ -1,0 +1,17 @@
+#!/bin/sh
+
+arg=$1
+
+if [ $arg -eq 0 ]
+then
+    echo "Stopping process"
+    pid=$(Powershell.exe "(Get-Process winnfsd).Id")
+    echo "Stopping process with pid $pid"
+    Powershell.exe Stop-Process $pid
+elif [ $arg -eq 1 ]
+then
+    echo "Restarting process"
+    pid=$(Powershell.exe "(Get-Process winnfsd).Id")
+    Powershell.exe Stop-Process $pid
+    Powershell /WinNFSd/start.ps1
+fi
