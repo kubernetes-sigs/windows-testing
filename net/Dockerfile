@@ -4,7 +4,7 @@ ADD net.exe /net
 USER ContainerAdministrator
 RUN powershell -Command \
 mkdir /dev/null; \
-cp CURL.exe /busybox/curl.exe; \
-cp CURL.LIC /busybox/CURL.LIC;\
-rm CURL.exe;rm CURL.LIC
+cp /curl/CURL.exe /busybox/curl.exe; \
+cp /curl/CURL.LIC /busybox/CURL.LIC;\
+rm /curl/CURL.exe;rm /curl/CURL.LIC
 USER ContainerUser
