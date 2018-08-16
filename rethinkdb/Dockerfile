@@ -1,4 +1,4 @@
-ARG BASE_BUSYBOX_IMAGE=e2eteam/busybox:1.24
+ARG BASE_BUSYBOX_IMAGE=e2eteam/busybox:1.29
 FROM $BASE_BUSYBOX_IMAGE
 
 # install download RethinkDB.
