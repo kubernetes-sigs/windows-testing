@@ -130,7 +130,7 @@ $images = @(
 
     DockerImage -Name "cassandra" -Versions "v13" -ImageBase "java"
     DockerImage -Name "dnsutils" -ImageBase "busybox" -Versions "1.1"
-    DockerImage -Name "echoserver" -Versions "2.1"
+    DockerImage -Name "echoserver" -ImageBase "busybox" -Versions "2.1"
     DockerImage -Name "entrypoint-tester"
     DockerImage -Name "fakegitserver"
     DockerImage -Name "gb-frontend" -Versions "v6"

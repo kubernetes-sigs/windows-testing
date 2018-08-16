@@ -7,7 +7,6 @@ del c:\nginx-1.9.3.zip
 USER ContainerAdministrator
 RUN mkdir C:\usr\share
 RUN mklink /D C:\usr\share\nginx C:\nginx\nginx-1.9.3
-ADD SyncHost.exe /Windows/System32/SyncHost.exe
 RUN mklink C:\Windows\System32\sync.exe C:\Windows\System32\SyncHost.exe
 USER ContainerUser
 WORKDIR /nginx/nginx-1.9.3
