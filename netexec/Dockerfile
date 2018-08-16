@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=e2eteam/busybox:1.24
+ARG BASE_IMAGE=e2eteam/busybox:1.29
 FROM $BASE_IMAGE
 ADD netexec.exe /netexec.exe
 EXPOSE 8080
