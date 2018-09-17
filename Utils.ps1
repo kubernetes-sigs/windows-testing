@@ -89,6 +89,26 @@ function PushDockerImages($images) {
 }
 
 
+function PullDockerImages($images) {
+    Write-Verbose "Pulling Docker images..."
+    $failedImages = $myArray = New-Object System.Collections.ArrayList
+
+    foreach ($image in $images) {
+        $imgName = $image.Name
+        foreach ($version in $image.Versions) {
+            $fullImageName = "$repository/$imgName`:$version"
+            docker push "$fullImageName" | Write-Verbose
+
+            if (!$?) {
+                $failedImages.Add($fullImageName)
+            }
+        }
+    }
+
+    return $failedImages
+}
+
+
 function DockerImage
 {
     param
