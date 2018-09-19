@@ -97,7 +97,7 @@ function PullDockerImages($images) {
         $imgName = $image.Name
         foreach ($version in $image.Versions) {
             $fullImageName = "$repository/$imgName`:$version"
-            docker push "$fullImageName" | Write-Verbose
+            docker pull "$fullImageName" | Write-Verbose
 
             if (!$?) {
                 $failedImages.Add($fullImageName)
