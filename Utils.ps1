@@ -9,7 +9,7 @@ function BuildGoFiles($folders) {
 
     Write-Verbose "Building Go items..."
     foreach ($folder in $folders) {
-        $items = Get-ChildItem -Recurse -Filter "*.go" $folder | ? Name -NotMatch "util"
+        $items = Get-ChildItem -Recurse $folder | ? Name -Match ".*.go(lnk)$" | ? Name -NotMatch "util"
         foreach ($item in $items) {
             $exePath = Join-Path $item.DirectoryName ($item.BaseName + ".exe")
             if (Test-Path $exePath) {
@@ -20,7 +20,11 @@ function BuildGoFiles($folders) {
             $sourceFilePath = Join-Path $item.DirectoryName $item.Name
             Write-Verbose "Building $sourceFilePath to $exePath"
             pushd $item.DirectoryName
-            go build -o $exePath .
+            $source = "."
+            if ($item.Extension -eq ".golnk") {
+                $source = (cat $item).Trim()
+            }
+            go build -o $exePath $source
             popd
         }
     }
