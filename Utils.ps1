@@ -159,7 +159,7 @@ $Images = @(
     DockerImage -Name "mounttest"
     DockerImage -Name "nautilus" -ImageBase "test-webserver"
     DockerImage -Name "net" -ImageBase "busybox"
-    DockerImage -Name "netexec" -ImageBase "busybox"
+    DockerImage -Name "netexec" -ImageBase "busybox" -Versions "1.1"
     DockerImage -Name "nettest"
     DockerImage -Name "nginx" -Versions @("1.14-alpine","1.15-alpine") -ImageBase "busybox"
     DockerImage -Name "no-snat-test"
