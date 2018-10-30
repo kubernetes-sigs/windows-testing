@@ -6,5 +6,6 @@ RUN powershell -Command \
 iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1')); \
 choco feature disable --name showDownloadProgress
 ADD hostname.exe /busybox/hostname.exe
+ADD getent.exe /busybox/getent.exe
 RUN powershell -Command choco install bind-toolsonly --version 9.10.3 -y
 ENTRYPOINT ["cmd.exe", "/s", "/c"]
