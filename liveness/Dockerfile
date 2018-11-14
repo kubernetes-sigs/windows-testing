@@ -16,3 +16,4 @@ ARG BASE_IMAGE=microsoft/windowsservercore:1803
 FROM $BASE_IMAGE
 
 COPY server.exe /server
+RUN mkdir C:\tmp
