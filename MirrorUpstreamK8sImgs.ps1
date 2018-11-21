@@ -1,3 +1,16 @@
+# Copyright 2018 The Kubernetes Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 $VerbosePreference = "continue"
 
@@ -19,7 +32,7 @@ function MirrorK8sUpstreamImages {
             foreach ($version in $manifest.Versions) {
                 $upstreamImageFullName = "${upstreamImageName}:${version}"
                 docker pull $upstreamImageFullName | Write-Verbose
-                
+
                 if ( $manifest.Mirror ) {
                     Write-Verbose "Mirroring upstream image ${upstreamImageFullName} "
                     $mirrorImageFullName = "$($manifest.LinuxImage):${version}"
@@ -27,7 +40,7 @@ function MirrorK8sUpstreamImages {
                     docker tag "${upstreamImageFullName}" "${mirrorImageFullName}" | Write-Verbose
                     Write-Verbose "Pushing image to mirror repo"
                     docker push "${mirrorImageFullName}" | Write-Verbose
-                } 
+                }
                 if ( -Not $? ) {
                     $failedImages.Add($UpstreamImageName)
                 }
@@ -45,7 +58,7 @@ function ImageFullName
         $Version,
         $ImageNameSuffix = $null
     )
-      
+
     $UpstreamImage = "${Repo}/${Name}${ImageNameSuffix}"
     $UpstreamImage
 }
@@ -84,7 +97,7 @@ function ManifestList
     $windowsImage = ImageFullName -Repo "e2eteam" -Name $image.Name
     $image | Add-Member -MemberType NoteProperty -Name WindowsImage -Value $windowsImage
 
-    
+
     # Calling "image" below outputs it, acting as a "return" value
     $image
 }
@@ -106,7 +119,7 @@ function CreateManifestLists {
     foreach ($manifest in $Lists) {
 
         $fullManifestListName = ImageFullName -Repo "e2ek8simgs" -Name $manifest.Name
-        Write-Host "Creating Manifest List $fullManifestListName" 
+        Write-Host "Creating Manifest List $fullManifestListName"
         foreach ( $version in $manifest.Versions ) {
             docker manifest create $(GetVersionedImage $fullManifestListName $version) $(GetVersionedImage $manifest.LinuxImage $version ) $(GetVersionedImage $manifest.WindowsImage $version) | Write-Host
             docker manifest inspect $(GetVersionedImage $fullManifestListName $version) | Write-Host
