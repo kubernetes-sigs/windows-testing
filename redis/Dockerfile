@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=microsoft/windowsservercore:1803
+ARG BASE_IMAGE=e2eteam/busybox:1.29
 FROM $BASE_IMAGE
 EXPOSE 6379
 WORKDIR /redis
