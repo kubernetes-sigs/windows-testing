@@ -9,7 +9,7 @@ function BuildGoFiles($folders) {
 
     Write-Verbose "Building Go items..."
     foreach ($folder in $folders) {
-        $items = Get-ChildItem -Recurse $folder | ? Name -Match ".*.go(lnk)$" | ? Name -NotMatch "util"
+        $items = Get-ChildItem -Recurse $folder | ? Name -Match ".*.go(lnk)?$" | ? Name -NotMatch "util"
         foreach ($item in $items) {
             $exePath = Join-Path $item.DirectoryName ($item.BaseName + ".exe")
             if (Test-Path $exePath) {
