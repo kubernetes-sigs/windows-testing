@@ -185,9 +185,6 @@ $Images = @(
     DockerImage -Name "resource-consumer/controller"
     DockerImage -Name "rethinkdb" -Version "1.16.0_1" -ImageBase "busybox"
     DockerImage -Name "serve-hostname" -Versions "1.1"
-    DockerImage -Name "spark" -Versions "1.5.2_v1" -ImageBase "java"
-    DockerImage -Name "storm-nimbus" -Versions "latest" -ImageBase "java"
-    DockerImage -Name "storm-worker" -Versions "latest" -ImageBase "java"
     DockerImage -Name "webhook" -Versions "1.12v2"
     DockerImage -Name "zookeeper" -Versions "latest" -ImageBase "java"
 )
