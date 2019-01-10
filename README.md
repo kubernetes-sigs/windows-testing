@@ -28,6 +28,13 @@ export KUBE_TEST_REPO_LIST=$(pwd)/repo_list
 
 > TODO: copy & simplify steps from https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml
 
+
+## Building Tests
+
+### e2e.test
+
+> TODO
+
 ### Images
 
 [images/](images/README.md) - has all of the container images used in e2e test passes and the scripts to build them. They are replacement Windows containers for those in [kubernetes/test/images](https://github.com/kubernetes/kubernetes/tree/master/test/images)
