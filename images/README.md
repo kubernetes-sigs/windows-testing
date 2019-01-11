@@ -1,0 +1,1 @@
+This repo contains all windows equivalent of docker images used to run k8s e2e tests.
