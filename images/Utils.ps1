@@ -159,7 +159,7 @@ $Images = @(
 
     DockerImage -Name "cassandra" -Versions "v13" -ImageBase "java"
     DockerImage -Name "dnsutils" -ImageBase "busybox" -Versions "1.1"
-    DockerImage -Name "echoserver" -ImageBase "busybox" -Versions "2.1"
+    DockerImage -Name "echoserver" -ImageBase "busybox" -Versions "2.2"
     DockerImage -Name "entrypoint-tester"
     DockerImage -Name "fakegitserver"
     DockerImage -Name "gb-frontend" -Versions "v6"
@@ -181,10 +181,10 @@ $Images = @(
     DockerImage -Name "port-forward-tester"
     DockerImage -Name "porter"
     DockerImage -Name "redis" -ImageBase "busybox"
-    DockerImage -Name "resource-consumer" -Versions "1.3"
+    DockerImage -Name "resource-consumer" -Versions "1.4"
     DockerImage -Name "resource-consumer/controller"
     DockerImage -Name "rethinkdb" -Version "1.16.0_1" -ImageBase "busybox"
     DockerImage -Name "serve-hostname" -Versions "1.1"
-    DockerImage -Name "webhook" -Versions "1.12v2"
+    DockerImage -Name "webhook" -Versions "1.13v1"
     DockerImage -Name "zookeeper" -Versions "latest" -ImageBase "java"
 )
