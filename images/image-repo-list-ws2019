@@ -1,0 +1,8 @@
+dockerLibraryRegistry: claudiubelu
+e2eRegistry: claudiubelu
+gcRegistry: claudiubelu
+hazelcastRegistry: claudiubelu
+PrivateRegistry: claudiubelu
+sampleRegistry: claudiubelu
+stormRegistry: claudiubelu
+zookeeperRegistry: claudiubelu
