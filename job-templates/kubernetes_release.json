@@ -1,0 +1,85 @@
+{
+  "apiVersion": "vlabs",
+  "properties": {
+    "orchestratorProfile": {
+      "orchestratorType": "Kubernetes",
+      "orchestratorRelease": "1.13"
+    },
+    "masterProfile": {
+      "count": 1,
+      "dnsPrefix": "",
+      "vmSize": "Standard_D2_v3",
+      "distro": "ubuntu",
+      "extensions": [
+          {
+              "name": "win-e2e-master-extension"
+          }
+      ]
+    },
+    "agentPoolProfiles": [
+      {
+        "name": "windowspool2",
+        "count": 2,
+        "vmSize": "Standard_D2_v3",
+        "availabilityProfile": "AvailabilitySet",
+        "osType": "Windows",
+        "preProvisionExtension":
+            {
+                "name": "node_setup",
+                "singleOrAll": "all"
+            },
+        "extensions": [
+            {
+                "name": "winrm"
+            },
+            {
+              "name": "windows-patches"
+            }
+        ]
+      }
+    ],
+    "windowsProfile": {
+      "adminUsername": "azureuser",
+      "adminPassword": "replacepassword1234$"
+    },
+    "linuxProfile": {
+      "adminUsername": "azureuser",
+      "ssh": {
+        "publicKeys": [
+          {
+            "keyData": ""
+          }
+        ]
+      }
+    },
+    "servicePrincipalProfile": {
+      "clientId": "",
+      "secret": ""
+    },
+    "extensionProfiles": [
+       {
+          "name":    "node_setup",
+          "version": "v1",
+          "rootURL": "https://k8swin.blob.core.windows.net/k8s-windows/preprovision_extensions/",
+          "script":  "node_setup.ps1"
+        },
+        {
+          "name":"winrm",
+          "version": "v1"
+        },
+        {
+          "name":                "win-e2e-master-extension",
+          "version":             "v1",
+          "extensionParameters": "parameters",
+          "rootURL":             "https://k8swin.blob.core.windows.net/k8s-windows/extensions/",
+          "script":              "win-e2e-master-extension.sh"
+        },
+        {
+          "name": "windows-patches",
+          "version": "v1",
+          "extensionParameters": "'https://k8stestinfrabinaries.blob.core.windows.net/hotfixes-2019/Windows10.0-KB098765-x64-InstallForTestingPurposesOnly.exe?sp=r&st=2018-12-04T21:36:13Z&se=2019-03-12T05:36:13Z&spr=https&sv=2018-03-28&sig=o7s5kvVQ7FebXySBbd4V3kfXqAey3xYg5saxF8%2Bj%2BHo%3D&sr=b'",
+          "rootURL": "https://raw.githubusercontent.com/Azure/aks-engine/master/"
+        }
+    ]
+  }
+}
