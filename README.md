@@ -43,12 +43,12 @@ cd $GOPATH/src/k8s.io/kubernetes
 If building on Mac or Windows, you can specify `KUBE_BUILD_PLATFORMS`.
 
 For Windows
-``` bash
+```bash
 ./build/run.sh make KUBE_BUILD_PLATFORMS=windows/amd64
 ```
 
 For Mac
-``` bash
+```bash
 ./build/run.sh make KUBE_BUILD_PLATFORMS=darwin/amd64
 ```
 
