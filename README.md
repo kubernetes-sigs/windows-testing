@@ -33,7 +33,7 @@ export KUBE_TEST_REPO_LIST=$(pwd)/repo_list
 
 ### e2e.test
 
-Make sure you have a working [Kubernetes development environment](https://github.com/kubernetes/kubernetes).
+Make sure you have a working [Kubernetes development environment](https://github.com/kubernetes/community/blob/master/contributors/devel/development.md).
 ```bash
 go get -d k8s.io/kubernetes
 cd $GOPATH/src/k8s.io/kubernetes
