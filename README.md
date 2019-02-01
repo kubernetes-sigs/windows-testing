@@ -33,7 +33,26 @@ export KUBE_TEST_REPO_LIST=$(pwd)/repo_list
 
 ### e2e.test
 
-> TODO
+Make sure you have a working [Kubernetes development environment](https://github.com/kubernetes/kubernetes).
+```bash
+go get -d k8s.io/kubernetes
+cd $GOPATH/src/k8s.io/kubernetes
+./build/run.sh make WHAT=test/e2e/e2e.test
+```
+
+If building on Mac or Windows, you can specify `KUBE_BUILD_PLATFORMS`.
+
+For Windows
+``` bash
+./build/run.sh make KUBE_BUILD_PLATFORMS=windows/amd64
+```
+
+For Mac
+``` bash
+./build/run.sh make KUBE_BUILD_PLATFORMS=darwin/amd64
+```
+
+Your binaries will be available at `~/go/src/k8s.io/kubernetes/_output/dockerized/bin/linux/amd64/e2e.test` where `linux/amd64/` is replaced by `KUBE_BUILD_PLATFORMS` if you are building on Mac or Windows.
 
 ### Images
 
