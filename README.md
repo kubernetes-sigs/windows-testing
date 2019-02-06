@@ -39,6 +39,7 @@ go get -d k8s.io/kubernetes
 cd $GOPATH/src/k8s.io/kubernetes
 ./build/run.sh make WHAT=test/e2e/e2e.test
 ```
+Once complete, the binary will be available at: `~/go/src/k8s.io/kubernetes/_output/dockerized/bin/linux/amd64/e2e.test`
 
 If building on Mac or Windows, you can specify `KUBE_BUILD_PLATFORMS`.
 
