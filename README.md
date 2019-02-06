@@ -18,7 +18,7 @@ All of the SIG-Windows tests are included in the `e2e.test` binary. You need to 
 
 ```bash
 export KUBECONFIG=path/to/kubeconfig
-curl https://raw.githubusercontent.com/windows-testing/master/images/image-repo-list-ws2019 -o repo_list
+curl https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list-ws2019 -o repo_list
 export KUBE_TEST_REPO_LIST=$(pwd)/repo_list
 
 ./e2e.test --provider=local --ginkgo.noColor --ginkgo.focus="\[sig-windows\]" --node-os-distro="windows"
