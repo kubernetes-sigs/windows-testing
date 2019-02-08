@@ -77,7 +77,7 @@
         {
           "name": "windows-patches",
           "version": "v1",
-          "extensionParameters": "'https://k8stestinfrabinaries.blob.core.windows.net/hotfixes-2019/Windows10.0-KB098765-x64-InstallForTestingPurposesOnly.exe?sp=r&st=2018-12-04T21:36:13Z&se=2019-03-12T05:36:13Z&spr=https&sv=2018-03-28&sig=o7s5kvVQ7FebXySBbd4V3kfXqAey3xYg5saxF8%2Bj%2BHo%3D&sr=b'",
+          "extensionParameters": "'http://download.windowsupdate.com/c/msdownload/update/software/updt/2019/01/windows10.0-kb4476976-x64_a9c241844c041cb8dbcf28b5635eecb1a57e028a.msu'",
           "rootURL": "https://raw.githubusercontent.com/Azure/aks-engine/master/"
         }
     ]
