@@ -20,7 +20,8 @@
       {
         "name": "windowspool2",
         "count": 2,
-        "vmSize": "Standard_D2_v3",
+        "vmSize": "Standard_D2s_v3",
+        "osDiskSizeGB": 128,
         "availabilityProfile": "AvailabilitySet",
         "osType": "Windows",
         "preProvisionExtension":
