@@ -1,4 +1,4 @@
-# Copyright 2018 The Kubernetes Authors.
+# Copyright 2019 The Kubernetes Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
 # limitations under the License.
 
 Param(
-    [string]$BaseImage = "microsoft/windowsservercore:1803",
     [string]$Repository = "e2eteam",
     [bool]$Recreate = $true,
     [bool]$PushToDocker = $false
@@ -24,9 +23,22 @@ $VerbosePreference = "continue"
 . "$PSScriptRoot\Utils.ps1"
 
 BuildGoFiles $Images.Name
-$failedBuildImages = Build-DockerImages $Images $BaseImage $Repository $Recreate
+
+$failedBuildImages = New-Object System.Collections.ArrayList
+$failedPushImages = New-Object System.Collections.ArrayList
+$failedBuildManifests = New-Object System.Collections.ArrayList
+$failedPushManifests = New-Object System.Collections.ArrayList
+
+foreach ($baseImage in $BaseImages) {
+    $failedBuildImages += Build-DockerImages $Images $baseImage.ImageName $Repository $Recreate $baseImage.Suffix
+    if ($PushToDocker) {
+        $failedPushImages += Push-DockerImages $Images $Repository $baseImage.Suffix
+    }
+}
+
+$failedBuildManifests = Build-DockerManifestLists $Images $BaseImages $Repository
 if ($PushToDocker) {
-    $failedPushImages = Push-DockerImages $Images $Repository
+    $failedPushManifests = Push-DockerManifestLists $Images $Repository
 }
 
 if ($failedBuildImages) {
@@ -35,4 +47,12 @@ if ($failedBuildImages) {
 
 if ($failedPushImages) {
     Write-Host "Docker images that failed to push: $failedPushImages"
+}
+
+if ($failedBuildManifests) {
+    Write-Host "Docker manifest lists that failed to build: $failedBuildManifests"
+}
+
+if ($failedPushManifests) {
+    Write-Host "Docker manifest lists that failed to push: $failedPushManifests"
 }
