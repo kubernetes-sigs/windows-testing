@@ -20,8 +20,8 @@ RUN powershell -Command \
     Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1')); \
     choco feature disable --name showDownloadProgress
 RUN powershell -Command \
-    choco install apache-httpd -y; \
-    choco install php -y --params '"/ThreadSafe "'
+    choco install apache-httpd --version 2.4.37 -y; \
+    choco install php --version 7.2.14 -y --params '"/ThreadSafe "'
 RUN powershell -Command \
     $oldpath = (Get-ItemProperty -Path ‘Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment’ -Name PATH).path; \
     $newpath = “$oldpath;c:\tools\php72\;c:\Users\ContainerAdministrator\AppData\Roaming\Apache24\bin\”; \
