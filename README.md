@@ -50,7 +50,7 @@ All of the tests are built into the `e2e.test` binary, which you can as a standa
 
 There are a few important parameters that you need to use:
 
-- `--provider=local` - this will avoid using a cloud provider to provision new resources such as storage volumes or load balancers
+- `--provider=skeleton` - this will avoid using a cloud provider to provision new resources such as storage volumes or load balancers
 - `--ginkgo.focus="..."` - this regex chooses what [Ginkgo](http://onsi.github.io/ginkgo/) tests to run.
 - `--node-os-distro="windows"` - some test cases have different behavior on Linux & Windows. This tells them to test Windows.
 - `--ginkgo.skip="..."` - this regex chooses what tests to skip
@@ -67,13 +67,13 @@ export KUBE_TEST_REPO_LIST=$(pwd)/repo_list
 Once those are set, you could run all the `[SIG-Windows]` tests with:
 
 ```
-./e2e.test --provider=local --ginkgo.noColor --ginkgo.focus="\[sig-windows\]" --node-os-distro="windows"
+./e2e.test --provider=skeleton --ginkgo.noColor --ginkgo.focus="\[sig-windows\]" --node-os-distro="windows"
 ```
 
 The full list of what is run for TestGrid is in the [sig-windows-config.yaml](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml) after `--test-args`. You can copy the parameters there for a full test pass.
 
 ```
-./e2e.test --provider=local --node-os-distro=windows --ginkgo.focus=\\[Conformance\\]|\\[NodeConformance\\]|\\[sig-windows\\]|\\[sig-apps\\].CronJob --ginkgo.skip=\\[LinuxOnly\\]|\\[k8s.io\\].Pods.*should.cap.back-off.at.MaxContainerBackOff.\\[Slow\\]\\[NodeConformance\\]|\\[k8s.io\\].Pods.*should.have.their.auto-restart.back-off.timer.reset.on.image.update.\\[Slow\\]\\[NodeConformance\\]"
+./e2e.test --provider=skeleton --node-os-distro=windows --ginkgo.focus=\\[Conformance\\]|\\[NodeConformance\\]|\\[sig-windows\\]|\\[sig-apps\\].CronJob --ginkgo.skip=\\[LinuxOnly\\]|\\[k8s.io\\].Pods.*should.cap.back-off.at.MaxContainerBackOff.\\[Slow\\]\\[NodeConformance\\]|\\[k8s.io\\].Pods.*should.have.their.auto-restart.back-off.timer.reset.on.image.update.\\[Slow\\]\\[NodeConformance\\]"
 ```
 
 ### Using kubetest to deploy, test, and clean up a cluster
@@ -104,7 +104,9 @@ Set environment variables:
 Once those are set, you can run `kubetest` and it will do the rest. The full set of tests will take 6-7 hours.
 
 ```bash
-export KUBECONFIG=path/to/kubeconfig
+export KUBE_MASTER_IP=#IP of master node if running remotely, or localhost if running on master node
+export KUBE_MASTER_URL="http://${KUBE_MASTER_IP}:8080"
+export KUBECONFIG=#path/to/kubeconfig
 curl https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list-ws2019 -o repo_list
 export KUBE_TEST_REPO_LIST=$(pwd)/repo_list
 export AZURE_CREDENTIALS=TODO
@@ -124,8 +126,7 @@ kubetest --test=true \
   --acsengine-orchestratorRelease=1.13 \
   --acsengine-template-url=https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/job-templates/kubernetes_release.json \
   --acsengine-agentpoolcount=3 \
-  --test_args=--node-os-distro=windows --ginkgo.focus=\\[Conformance\\]|\\[NodeConformance\\]|\\[sig-windows\\]|\\[sig-apps\\].CronJob --ginkgo.skip=\\[LinuxOnly\\]|\\[k8s.io\\].Pods.*should.cap.back-off.at.MaxContainerBackOff.\\[Slow\\]\\[NodeConformance\\]|\\[k8s.io\\].Pods.*should.have.their.auto-restart.back-off.timer.reset.on.image.update.\\[Slow\\]\\[NodeConformance\\] \
-  --timeout=450m
+  --test_args=--node-os-distro=windows --ginkgo.focus=\\[Conformance\\]|\\[NodeConformance\\]|\\[sig-windows\\]|\\[sig-apps\\].CronJob --ginkgo.skip=\\[LinuxOnly\\]|\\[k8s.io\\].Pods.*should.cap.back-off.at.MaxContainerBackOff.\\[Slow\\]\\[NodeConformance\\]|\\[k8s.io\\].Pods.*should.have.their.auto-restart.back-off.timer.reset.on.image.update.\\[Slow\\]\\[NodeConformance\\]
 ```
 
 
