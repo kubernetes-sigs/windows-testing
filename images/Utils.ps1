@@ -44,31 +44,45 @@ function BuildGoFiles($folders) {
     }
 }
 
-function BuildDockerImages($images, $repository, $recreate) {
+Function Build-DockerImages {
+    Param (
+      [Parameter(Mandatory=$true)]  [PSObject[]]$Images,
+      [Parameter(Mandatory=$true)]  [String]$BaseImage,
+      [Parameter(Mandatory=$true)]  [String]$Repository,
+      [Parameter(Mandatory=$true)]  [bool]$Recreate,
+      [Parameter(mandatory=$false)] [String]$VersionSuffix = ""
+    )
+
     Write-Verbose "Building Docker images..."
     $failedImages = New-Object System.Collections.ArrayList
     $allDockerImages = docker images
 
-    foreach ($image in $images) {
+    foreach ($image in $Images) {
         $imgName = $image.Name
         foreach ($version in $image.Versions) {
-            $fullImageName = "$repository/$imgName`:$version"
+            $version = "$version$VersionSuffix"
+            $fullImageName = "$Repository/$imgName`:$version"
 
-            if (!$recreate) {
-                $imageFound = $allDockerImages | findstr "$repository/$imgName" | findstr $version
+            if (!$Recreate) {
+                $imageFound = $allDockerImages | findstr "$Repository/$imgName" | findstr $version
                 if ($imageFound) {
                     Write-Verbose "Image ""$fullImageName"" already exists. Skipping."
                     continue
                 }
             }
 
-            # check if the image is based on another already built image,
-            # like busybox. If it's not found, use the base image name as is.
-            $imgBase = $image.ImageBase
-            $imgBaseObj = $images | ? Name -eq $image.ImageBase
-            if ($imgBaseObj) {
-                $imgBaseObjVersion = $imgBaseObj[0].Versions[0]
-                $imgBase = "$repository/$imgBase`:$imgBaseObjVersion"
+            # if the image has no ImageBase, use $BaseImage instead.
+            # if it has, check if the image is based on another already built
+            # image, like busybox.
+            if ($image.ImageBase -eq "") {
+                $imgBase = $BaseImage
+            } else {
+                $imgBase = $image.ImageBase
+                $imgBaseObj = $Images | ? Name -eq $image.ImageBase
+                if ($imgBaseObj) {
+                    $imgBaseObjVersion = $imgBaseObj[0].Versions[0]
+                    $imgBase = "$Repository/$imgBase`:$imgBaseObjVersion$VersionSuffix"
+                }
             }
 
             pushd $imgName
@@ -87,14 +101,21 @@ function BuildDockerImages($images, $repository, $recreate) {
 }
 
 
-function PushDockerImages($images) {
+Function Push-DockerImages {
+    Param (
+      [Parameter(Mandatory=$true)]  [PSObject]$Images,
+      [Parameter(Mandatory=$true)]  [String]$Repository,
+      [Parameter(mandatory=$false)] [String]$VersionSuffix = ""
+    )
+
     Write-Verbose "Pushing Docker images..."
     $failedImages = $myArray = New-Object System.Collections.ArrayList
 
     foreach ($image in $images) {
         $imgName = $image.Name
         foreach ($version in $image.Versions) {
-            $fullImageName = "$repository/$imgName`:$version"
+            $version = "$version$VersionSuffix"
+            $fullImageName = "$Repository/$imgName`:$version"
             docker push "$fullImageName" | Write-Verbose
 
             if (!$?) {
@@ -104,6 +125,59 @@ function PushDockerImages($images) {
     }
 
     return $failedImages
+}
+
+
+Function Build-DockerManifestLists {
+    Param (
+      [Parameter(Mandatory=$true)]  [PSObject]$Images,
+      [Parameter(Mandatory=$true)]  [PSObject]$BaseImages,
+      [Parameter(Mandatory=$true)]  [String]$Repository
+    )
+
+    Write-Verbose "Creating Docker manifest lists..."
+    $failedManifests = $myArray = New-Object System.Collections.ArrayList
+
+    foreach ($image in $images) {
+        $manifestName = $image.Name
+        foreach ($version in $image.Versions) {
+            $fullManifestName = "$Repository/$manifestName`:$version"
+            $manifestImages = $BaseImages.Suffix | % {$fullManifestName + $_}
+            docker manifest create --amend "$fullManifestName" $manifestImages | Write-Verbose
+
+            if (!$?) {
+                $failedManifests.Add($fullManifestName)
+            }
+        }
+    }
+
+    return $failedManifests
+}
+
+
+Function Push-DockerManifestLists {
+    Param (
+      [Parameter(Mandatory=$true)]  [PSObject]$Images,
+      [Parameter(Mandatory=$true)]  [String]$Repository
+    )
+
+    Write-Verbose "Pushing Docker manifest lists..."
+    $failedManifests = $myArray = New-Object System.Collections.ArrayList
+
+    foreach ($image in $images) {
+        $imgName = $image.Name
+        foreach ($version in $image.Versions) {
+            $version = "$version$VersionSuffix"
+            $fullManifestName = "$Repository/$imgName`:$version"
+            docker manifest push "$fullManifestName" | Write-Verbose
+
+            if (!$?) {
+                $failedManifests.Add($fullManifestName)
+            }
+        }
+    }
+
+    return $failedManifests
 }
 
 
@@ -127,13 +201,36 @@ function PullDockerImages($images) {
 }
 
 
+function BaseImage
+{
+    param
+    (
+        $ImageName,
+        $Suffix
+    )
+
+    $psObj = New-Object -TypeName PSObject
+    $psObj | Add-Member -MemberType NoteProperty -Name ImageName -Value $ImageName
+    $psObj | Add-Member -MemberType NoteProperty -Name Suffix -Value "-$Suffix"
+
+    # Calling "psObj" below outputs it, acting as a "return" value
+    $psObj
+}
+
+
+$BaseImages = @(
+    BaseImage -ImageName "microsoft/windowsservercore:1803" -Suffix "1803"
+    BaseImage -ImageName "mcr.microsoft.com/windows/servercore:ltsc2019" -Suffix "1809"
+)
+
+
 function DockerImage
 {
     param
     (
         $Name,
         $Versions = "1.0",
-        $ImageBase = $BaseImage
+        $ImageBase = ""
     )
 
     if ($Versions -is [string]) {
