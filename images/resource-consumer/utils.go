@@ -34,7 +34,9 @@ func ConsumeCPU(millicores int, durationSec int) {
 	arg1 := fmt.Sprintf("-millicores=%d", millicores)
 	arg2 := fmt.Sprintf("-duration-sec=%d", durationSec)
 	consumeCPU := exec.Command(consumeCPUBinary, arg1, arg2)
-	consumeCPU.Run()
+	if err := consumeCPU.Run(); err != nil {
+		panic(err)
+	}
 }
 
 func ConsumeMem(megabytes int, durationSec int) {
