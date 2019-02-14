@@ -3,10 +3,7 @@
   "properties": {
     "orchestratorProfile": {
       "orchestratorType": "Kubernetes",
-      "orchestratorRelease": "1.13",
-      "kubernetesConfig": {
-        "azureCNIURLLinux": "https://acs-mirror.azureedge.net/cni/azure-vnet-cni-linux-amd64-v1.0.16.tgz",
-        "azureCNIURLWindows": "https://acs-mirror.azureedge.net/cni/azure-vnet-cni-windows-amd64-v1.0.16.zip"
+      "orchestratorRelease": "1.13"
       }
     },
     "masterProfile": {
@@ -34,9 +31,6 @@
                 "singleOrAll": "all"
             },
         "extensions": [
-            {
-                "name": "winrm"
-            },
             {
               "name": "windows-patches"
             }
@@ -67,10 +61,6 @@
           "version": "v1",
           "rootURL": "https://k8swin.blob.core.windows.net/k8s-windows/preprovision_extensions/",
           "script":  "node_setup.ps1"
-        },
-        {
-          "name":"winrm",
-          "version": "v1"
         },
         {
           "name":                "win-e2e-master-extension",
