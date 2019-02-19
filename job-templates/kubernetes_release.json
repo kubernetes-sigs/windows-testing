@@ -28,12 +28,7 @@
             {
                 "name": "node_setup",
                 "singleOrAll": "all"
-            },
-        "extensions": [
-            {
-              "name": "windows-patches"
             }
-        ]
       }
     ],
     "windowsProfile": {
@@ -67,12 +62,6 @@
           "extensionParameters": "parameters",
           "rootURL":             "https://k8swin.blob.core.windows.net/k8s-windows/extensions/",
           "script":              "win-e2e-master-extension.sh"
-        },
-        {
-          "name": "windows-patches",
-          "version": "v1",
-          "extensionParameters": "'http://download.windowsupdate.com/c/msdownload/update/software/updt/2019/01/windows10.0-kb4476976-x64_a9c241844c041cb8dbcf28b5635eecb1a57e028a.msu'",
-          "rootURL": "https://raw.githubusercontent.com/Azure/aks-engine/master/"
         }
     ]
   }
