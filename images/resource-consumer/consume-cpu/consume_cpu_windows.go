@@ -18,7 +18,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"math"
 	"syscall"
 	"time"
@@ -36,51 +35,53 @@ func doSomething() {
 }
 
 type ProcCPUStats struct {
-	User   float64   // time spent in user mode
-	System float64   // time spent in system mode
+	User   int64     // nanoseconds spent in user mode
+	System int64     // nanoseconds spent in system mode
 	Time   time.Time // when the sample was taken
-	Total  float64   // total of all time fields
+	Total  int64     // total of all time fields (nanoseconds)
 }
 
+// Retrieves the amount of CPU time this process has used since it started.
 func statsNow(handle syscall.Handle) (s ProcCPUStats) {
 	var processInfo syscall.Rusage
 	syscall.GetProcessTimes(handle, &processInfo.CreationTime, &processInfo.ExitTime, &processInfo.KernelTime, &processInfo.UserTime)
 	s.Time = time.Now()
-	s.User = float64(processInfo.UserTime.Nanoseconds())/100000000 + float64(processInfo.UserTime.Nanoseconds())/100000000
-	s.System = float64(processInfo.KernelTime.Nanoseconds())/100000000 + float64(processInfo.KernelTime.Nanoseconds())/100000000
+	s.User = processInfo.UserTime.Nanoseconds()
+	s.System = processInfo.KernelTime.Nanoseconds()
 	s.Total = s.User + s.System
 	return s
 }
 
-func usageNow(first ProcCPUStats, second ProcCPUStats) float64 {
-	dT := second.Time.Sub(first.Time).Seconds()
-	return 100 * (second.Total - first.Total) / dT
+// Given stats from two time points, calculates the millicores used by this
+// process between the two samples.
+func usageNow(first ProcCPUStats, second ProcCPUStats) int64 {
+	dT := second.Time.Sub(first.Time).Nanoseconds()
+	dUsage := (second.Total - first.Total)
+	if dT == 0 {
+		return 0
+	}
+	return 1000 * dUsage / dT
 }
 
 var (
-	millicores  = flag.Int("millicores", 0, "millicores number")
-	durationSec = flag.Int("duration-sec", 0, "duration time in seconds")
+	targetMillicores = flag.Int("millicores", 0, "millicores number")
+	durationSec      = flag.Int("duration-sec", 0, "duration time in seconds")
 )
 
 func main() {
-	//lsd := syswin.NewLazySystemDLL("kernel32.dll")
 	phandle, err := syswin.GetCurrentProcess()
 	if err != nil {
-		fmt.Println("Got err: ", err)
-		return
+		panic(err)
 	}
 	handle := syscall.Handle(phandle)
 	flag.Parse()
-	// convert millicores to percentage
-	millicoresPct := float64(*millicores) / float64(10)
 	duration := time.Duration(*durationSec) * time.Second
 	start := time.Now()
 	first := statsNow(handle)
 
 	for time.Now().Sub(start) < duration {
-		cpu := usageNow(first, statsNow(handle))
-		fmt.Println("cpu: ", cpu)
-		if cpu < millicoresPct {
+		currentMillicores := usageNow(first, statsNow(handle))
+		if currentMillicores < int64(*targetMillicores) {
 			doSomething()
 		} else {
 			time.Sleep(sleep)
