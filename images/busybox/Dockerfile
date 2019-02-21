@@ -19,6 +19,7 @@ FROM $BASE_IMAGE
 COPY --from=prep /curl/ /curl
 WORKDIR /busybox
 ADD busybox.exe busybox.exe
+ADD https://github.com/diegocr/netcat/raw/master/nc.exe /busybox/nc.exe
 USER ContainerAdministrator
 RUN FOR /f "tokens=*" %i IN ('busybox --list') DO mklink C:\busybox\%i.exe busybox.exe
 RUN setx /M PATH "C:\busybox;C:\curl\;%PATH%"
