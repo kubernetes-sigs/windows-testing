@@ -3,11 +3,7 @@
   "properties": {
     "orchestratorProfile": {
       "orchestratorType": "Kubernetes",
-      "orchestratorRelease": "1.14",
-      "kubernetesConfig": {
-        "azureCNIURLLinux": "https://acs-mirror.azureedge.net/cni/azure-vnet-cni-linux-amd64-v1.0.17.tgz",
-        "azureCNIURLWindows": "https://acs-mirror.azureedge.net/cni/azure-vnet-cni-windows-amd64-v1.0.17.zip"
-      }
+      "orchestratorRelease": "1.14"
     },
     "masterProfile": {
       "count": 1,
@@ -37,12 +33,7 @@
     ],
     "windowsProfile": {
       "adminUsername": "azureuser",
-      "adminPassword": "replacepassword1234$",
-      "windowsPublisher": "MicrosoftWindowsServer",
-      "windowsOffer": "WindowsServerSemiAnnual",
-      "windowsSku": "Datacenter-Core-1809-with-Containers-smalldisk",
-      "imageVersion": "1809.0.20190214",
-      "windowsDockerVersion": "18.09.0"
+      "adminPassword": "replacepassword1234$"
     },
     "linuxProfile": {
       "adminUsername": "azureuser",
