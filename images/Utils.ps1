@@ -258,6 +258,7 @@ $Images = @(
     DockerImage -Name "dnsutils" -ImageBase "busybox" -Versions "1.1"
     DockerImage -Name "echoserver" -ImageBase "busybox" -Versions "2.2"
     DockerImage -Name "entrypoint-tester"
+    DockerImage -Name "etcd" -Versions "v3.3.10"
     DockerImage -Name "fakegitserver"
     DockerImage -Name "gb-frontend" -Versions "v6"
     DockerImage -Name "gb-redisslave" -Versions "v3"
