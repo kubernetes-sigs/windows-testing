@@ -12,6 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+Function Get-DnsName {
+    Param (
+      [Parameter(Mandatory=$true)] [String]$DnsName
+    )
+
+    # NOTE(claudiub): if there are some initial network connectivity issues,
+    # we'll retry to get resolve the DNS name.
+    for ($i = 0; $i -le 100; $i++) {
+        $dnsEntries = Resolve-DnsName $DnsName
+        if ($?) {
+            return $dnsEntries
+        }
+
+        # sleep between retries.
+        Start-Sleep -Milliseconds 500
+    }
+    return $null
+}
+
 # there are some issues with DNS name resolution, so we're going to bypass them.
 # Redis will try to contact redis-master, so we'll insert that entry into the
 # hosts file, if we can.
@@ -21,7 +40,12 @@ if (Test-Path C:\var\run\secrets\kubernetes.io\serviceaccount\namespace) {
 
     $namespace = Get-Content C:\var\run\secrets\kubernetes.io\serviceaccount\namespace
 
-    $redisMasterIps = Resolve-DnsName redis-master.$namespace`.svc.cluster.local
+    $redisMasterIps = Get-DnsName redis-master.$namespace`.svc.cluster.local
+    if (!$redisMasterIps) {
+        echo "Could not resolve the redis-master DNS name."
+        exit 1
+    }
+
     $ip = $redisMasterIps[0].IPAddress
     Add-Content -Value "$ip redis-master" -Path C:\Windows\System32\drivers\etc\hosts
 }
