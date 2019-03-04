@@ -39,7 +39,8 @@ $goDependencies = @(
     "k8s.io/apiextensions-apiserver",
     "k8s.io/apiserver",
     "k8s.io/client-go/rest",
-    "k8s.io/kubernetes/test"
+    "k8s.io/kubernetes/test",
+    "k8s.io/sample-apiserver"
 )
 
 # Install Go dependencies.
@@ -47,3 +48,8 @@ foreach ($dependency in $goDependencies) {
     Write-Verbose "Installing $dependency"
     go get $dependency
 }
+
+# the sample-apiserver image requires a specific tag.
+pushd $env:GOPATH\src\k8s.io\sample-apiserver
+git checkout --track origin/release-1.10
+popd
