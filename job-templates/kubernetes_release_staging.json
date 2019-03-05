@@ -35,7 +35,8 @@
       "adminUsername": "azureuser",
       "adminPassword": "replacepassword1234$",
       "windowsDockerVersion": "18.09.2",
-      "sshEnabled": true
+      "sshEnabled": true,
+      "enableAutomaticUpdates": false
     },
     "linuxProfile": {
       "adminUsername": "azureuser",
