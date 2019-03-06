@@ -22,7 +22,7 @@ $VerbosePreference = "continue"
 
 . "$PSScriptRoot\Utils.ps1"
 
-BuildGoFiles $Images.Name
+BuildGoFiles $Images.Name $Recreate
 
 $failedBuildImages = New-Object System.Collections.ArrayList
 $failedPushImages = New-Object System.Collections.ArrayList
