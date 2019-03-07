@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-function BuildGoFiles($folders) {
+function BuildGoFiles($folders, $recreate) {
     Get-Command -ErrorAction Ignore -Name go | Out-Null
     if (!$?) {
         Write-Verbose ("Go is not installed or not found. Skipping building " +
@@ -26,7 +26,7 @@ function BuildGoFiles($folders) {
         $items = Get-ChildItem -Recurse $folder | ? Name -Match ".*.go(lnk)?$" | ? Name -NotMatch "util"
         foreach ($item in $items) {
             $exePath = Join-Path $item.DirectoryName ($item.BaseName + ".exe")
-            if (Test-Path $exePath) {
+            if (!$recreate -and (Test-Path $exePath)) {
                 Write-Verbose "$exePath already exists. Skipping go build for it."
                 continue
             }

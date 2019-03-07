@@ -23,7 +23,7 @@ $VerbosePreference = "continue"
 
 . "$PSScriptRoot\Utils.ps1"
 
-BuildGoFiles $Images.Name
+BuildGoFiles $Images.Name $Recreate
 $failedBuildImages = Build-DockerImages $Images $BaseImage $Repository $Recreate
 if ($PushToDocker) {
     $failedPushImages = Push-DockerImages $Images $Repository
