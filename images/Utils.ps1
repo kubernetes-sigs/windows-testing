@@ -285,5 +285,4 @@ $Images = @(
     DockerImage -Name "sample-apiserver" -Versions "1.10"
     DockerImage -Name "serve-hostname" -Versions "1.1"
     DockerImage -Name "webhook" -Versions "1.13v1"
-    DockerImage -Name "zookeeper" -Versions "latest" -ImageBase "java"
 )
