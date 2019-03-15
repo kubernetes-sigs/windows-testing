@@ -169,7 +169,7 @@ Function Push-DockerManifestLists {
         foreach ($version in $image.Versions) {
             $version = "$version$VersionSuffix"
             $fullManifestName = "$Repository/$imgName`:$version"
-            docker manifest push "$fullManifestName" | Write-Verbose
+            docker manifest push --purge "$fullManifestName" | Write-Verbose
 
             if (!$?) {
                 $failedManifests.Add($fullManifestName)
