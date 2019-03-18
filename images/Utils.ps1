@@ -266,7 +266,7 @@ $Images = @(
     DockerImage -Name "hostexec" -Versions "1.1" -ImageBase "busybox"
     DockerImage -Name "jessie-dnsutils" -ImageBase "busybox"
     DockerImage -Name "kitten" -ImageBase "test-webserver"
-    DockerImage -Name "liveness"
+    DockerImage -Name "liveness" -Versions "1.1"
     DockerImage -Name "logs-generator"
     DockerImage -Name "mounttest"
     DockerImage -Name "nautilus" -ImageBase "test-webserver"
