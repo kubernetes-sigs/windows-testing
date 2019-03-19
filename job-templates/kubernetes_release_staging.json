@@ -3,11 +3,7 @@
   "properties": {
     "orchestratorProfile": {
       "orchestratorType": "Kubernetes",
-      "orchestratorRelease": "1.14",
-      "kubernetesConfig": {
-        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/archive/v1.0.18.tar.gz",
-        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/archive/v1.0.18.zip"
-      }
+      "orchestratorRelease": "1.14"
     },
     "masterProfile": {
       "count": 1,
