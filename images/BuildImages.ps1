@@ -24,6 +24,21 @@ $VerbosePreference = "continue"
 . "$PSScriptRoot\Utils.ps1"
 
 BuildGoFiles $Images.Name $Recreate
+CopyPythonFiles $Images.Name
+
+# we are trying to use an external image for the Python-based images, so we
+# have to retag the "python:3.7.2-windowsservercore" based on the given
+# $BaseImage.
+foreach ($base in $BaseImages) {
+    if ($BaseImage -eq $base.Name) {
+        $basePython = "python:3.7.2-windowsservercore"
+        $suffix = $base.Suffix
+        $actualImageName = "$basePython$suffix"
+        Write-Verbose "Retagging $actualImageName as $basePython"
+        docker tag $actualImageName $basePython
+    }
+}
+
 $failedBuildImages = Build-DockerImages $Images $BaseImage $Repository $Recreate
 if ($PushToDocker) {
     $failedPushImages = Push-DockerImages $Images $Repository

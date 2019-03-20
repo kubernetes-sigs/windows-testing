@@ -44,6 +44,17 @@ function BuildGoFiles($folders, $recreate) {
     }
 }
 
+function CopyPythonFiles($folders) {
+    Write-Verbose "Copying Python files..."
+    foreach ($folder in $folders) {
+        $items = Get-ChildItem -Recurse $folder | ? Name -Match ".*.pylnk?$"
+        foreach ($item in $items) {
+            $source = (cat "$folder/$item").Trim()
+            cp $env:GOPATH/src/$source $folder/
+        }
+    }
+}
+
 Function Build-DockerImages {
     Param (
       [Parameter(Mandatory=$true)]  [PSObject[]]$Images,
@@ -246,7 +257,6 @@ function DockerImage
     $image
 }
 
-
 $Images = @(
     # base images used to build other images.
     DockerImage -Name "busybox" -Versions "1.29"
@@ -259,6 +269,8 @@ $Images = @(
     DockerImage -Name "echoserver" -ImageBase "busybox" -Versions "2.2"
     DockerImage -Name "entrypoint-tester"
     DockerImage -Name "etcd" -Versions "v3.3.10"
+    DockerImage -Name "example-dns-backend" -Versions "v1" -ImageBase "python:3.7.2-windowsservercore"
+    DockerImage -Name "example-dns-frontend" -Versions "v1" -ImageBase "python:3.7.2-windowsservercore"
     DockerImage -Name "fakegitserver"
     DockerImage -Name "gb-frontend" -Versions "v6"
     DockerImage -Name "gb-redisslave" -Versions "v3"

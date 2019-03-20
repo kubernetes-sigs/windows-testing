@@ -41,6 +41,7 @@ $goDependencies = @(
     "k8s.io/client-go/rest",
     "k8s.io/component-base/cli/flag",
     "k8s.io/component-base/logs",
+    "k8s.io/examples",
     "k8s.io/kubernetes/test",
     "k8s.io/sample-apiserver"
 )
