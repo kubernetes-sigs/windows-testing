@@ -137,3 +137,7 @@ kubetest --test=true \
 ## Building Test Images
 
 [images/](images/README.md) - has all of the container images used in e2e test passes and the scripts to build them. They are replacement Windows containers for those in [kubernetes/test/images](https://github.com/kubernetes/kubernetes/tree/master/test/images)
+
+## Scripts
+
+[scripts/](scripts/README.md) - has some scripts used for setup, development and debugging.
