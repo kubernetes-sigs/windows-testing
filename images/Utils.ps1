@@ -64,7 +64,7 @@ Function Build-DockerImages {
             $fullImageName = "$Repository/$imgName`:$version"
 
             if (!$Recreate) {
-                $imageFound = $allDockerImages | findstr "$Repository/$imgName" | findstr $version
+                $imageFound = $allDockerImages | Select-String -Pattern "$Repository/$imgName" | Select-String -Pattern "\s$version\s"
                 if ($imageFound) {
                     Write-Verbose "Image ""$fullImageName"" already exists. Skipping."
                     continue
