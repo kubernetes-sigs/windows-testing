@@ -64,7 +64,7 @@ Function Build-DockerImages {
             $fullImageName = "$Repository/$imgName`:$version"
 
             if (!$Recreate) {
-                $imageFound = $allDockerImages | findstr "$Repository/$imgName" | findstr $version
+                $imageFound = $allDockerImages | Select-String -Pattern "$Repository/$imgName" | Select-String -Pattern "\s$version\s"
                 if ($imageFound) {
                     Write-Verbose "Image ""$fullImageName"" already exists. Skipping."
                     continue
@@ -258,7 +258,7 @@ $Images = @(
     DockerImage -Name "dnsutils" -ImageBase "busybox" -Versions "1.1"
     DockerImage -Name "echoserver" -ImageBase "busybox" -Versions "2.2"
     DockerImage -Name "entrypoint-tester"
-    DockerImage -Name "etcd" -Versions "v3.3.10"
+    DockerImage -Name "etcd" -Versions "v3.3.10", "3.3.10"
     DockerImage -Name "fakegitserver"
     DockerImage -Name "gb-frontend" -Versions "v6"
     DockerImage -Name "gb-redisslave" -Versions "v3"
