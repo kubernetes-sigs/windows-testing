@@ -5,8 +5,8 @@
       "orchestratorType": "Kubernetes",
       "orchestratorRelease": "1.14",
       "kubernetesConfig": {
-        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.20/azure-vnet-cni-linux-amd64-v1.0.20.tgz",
-        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.20/azure-vnet-cni-windows-amd64-v1.0.20.zip"
+        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.18-rc3/azure-vnet-cni-linux-amd64-v1.0.18-rc3.tgz",
+        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.18-rc3/azure-vnet-cni-windows-amd64-v1.0.18-rc3.zip"
       }
     },
     "masterProfile": {
@@ -38,7 +38,7 @@
     "windowsProfile": {
       "adminUsername": "azureuser",
       "adminPassword": "replacepassword1234$",
-      "windowsDockerVersion": "18.09.5",
+      "windowsDockerVersion": "18.09.2",
       "sshEnabled": true
     },
     "linuxProfile": {
