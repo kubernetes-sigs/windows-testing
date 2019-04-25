@@ -38,6 +38,10 @@
     "windowsProfile": {
       "adminUsername": "azureuser",
       "adminPassword": "replacepassword1234$",
+      "windowsPublisher": "MicrosoftWindowsServer",
+      "windowsOffer": "WindowsServerSemiAnnual",
+      "windowsSku": "Datacenter-Core-1809-with-Containers-smalldisk",
+      "imageVersion": "1809.0.20190314",
       "windowsDockerVersion": "18.09.2",
       "sshEnabled": true
     },
