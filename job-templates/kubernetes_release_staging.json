@@ -16,7 +16,7 @@
       "distro": "ubuntu",
       "extensions": [
           {
-              "name": "win-e2e-master-extension"
+              "name": "master_extension"
           }
       ]
     },
@@ -30,7 +30,7 @@
         "osType": "Windows",
         "preProvisionExtension":
             {
-                "name": "node_setup",
+                "name": "agent_preprovision_extension",
                 "singleOrAll": "all"
             }
       }
@@ -61,16 +61,16 @@
     },
     "extensionProfiles": [
        {
-          "name":    "node_setup",
+          "name":    "agent_preprovision_extension",
           "version": "v1",
-          "rootURL": "https://k8swin.blob.core.windows.net/k8s-windows/preprovision_extensions/",
+          "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
           "script":  "node_setup.ps1"
         },
         {
-          "name":                "win-e2e-master-extension",
+          "name":                "master_extension",
           "version":             "v1",
           "extensionParameters": "parameters",
-          "rootURL":             "https://k8swin.blob.core.windows.net/k8s-windows/extensions/",
+          "rootURL":             "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
           "script":              "win-e2e-master-extension.sh"
         }
     ]
