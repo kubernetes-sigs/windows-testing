@@ -281,7 +281,7 @@ $Images = @(
     DockerImage -Name "porter"
     DockerImage -Name "redis" -ImageBase "busybox"
     DockerImage -Name "resource-consumer" -Versions "1.4"
-    DockerImage -Name "resource-consumer/controller"
+    DockerImage -Name "resource-consumer-controller"
     DockerImage -Name "rethinkdb" -Version "1.16.0_1" -ImageBase "busybox"
     DockerImage -Name "sample-apiserver" -Versions "1.10"
     DockerImage -Name "serve-hostname" -Versions "1.1"
