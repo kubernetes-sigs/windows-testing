@@ -264,6 +264,7 @@ $Images = @(
     DockerImage -Name "gb-redisslave" -Versions "v3"
     DockerImage -Name "hazelcast-kubernetes" -Versions "3.8_1" -ImageBase "java"
     DockerImage -Name "hostexec" -Versions "1.1" -ImageBase "busybox"
+    DockerImage -Name "iperf" -ImageBase "busybox"
     DockerImage -Name "jessie-dnsutils" -ImageBase "busybox"
     DockerImage -Name "kitten" -ImageBase "test-webserver"
     DockerImage -Name "liveness" -Versions "1.1"
