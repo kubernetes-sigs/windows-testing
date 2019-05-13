@@ -1,0 +1,77 @@
+{
+  "apiVersion": "vlabs",
+  "properties": {
+    "orchestratorProfile": {
+      "orchestratorType": "Kubernetes",
+      "orchestratorRelease": "1.15",
+      "kubernetesConfig": {
+        "azureCNIURLLinux": "https://acs-mirror.azureedge.net/cni/azure-vnet-cni-linux-amd64-v1.0.17.tgz",
+        "azureCNIURLWindows": "https://acs-mirror.azureedge.net/cni/azure-vnet-cni-windows-amd64-v1.0.17.zip"
+      }
+    },
+    "masterProfile": {
+      "count": 1,
+      "dnsPrefix": "",
+      "vmSize": "Standard_D2_v3",
+      "distro": "ubuntu",
+      "extensions": [
+          {
+              "name": "win-e2e-master-extension"
+          }
+      ]
+    },
+    "agentPoolProfiles": [
+      {
+        "name": "windowspool1",
+        "count": 2,
+        "vmSize": "Standard_D2s_v3",
+        "osDiskSizeGB": 128,
+        "availabilityProfile": "AvailabilitySet",
+        "osType": "Windows",
+        "preProvisionExtension":
+            {
+                "name": "node_setup",
+                "singleOrAll": "all"
+            }
+      }
+    ],
+    "windowsProfile": {
+      "adminUsername": "azureuser",
+      "adminPassword": "replacepassword1234$",
+      "windowsPublisher": "MicrosoftWindowsServer",
+      "windowsOffer": "WindowsServerSemiAnnual",
+      "windowsSku": "Datacenter-Core-1809-with-Containers-smalldisk",
+      "imageVersion": "1809.0.20190214",
+      "windowsDockerVersion": "18.09.0"
+    },
+    "linuxProfile": {
+      "adminUsername": "azureuser",
+      "ssh": {
+        "publicKeys": [
+          {
+            "keyData": ""
+          }
+        ]
+      }
+    },
+    "servicePrincipalProfile": {
+      "clientId": "",
+      "secret": ""
+    },
+    "extensionProfiles": [
+       {
+          "name":    "node_setup",
+          "version": "v1",
+          "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
+          "script":  "node_setup.ps1"
+        },
+        {
+          "name":                "win-e2e-master-extension",
+          "version":             "v1",
+          "extensionParameters": "parameters",
+          "rootURL":             "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
+          "script":              "win-e2e-master-extension.sh"
+        }
+    ]
+  }
+}
