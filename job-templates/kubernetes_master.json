@@ -16,7 +16,7 @@
       "distro": "ubuntu",
       "extensions": [
           {
-              "name": "name": "master_extension"
+              "name": "master_extension"
           }
       ]
     },
