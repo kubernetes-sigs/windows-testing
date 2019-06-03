@@ -6,7 +6,10 @@
       "orchestratorRelease": "1.15",
       "kubernetesConfig": {
         "azureCNIURLLinux": "https://acs-mirror.azureedge.net/cni/azure-vnet-cni-linux-amd64-v1.0.17.tgz",
-        "azureCNIURLWindows": "https://acs-mirror.azureedge.net/cni/azure-vnet-cni-windows-amd64-v1.0.17.zip"
+        "azureCNIURLWindows": "https://acs-mirror.azureedge.net/cni/azure-vnet-cni-windows-amd64-v1.0.17.zip",
+        "kubeletConfig" : {
+           "--feature-gates": "KubeletPodResources=false"
+        }
       }
     },
     "masterProfile": {
