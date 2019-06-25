@@ -15,5 +15,31 @@
 ARG BASE_IMAGE=e2eteam/busybox:1.29
 FROM $BASE_IMAGE
 
-ADD agnhost.exe /agnhost.exe
+# from iperf
+RUN powershell -Command "\
+    wget -uri 'https://iperf.fr/download/windows/iperf-2.0.9-win64.zip' -OutFile 'C:\iperf.zip';\
+    Expand-Archive -Path C:\iperf.zip -DestinationPath C:\ -Force;\
+    Rename-Item C:\iperf-2.0.9-win64 C:\iperf;\
+    Remove-Item 'C:\iperf.zip'"
+
+# PORT 8080 needed by: netexec, nettest
+# PORT 8081 needed by: netexec
+# PORT 9376 needed by: serve-hostname
+EXPOSE 8080 8081 9376
+
+# from netexec
+RUN mkdir C:\uploads
+
+# from porter
+ADD localhost.crt localhost.crt
+ADD localhost.key localhost.key
+
+ADD agnhost agnhost
+
+# needed for the entrypoint-tester related tests. Some of the entrypoint-tester related tests
+# overrides this image's entrypoint with agnhost-2 binary, and will verify that the correct
+# entrypoint is used by the containers.
+RUN mklink agnhost-2 agnhost
+
 ENTRYPOINT ["/agnhost"]
+CMD ["pause"]
