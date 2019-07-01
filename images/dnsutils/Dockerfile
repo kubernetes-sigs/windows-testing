@@ -22,4 +22,8 @@ choco feature disable --name showDownloadProgress
 ADD hostname.exe /busybox/hostname.exe
 ADD getent.exe /busybox/getent.exe
 RUN powershell -Command choco install bind-toolsonly --version 9.10.3 -y
+RUN powershell -Command "\
+    wget -uri 'https://github.com/coredns/coredns/releases/download/v1.5.0/coredns_1.5.0_windows_amd64.tgz' -OutFile 'C:\coredns.tgz';\
+    tar -xzvf 'C:\coredns.tgz';\
+    Remove-Item 'C:\coredns.tgz'"
 ENTRYPOINT ["cmd.exe", "/s", "/c"]
