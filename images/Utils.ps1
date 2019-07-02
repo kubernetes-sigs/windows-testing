@@ -277,6 +277,7 @@ $Images = @(
     DockerImage -Name "nettest"
     DockerImage -Name "nginx" -Versions @("1.14-alpine","1.15-alpine") -ImageBase "busybox"
     DockerImage -Name "no-snat-test"
+    DockerImage -Name "nonroot" -Versions "1.1"
     DockerImage -Name "pause" -Versions "3.1"
     DockerImage -Name "port-forward-tester"
     DockerImage -Name "porter"
