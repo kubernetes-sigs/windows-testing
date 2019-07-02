@@ -25,7 +25,11 @@ RUN powershell -Command \
     $oldpath = (Get-ItemProperty -Path ‘Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment’ -Name PATH).path; \
     $newpath = “$oldpath;c:\tools\php72\;c:\Users\ContainerAdministrator\AppData\Roaming\Apache24\bin\”; \
     Set-ItemProperty -Path ‘Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment’ -Name PATH -Value $newPath
+RUN mkdir C:\usr\local &&\
+    mklink /D C:\usr\local\apache2 C:\Users\ContainerAdministrator\AppData\Roaming\Apache24
+
 COPY httpd.conf /Users/ContainerAdministrator/AppData/Roaming/Apache24/conf/httpd.conf
+COPY index.html /Users/ContainerAdministrator/AppData/Roaming/Apache24/conf/index.html
 
 EXPOSE 80
 USER ContainerAdministrator
