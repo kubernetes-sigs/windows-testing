@@ -38,12 +38,7 @@
             {
                 "name": "agent_preprovision_extension",
                 "singleOrAll": "all"
-            },
-        "extensions": [
-            {
-                "name": "windows-patches"
             }
-         ]
       }
     ],
     "windowsProfile": {
@@ -75,12 +70,6 @@
           "version": "v1",
           "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
           "script":  "node_setup.ps1"
-        },
-        {
-          "name": "windows-patches",
-          "version": "v1",
-          "rootURL": "https://raw.githubusercontent.com/stanciuoctavian/aks-engine/forceNodeRestart/",
-          "extensionParameters": "'http://download.windowsupdate.com/d/msdownload/update/software/updt/2019/05/windows10.0-kb4497934-x64_2a3224347811199634033c289ee046f71639611e.msu'"
         },
         {
           "name":                "master_extension",
