@@ -75,7 +75,7 @@
           "name":                "master_extension",
           "version":             "v1",
           "extensionParameters": "parameters",
-          "rootURL":             "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
+          "rootURL":             "https://raw.githubusercontent.com/stanciuoctavian/windows-testing/master-ext-sleep/",
           "script":              "win-e2e-master-extension.sh"
         }
     ]
