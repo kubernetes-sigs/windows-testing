@@ -147,8 +147,14 @@ will usually have a `exec format error`.
 
 #### Install golang on Windows machine
 
-Download the go msi for windows from [here](https://golang.org/dl/) and scp it
-to windows node for installation.
+Pick the Go version that is [compatible](https://github.com/kubernetes/community/blob/master/contributors/devel/development.md)
+with the Kubernetes version you intend to build. Download the MSI file to the Windows machine for development.
+
+```
+Invoke-Webrequest https://dl.google.com/go/go-<version>.windows-amd64.msi -Outfile go<version>.windows-amd64.msi
+```
+
+Start the MSI installer, e.g. `Start-Process .\go<version.windows-amd64.msi` and finish the installation.
 
 Add go path to the `PATH` environment variable:
 
@@ -173,13 +179,10 @@ choco install git.install
 
 to install git.
 
-#### Scp the files and corresponding test files to the Windows machine
-
-```
-gcloud compute scp --recurse [FILE_PATHS_LOCAL]  [WINDOWS_NODE_NAME]:/C:/[PATH_ON_WINDOWS]
-```
-
 #### Run the tests
+
+Set up the Kubernetes repository on the node by following the instructions in
+[Github workflow](https://github.com/kubernetes/community/blob/master/contributors/guide/github-workflow.md).
 
 ```
 go get  # Install the required packages
