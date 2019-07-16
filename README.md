@@ -129,6 +129,62 @@ kubetest --test=true \
   --test_args=--node-os-distro=windows --ginkgo.focus=\\[Conformance\\]|\\[NodeConformance\\]|\\[sig-windows\\]|\\[sig-apps\\].CronJob --ginkgo.skip=\\[LinuxOnly\\]|\\[k8s.io\\].Pods.*should.cap.back-off.at.MaxContainerBackOff.\\[Slow\\]\\[NodeConformance\\]|\\[k8s.io\\].Pods.*should.have.their.auto-restart.back-off.timer.reset.on.image.update.\\[Slow\\]\\[NodeConformance\\]
 ```
 
+## Running unit test
+
+Note: This assumes the Windows node is running on GCE, but should be applicable
+to other platforms with slight changes.
+
+Unit tests for files that have a `// +build windows` at the first line should be
+running on windows environment. Running in Linux with command
+
+```
+GOOS=windows GOARCH=amd64 go test
+```
+
+will usually have a `exec format error`.
+
+### Steps for running unit tests on windows environment
+
+#### Install golang on Windows machine
+
+Download the go msi for windows from [here](https://golang.org/dl/) and scp it
+to windows node for installation.
+
+Add go path to the `PATH` environment variable:
+
+```
+$env:PATH=$env:PATH+";C"\go\bin"
+```
+
+Set the `GOPATH` environment variable:
+
+```
+$env:GOPATH="C:\go\pkg"
+```
+
+#### Install git using chocolatey
+
+Follow the instruction [here](https://chocolatey.org/install) to install
+chocolatey on Windows node. Then run
+
+```
+choco install git.install
+```
+
+to install git.
+
+#### Scp the files and corresponding test files to the Windows machine
+
+```
+gcloud compute scp --recurse [FILE_PATHS_LOCAL]  [WINDOWS_NODE_NAME]:/C:/[PATH_ON_WINDOWS]
+```
+
+#### Run the tests
+
+```
+go get  # Install the required packages
+go test  # Run the tests
+```
 
 #### Google Compute Platform
 
