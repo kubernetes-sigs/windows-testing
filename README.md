@@ -131,9 +131,6 @@ kubetest --test=true \
 
 ## Running unit test
 
-Note: This assumes the Windows node is running on GCE, but should be applicable
-to other platforms with slight changes.
-
 Unit tests for files that have a `// +build windows` at the first line should be
 running on windows environment. Running in Linux with command
 
