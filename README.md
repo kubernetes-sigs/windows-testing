@@ -156,7 +156,7 @@ Start the MSI installer, e.g. `Start-Process .\go<version.windows-amd64.msi` and
 Add go path to the `PATH` environment variable:
 
 ```
-$env:PATH=$env:PATH+";C"\go\bin"
+$env:PATH=$env:PATH+";C:\go\bin"
 ```
 
 Set the `GOPATH` environment variable:
