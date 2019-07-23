@@ -29,7 +29,7 @@ RUN mkdir C:\usr\local &&\
     mklink /D C:\usr\local\apache2 C:\Users\ContainerAdministrator\AppData\Roaming\Apache24
 
 COPY httpd.conf /Users/ContainerAdministrator/AppData/Roaming/Apache24/conf/httpd.conf
-COPY index.html /Users/ContainerAdministrator/AppData/Roaming/Apache24/conf/index.html
+COPY index.html /Users/ContainerAdministrator/AppData/Roaming/Apache24/htdocs/index.html
 
 EXPOSE 80
 USER ContainerAdministrator
