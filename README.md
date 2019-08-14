@@ -172,6 +172,7 @@ chocolatey on Windows node. Then run
 
 ```
 choco install git.install
+$env:PATH=$env:PATH+";C:\Program Files\Git\bin"
 ```
 
 to install git.
