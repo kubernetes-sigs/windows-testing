@@ -8,7 +8,10 @@
         "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.22/azure-vnet-cni-linux-amd64-v1.0.22.tgz",
         "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.22/azure-vnet-cni-windows-amd64-v1.0.22.zip",
         "kubeletConfig" : {
-           "--feature-gates": "KubeletPodResources=false"
+          "--feature-gates": "KubeletPodResources=false"
+        },
+	"apiServerConfig": {
+          "--runtime-config":  "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true"
         }
       }
     },
@@ -35,18 +38,17 @@
             {
                 "name": "agent_preprovision_extension",
                 "singleOrAll": "all"
-            },
-        "extensions": [
-            {
-                "name": "windows-patches"
             }
-         ]
       }
     ],
     "windowsProfile": {
       "adminUsername": "azureuser",
       "adminPassword": "replacepassword1234$",
-      "windowsDockerVersion": "18.09.0"
+      "windowsDockerVersion": "18.09.2",
+      "windowsPublisher": "MicrosoftWindowsServer",
+      "windowsOffer": "WindowsServer",
+      "windowsSku": "Datacenter-Core-1809-with-Containers-smalldisk",
+      "imageVersion": "17763.557.20190604"
     },
     "linuxProfile": {
       "adminUsername": "azureuser",
@@ -68,12 +70,6 @@
           "version": "v1",
           "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
           "script":  "node_setup.ps1"
-        },
-        {
-          "name": "windows-patches",
-          "version": "v1",
-          "rootURL": "https://raw.githubusercontent.com/stanciuoctavian/aks-engine/forceNodeRestart/",
-          "extensionParameters": "'http://download.windowsupdate.com/d/msdownload/update/software/updt/2019/05/windows10.0-kb4497934-x64_2a3224347811199634033c289ee046f71639611e.msu'"
         },
         {
           "name":                "master_extension",
