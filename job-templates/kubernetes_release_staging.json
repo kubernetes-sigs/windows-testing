@@ -46,9 +46,9 @@
       "adminPassword": "replacepassword1234$",
       "windowsDockerVersion": "18.09.2",
       "windowsPublisher": "MicrosoftWindowsServer",
-      "windowsOffer": "WindowsServer",
+      "windowsOffer": "WindowsServerSemiAnnual",
       "windowsSku": "Datacenter-Core-1809-with-Containers-smalldisk",
-      "imageVersion": "17763.557.20190604"
+      "imageVersion": "1809.0.20190711"
     },
     "linuxProfile": {
       "adminUsername": "azureuser",
