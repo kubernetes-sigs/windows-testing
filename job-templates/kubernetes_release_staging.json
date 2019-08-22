@@ -44,7 +44,7 @@
     "windowsProfile": {
       "adminUsername": "azureuser",
       "adminPassword": "replacepassword1234$",
-      "windowsDockerVersion": "18.09.2",
+      "windowsDockerVersion": "18.09.7",
       "windowsPublisher": "MicrosoftWindowsServer",
       "windowsOffer": "WindowsServerSemiAnnual",
       "windowsSku": "Datacenter-Core-1809-with-Containers-smalldisk",
