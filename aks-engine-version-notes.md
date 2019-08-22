@@ -10,6 +10,10 @@ with minimum test disrupiton ( test job config won't need updating ).
 This file is intended to be a log of all the custom builds of aks-engine that we use for upstream tests at any given time and the
 commits/branch that are used for that build.
 
+08/22/2019
+
+- using aks-engine release version: 0.39.1 ( https://github.com/Azure/aks-engine/releases/download/v0.39.1/aks-engine-v0.39.1-linux-amd64.tar.gz )
+
 06/28/2019
 
 - using aks-engine built from: https://github.com/adelina-t/aks-engine/tree/fix_labels_bug
