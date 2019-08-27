@@ -5,8 +5,8 @@
       "orchestratorType": "Kubernetes",
       "orchestratorRelease": "1.16",
       "kubernetesConfig": {
-        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.22/azure-vnet-cni-linux-amd64-v1.0.22.tgz",
-        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.22/azure-vnet-cni-windows-amd64-v1.0.22.zip",
+        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.25/azure-vnet-cni-linux-amd64-v1.0.25.tgz",
+        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.25/azure-vnet-cni-windows-amd64-v1.0.25.zip",
         "kubeletConfig" : {
           "--feature-gates": "KubeletPodResources=false"
         },
@@ -44,11 +44,11 @@
     "windowsProfile": {
       "adminUsername": "azureuser",
       "adminPassword": "replacepassword1234$",
-      "windowsDockerVersion": "18.09.2",
+      "windowsDockerVersion": "18.09.7",
       "windowsPublisher": "MicrosoftWindowsServer",
-      "windowsOffer": "WindowsServer",
+      "windowsOffer": "WindowsServerSemiAnnual",
       "windowsSku": "Datacenter-Core-1809-with-Containers-smalldisk",
-      "imageVersion": "17763.557.20190604"
+      "imageVersion": "1809.0.20190711"
     },
     "linuxProfile": {
       "adminUsername": "azureuser",
