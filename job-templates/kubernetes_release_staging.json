@@ -5,8 +5,8 @@
       "orchestratorType": "Kubernetes",
       "orchestratorRelease": "1.16",
       "kubernetesConfig": {
-        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.25/azure-vnet-cni-linux-amd64-v1.0.25.tgz",
-        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.25/azure-vnet-cni-windows-amd64-v1.0.25.zip",
+        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.27/azure-vnet-cni-linux-amd64-v1.0.27.tgz",
+        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.27/azure-vnet-cni-windows-amd64-v1.0.27.zip",
         "kubeletConfig" : {
           "--feature-gates": "KubeletPodResources=false"
         },
