@@ -129,6 +129,63 @@ kubetest --test=true \
   --test_args=--node-os-distro=windows --ginkgo.focus=\\[Conformance\\]|\\[NodeConformance\\]|\\[sig-windows\\]|\\[sig-apps\\].CronJob --ginkgo.skip=\\[LinuxOnly\\]|\\[k8s.io\\].Pods.*should.cap.back-off.at.MaxContainerBackOff.\\[Slow\\]\\[NodeConformance\\]|\\[k8s.io\\].Pods.*should.have.their.auto-restart.back-off.timer.reset.on.image.update.\\[Slow\\]\\[NodeConformance\\]
 ```
 
+## Running unit test
+
+Unit tests for files that have a `// +build windows` at the first line should be
+running on windows environment. Running in Linux with command
+
+```
+GOOS=windows GOARCH=amd64 go test
+```
+
+will usually have a `exec format error`.
+
+### Steps for running unit tests on windows environment
+
+#### Install golang on Windows machine
+
+Pick the Go version that is [compatible](https://github.com/kubernetes/community/blob/master/contributors/devel/development.md)
+with the Kubernetes version you intend to build. Download the MSI file to the Windows machine for development.
+
+```
+Invoke-Webrequest https://dl.google.com/go/go-<version>.windows-amd64.msi -Outfile go<version>.windows-amd64.msi
+```
+
+Start the MSI installer, e.g. `Start-Process .\go<version.windows-amd64.msi` and finish the installation.
+
+Add go path to the `PATH` environment variable:
+
+```
+$env:PATH=$env:PATH+";C:\go\bin"
+```
+
+Set the `GOPATH` environment variable:
+
+```
+$env:GOPATH="C:\go\pkg"
+```
+
+#### Install git using chocolatey
+
+Follow the instruction [here](https://chocolatey.org/install) to install
+chocolatey on Windows node. Then run
+
+```
+choco install git.install
+$env:PATH=$env:PATH+";C:\Program Files\Git\bin"
+```
+
+to install git.
+
+#### Run the tests
+
+Set up the Kubernetes repository on the node by following the instructions in
+[Github workflow](https://github.com/kubernetes/community/blob/master/contributors/guide/github-workflow.md).
+
+```
+go get  # Install the required packages
+go test  # Run the tests
+```
 
 #### Google Compute Platform
 
