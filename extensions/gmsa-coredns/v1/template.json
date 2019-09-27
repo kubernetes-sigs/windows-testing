@@ -1,75 +1,75 @@
 {
-   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-   "contentVersion": "1.0.0.0",
-   "parameters": {  
-		"artifactsLocation": {
-			"type": "string",
-			"minLength": 1,
-			"metadata": {
-				"description": "Artifacts Location - URL"
-			}
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {  
+        "artifactsLocation": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "Artifacts Location - URL"
+            }
         },
-		"apiVersionDeployments": {
-			"type": "string",
-			"minLength": 1,
-			"metadata": {
-				"description": "Deployments API Version"
-			}
-		},
-		"targetVMName":{
-			"type": "string",
-			"minLength": 1,
-			"metadata": {
-				"description": "Name of the vm to run the "
-			}
-		},
-		"targetVMType":{
-			"type": "string",
-			"minLength": 1,
-			"metadata": {
-				"description": "Type of the vm to run the extension: master or agent "
-			}
-		},
-		"extensionParameters": {
-			"type": "securestring",
-			"minLength": 0,
-			"metadata": {
-				"description": "Custom Parameter for Extension - for gmsa-coredns, this is empty"
-			}
-		},
-		"vmIndex": {
-			"type": "int",
-			"metadata": {
-				"description": "index in the pool of the current agent, used so that we can get the extension name right"
-			}
-		}
-   },
-   "variables": {  
-		"singleQuote": "'",
-		"initScriptUrl": "[concat(parameters('artifactsLocation'), 'extensions/gmsa-coredns/v1/update-coredns.sh')]"
-   },
-   "resources": [  
-	{
+        "apiVersionDeployments": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "Deployments API Version"
+            }
+        },
+        "targetVMName":{
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "Name of the vm to run the "
+            }
+        },
+        "targetVMType":{
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "Type of the vm to run the extension: master or agent "
+            }
+        },
+        "extensionParameters": {
+            "type": "securestring",
+            "minLength": 0,
+            "metadata": {
+                "description": "Custom Parameter for Extension - for gmsa-coredns, this is empty"
+            }
+        },
+        "vmIndex": {
+            "type": "int",
+            "metadata": {
+                "description": "index in the pool of the current agent, used so that we can get the extension name right"
+            }
+        }
+    },
+    "variables": {  
+        "singleQuote": "'",
+        "initScriptUrl": "[concat(parameters('artifactsLocation'), 'extensions/gmsa-coredns/v1/update-coredns.sh')]"
+    },
+    "resources": [  
+    {
       "apiVersion": "[parameters('apiVersionDeployments')]",
       "dependsOn": [],
       "location": "[resourceGroup().location]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-	  "name": "[concat(parameters('targetVMName'),'/cse', '-', parameters('targetVMType'), '-', parameters('vmIndex'))]", 
+      "name": "[concat(parameters('targetVMName'),'/cse', '-', parameters('targetVMType'), '-', parameters('vmIndex'))]", 
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",
         "typeHandlerVersion": "2.0",
         "autoUpgradeMinorVersion": true,
         "settings": {
-			"fileUris": [ 
-			   "[variables('initScriptUrl')]" 
-			 ]
-		},
+            "fileUris": [ 
+               "[variables('initScriptUrl')]" 
+             ]
+        },
         "protectedSettings": {
-			"commandToExecute": "[concat('/bin/bash -c \"/bin/bash ./update-coredns.sh ', variables('singleQuote'), parameters('extensionParameters'), variables('singleQuote'), ' >> /var/log/azure/update-coredns.log 2>&1 &\" &')]"
+            "commandToExecute": "[concat('/bin/bash -c \"/bin/bash ./update-coredns.sh ', variables('singleQuote'), parameters('extensionParameters'), variables('singleQuote'), ' >> /var/log/azure/update-coredns.log 2>&1 &\" &')]"
         }
       }
     }
-	],
-   "outputs": {  }
+    ],
+    "outputs": {  }
 }
