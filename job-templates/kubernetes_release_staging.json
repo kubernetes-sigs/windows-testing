@@ -3,7 +3,7 @@
   "properties": {
     "orchestratorProfile": {
       "orchestratorType": "Kubernetes",
-      "orchestratorRelease": "1.16",
+      "orchestratorRelease": "1.17",
       "kubernetesConfig": {
         "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.28/azure-vnet-cni-linux-amd64-v1.0.28.tgz",
         "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.28/azure-vnet-cni-windows-amd64-v1.0.28.zip",
