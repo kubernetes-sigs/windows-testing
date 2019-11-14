@@ -11,8 +11,7 @@
           "--feature-gates": "KubeletPodResources=false"
         },
 	"apiServerConfig": {
-          "--runtime-config":  "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true",
-	  "--feature-gates": "WindowsRunAsUserName=true"
+          "--runtime-config":  "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true"
         }
       }
     },
@@ -93,7 +92,7 @@
       "secret": ""
     },
     "extensionProfiles": [
-       {
+        {
           "name":    "agent_preprovision_extension",
           "version": "v1",
           "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
