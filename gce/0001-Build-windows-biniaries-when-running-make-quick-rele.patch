@@ -1,0 +1,40 @@
+From 610337a079eaee8560d1ae8d4ad613730c28e3d9 Mon Sep 17 00:00:00 2001
+From: Yu-Ju Hong <yjhong@google.com>
+Date: Thu, 10 Jan 2019 15:06:01 -0800
+Subject: [PATCH] Build windows biniaries when running `make quick-release`
+
+---
+ hack/lib/golang.sh | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/hack/lib/golang.sh b/hack/lib/golang.sh
+index 41004ced12..b825df1725 100755
+--- a/hack/lib/golang.sh
++++ b/hack/lib/golang.sh
+@@ -98,7 +98,10 @@ if [[ -n "${KUBE_BUILD_PLATFORMS:-}" ]]; then
+   readonly KUBE_CLIENT_PLATFORMS
+ elif [[ "${KUBE_FASTBUILD:-}" == "true" ]]; then
+   readonly KUBE_SERVER_PLATFORMS=(linux/amd64)
+-  readonly KUBE_NODE_PLATFORMS=(linux/amd64)
++  readonly KUBE_NODE_PLATFORMS=(
++    linux/amd64
++    windows/amd64
++  )
+   if [[ "${KUBE_BUILDER_OS:-}" == "darwin"* ]]; then
+     readonly KUBE_TEST_PLATFORMS=(
+       darwin/amd64
+@@ -110,7 +113,10 @@ elif [[ "${KUBE_FASTBUILD:-}" == "true" ]]; then
+     )
+   else
+     readonly KUBE_TEST_PLATFORMS=(linux/amd64)
+-    readonly KUBE_CLIENT_PLATFORMS=(linux/amd64)
++    readonly KUBE_CLIENT_PLATFORMS=(
++      linux/amd64
++      windows/amd64
++    )
+   fi
+ else
+ 
+-- 
+2.21.0.rc0.258.g878e2cd30e-goog
+
