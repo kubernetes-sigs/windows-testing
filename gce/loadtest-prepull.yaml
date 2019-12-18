@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: prepull
+spec:
+  selector:
+    matchLabels:
+      prepull-test-images: loadtest
+  template:
+    metadata:
+      labels:
+        prepull-test-images: loadtest
+    spec:
+      nodeSelector:
+        kubernetes.io/os: windows
+      initContainers:
+      containers:
+      - image: gcr.io/gke-release/pause-win:1.0.0
+        name: pause
