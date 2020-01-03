@@ -75,7 +75,7 @@
       "windowsPublisher": "MicrosoftWindowsServer",
       "windowsOffer": "WindowsServer",
       "windowsSku": "2019-Datacenter-Core-with-Containers-smalldisk",
-      "imageVersion": "17763.805.1910061628"
+      "imageVersion": "17763.914.1912042330"
     },
     "linuxProfile": {
       "adminUsername": "azureuser",
