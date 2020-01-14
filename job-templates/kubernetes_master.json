@@ -5,14 +5,13 @@
       "orchestratorType": "Kubernetes",
       "orchestratorRelease": "1.17",
       "kubernetesConfig": {
-        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.25/azure-vnet-cni-linux-amd64-v1.0.25.tgz",
-        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.25/azure-vnet-cni-windows-amd64-v1.0.25.zip",
+        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.30/azure-vnet-cni-linux-amd64-v1.0.30.tgz",
+        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.30/azure-vnet-cni-windows-amd64-v1.0.30.zip",
         "kubeletConfig" : {
           "--feature-gates": "KubeletPodResources=false"
         },
 	"apiServerConfig": {
-          "--runtime-config":  "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true",
-          "--feature-gates": "WindowsRunAsUserName=true"
+          "--runtime-config":  "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true"
         }
       }
     },
@@ -45,11 +44,11 @@
     "windowsProfile": {
       "adminUsername": "azureuser",
       "adminPassword": "replacepassword1234$",
-      "windowsDockerVersion": "18.09.7",
+      "windowsDockerVersion": "19.03.4",
       "windowsPublisher": "MicrosoftWindowsServer",
-      "windowsOffer": "WindowsServerSemiAnnual",
-      "windowsSku": "Datacenter-Core-1809-with-Containers-smalldisk",
-      "imageVersion": "1809.0.20190711"
+      "windowsOffer": "WindowsServer",
+      "windowsSku": "2019-Datacenter-Core-with-Containers-smalldisk",
+      "imageVersion": "17763.805.1910061628"
     },
     "linuxProfile": {
       "adminUsername": "azureuser",
@@ -66,7 +65,7 @@
       "secret": ""
     },
     "extensionProfiles": [
-       {
+        {
           "name":    "agent_preprovision_extension",
           "version": "v1",
           "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
