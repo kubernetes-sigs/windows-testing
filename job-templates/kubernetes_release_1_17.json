@@ -1,6 +1,9 @@
 {
   "apiVersion": "vlabs",
   "properties": {
+    "featureFlags": {
+      "enableTelemetry": true
+    },
     "orchestratorProfile": {
       "orchestratorType": "Kubernetes",
       "orchestratorRelease": "1.17",
