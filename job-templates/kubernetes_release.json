@@ -15,9 +15,9 @@
       "vmSize": "Standard_D2_v3",
       "distro": "ubuntu",
       "extensions": [
-          {
-              "name": "win-e2e-master-extension"
-          }
+        {
+          "name": "win-e2e-master-extension"
+        }
       ]
     },
     "agentPoolProfiles": [
@@ -28,11 +28,10 @@
         "osDiskSizeGB": 128,
         "availabilityProfile": "AvailabilitySet",
         "osType": "Windows",
-        "preProvisionExtension":
-            {
-                "name": "node_setup",
-                "singleOrAll": "all"
-            }
+        "preProvisionExtension": {
+          "name": "node_setup",
+          "singleOrAll": "all"
+        }
       }
     ],
     "windowsProfile": {
@@ -59,19 +58,19 @@
       "secret": ""
     },
     "extensionProfiles": [
-       {
-          "name":    "node_setup",
-          "version": "v1",
-          "rootURL": "https://k8swin.blob.core.windows.net/k8s-windows/preprovision_extensions/",
-          "script":  "node_setup.ps1"
-        },
-        {
-          "name":                "win-e2e-master-extension",
-          "version":             "v1",
-          "extensionParameters": "parameters",
-          "rootURL":             "https://k8swin.blob.core.windows.net/k8s-windows/extensions/",
-          "script":              "win-e2e-master-extension.sh"
-        }
+      {
+        "name": "node_setup",
+        "version": "v1",
+        "rootURL": "https://k8swin.blob.core.windows.net/k8s-windows/preprovision_extensions/",
+        "script": "node_setup.ps1"
+      },
+      {
+        "name": "win-e2e-master-extension",
+        "version": "v1",
+        "extensionParameters": "parameters",
+        "rootURL": "https://k8swin.blob.core.windows.net/k8s-windows/extensions/",
+        "script": "win-e2e-master-extension.sh"
+      }
     ]
   }
 }

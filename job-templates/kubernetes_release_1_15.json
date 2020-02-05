@@ -7,11 +7,11 @@
       "kubernetesConfig": {
         "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.22/azure-vnet-cni-linux-amd64-v1.0.22.tgz",
         "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.22/azure-vnet-cni-windows-amd64-v1.0.22.zip",
-        "kubeletConfig" : {
+        "kubeletConfig": {
           "--feature-gates": "KubeletPodResources=false"
         },
-	"apiServerConfig": {
-          "--runtime-config":  "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true"
+        "apiServerConfig": {
+          "--runtime-config": "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true"
         }
       }
     },
@@ -21,9 +21,9 @@
       "vmSize": "Standard_D2_v3",
       "distro": "ubuntu",
       "extensions": [
-          {
-              "name": "master_extension"
-          }
+        {
+          "name": "master_extension"
+        }
       ]
     },
     "agentPoolProfiles": [
@@ -34,11 +34,10 @@
         "osDiskSizeGB": 128,
         "availabilityProfile": "AvailabilitySet",
         "osType": "Windows",
-        "preProvisionExtension":
-            {
-                "name": "agent_preprovision_extension",
-                "singleOrAll": "all"
-            }
+        "preProvisionExtension": {
+          "name": "agent_preprovision_extension",
+          "singleOrAll": "all"
+        }
       }
     ],
     "windowsProfile": {
@@ -65,19 +64,19 @@
       "secret": ""
     },
     "extensionProfiles": [
-       {
-          "name":    "agent_preprovision_extension",
-          "version": "v1",
-          "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
-          "script":  "node_setup.ps1"
-        },
-        {
-          "name":                "master_extension",
-          "version":             "v1",
-          "extensionParameters": "parameters",
-          "rootURL":             "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
-          "script":              "win-e2e-master-extension.sh"
-        }
+      {
+        "name": "agent_preprovision_extension",
+        "version": "v1",
+        "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
+        "script": "node_setup.ps1"
+      },
+      {
+        "name": "master_extension",
+        "version": "v1",
+        "extensionParameters": "parameters",
+        "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
+        "script": "win-e2e-master-extension.sh"
+      }
     ]
   }
 }
