@@ -1,20 +1,31 @@
 #!/bin/bash
 
-# Wait for all pods in kube-system namespace to be running before applying taints
+# Wait for coredns pod to be ready
+while true; do
+	COREDNS_READY=$(kubectl get pods -l k8s-app=kube-dns -n kube-system -o custom-columns=STATUS:status.containerStatuses[0].ready --no-headers)
+	if [ "${COREDNS_READY}" = "true" ]; then
+		echo "$(date -R) - coredns is ready" >> /tmp/master_extension.log
+		kubectl get pods --all-namespaces >> /tmp/master_extension.log
+		break
+	fi
+	sleep 2
+done
 
-sleep 60
-OUT=$(kubectl get pods -n kube-system -o custom-columns=STATUS:status.phase | grep -v "STATUS\|Running")
-while [[ ! -z $OUT ]]; do
-sleep 2
-OUT=$(kubectl get pods -n kube-system -o custom-columns=STATUS:status.phase | grep -v "STATUS\|Running")
-echo "Waited 2 seconds." >> /tmp/master_extension.log
-echo $(kubectl get pods --all-namespaces) >> /tmp/master_extension.log
+# Wait for all pods in kube-system namespace to be ready before applying taints
+while true; do
+	NOTREADY_PODS=$(kubectl get pods -n kube-system -o custom-columns=STATUS:status.containerStatuses[0].ready --no-headers | grep -v "true")
+	if [ -z "${NOTREADY_PODS}" ]; then
+		echo "$(date -R) - All kube-system pods are ready" >> /tmp/master_extension.log
+		kubectl get pods --all-namespaces >> /tmp/master_extension.log
+		break
+	fi
+	sleep 2
 done
 
 master_node=$(kubectl get nodes | grep master | awk '{print $1}')
 
-kubectl taint nodes $master_node node-role.kubernetes.io/master=:NoSchedule
-kubectl label nodes $master_node node-role.kubernetes.io/master=NoSchedule
+kubectl taint nodes "$master_node" node-role.kubernetes.io/master=:NoSchedule
+kubectl label nodes "$master_node" node-role.kubernetes.io/master=NoSchedule
 
 # Prepull images
 kubectl create -f https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/gce/prepull.yaml
