@@ -1,0 +1,149 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: prepull-test-containers
+spec:
+  selector:
+    matchLabels:
+      prepull-test-images: e2e
+  template:
+    metadata:
+      labels:
+        prepull-test-images: e2e
+    spec:
+      nodeSelector:
+        kubernetes.io/os: windows
+      # To generate this list from the build-log.txt output of an e2e test
+      # result:
+      #   grep -o -E 'e2eteam/([[:alnum:]_-]+):([[:alnum:]./_-]+)' \
+      #   build-log.txt | sort | uniq
+      # DaemonSets do not support a RestartPolicy other than 'Always', so we
+      # run ping in each container to keep it alive so that kubernetes does not
+      # continually restart the containers while we're prepulling.
+      containers:
+      - image: e2eteam/agnhost:2.8
+        name: agnhost-28
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/busybox:1.29
+        name: busybox1
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/cassandra:v13
+        name: cassandra5
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/curl:1803
+        name: curl2
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/dnsutils:1.1
+        name: dnsutils6
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/echoserver:2.2
+        name: echoserver7
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/entrypoint-tester:1.0
+        name: entrypoint-tester8
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/etcd:3.3.10
+        name: etcd9
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/etcd:v3.3.10
+        name: etcd10
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/fakegitserver:1.0
+        name: fakegitserver11
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/gb-frontend:v6
+        name: gb-frontend12
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/httpd:2.4.38-alpine
+        name: httpd-2438
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/httpd:2.4.39-alpine
+        name: httpd-2439
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/java:openjdk-8-jre
+        name: java-openjdk-8
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/jessie-dnsutils:1.0
+        name: jessie-dnsutils17
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/kitten:1.0
+        name: kitten18
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/mounttest:1.0
+        name: mounttest21
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/nautilus:1.0
+        name: nautilus22
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/nginx:1.14-alpine
+        name: nginx26
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/pause:3.1
+        name: pause-31
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/test-webserver:1.0
+        name: test-webserver4
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']

@@ -25,15 +25,18 @@ done
 
 # Pre-pull all the test images. The images are currently hard-coded.
 # Eventually, we should get the list directly from
-# https://github.com/kubernetes-sigs/windows-testing/blob/master/images/PullImages.ps1
+# https://github.com/kubernetes/kubernetes/blob/master/test/utils/image/manifest.go.
+PREPULL_FILE=${PREPULL_YAML:-prepull-head.yaml}
 SCRIPT_ROOT=$(cd `dirname $0` && pwd)
-kubectl create -f ${SCRIPT_ROOT}/prepull.yaml
-# Wait 10 minutes for the test images to be pulled onto the nodes.
-sleep ${PREPULL_TIMEOUT:-15m}
+kubectl create -f ${SCRIPT_ROOT}/${PREPULL_FILE}
+# Wait a while for the test images to be pulled onto the nodes. In empirical
+# testing it could take up to 30 minutes to finish pulling all the test
+# containers on a node.
+sleep ${PREPULL_TIMEOUT:-30m}
 # Check the status of the pods.
 kubectl get pods -o wide
 # Delete the pods anyway since pre-pulling is best-effort
-kubectl delete -f ${SCRIPT_ROOT}/prepull.yaml
+kubectl delete -f ${SCRIPT_ROOT}/${PREPULL_FILE}
 # Wait a few more minutes for the pod to be cleaned up.
 sleep 3m
 
