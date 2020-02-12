@@ -13,10 +13,20 @@ spec:
     spec:
       nodeSelector:
         kubernetes.io/os: windows
-      # To generate this list from the build-log.txt output of an e2e test
-      # result:
-      #   grep -o -E 'e2eteam/([[:alnum:]_-]+):([[:alnum:]./_-]+)' \
-      #   build-log.txt | sort | uniq
+      # To see containers that are known to be used in e2e tests, run this
+      # command against the build-log.txt output from a test run:
+      #   grep -v 'Node Info: &Node' build-log.txt \
+      #     | grep -ho -E 'e2eteam/([[:alnum:]_-]+):([[:alnum:]./_-]+)' \
+      #     | sort | uniq
+      # NOTE: this command captures only a subset of the test containers,
+      # unfortunately; not all test containers will have their names printed in
+      # the test output. Running the command against the output from multiple
+      # test runs is also recommended. Filtering out the 'Node Info' lines
+      # avoids capturing containers that are only found in the test log
+      # *because* we prepulled them. Overall this command may be useful for
+      # detecting newly-used test containers but there's not a great way to
+      # prune unused containers from this manifest right now.
+      #
       # DaemonSets do not support a RestartPolicy other than 'Always', so we
       # run ping in each container to keep it alive so that kubernetes does not
       # continually restart the containers while we're prepulling.
@@ -33,18 +43,6 @@ spec:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/cassandra:v13
-        name: cassandra5
-        resources:
-          requests:
-            cpu: 1m
-        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/curl:1803
-        name: curl2
-        resources:
-          requests:
-            cpu: 1m
-        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
       - image: e2eteam/dnsutils:1.1
         name: dnsutils6
         resources:
@@ -57,26 +55,8 @@ spec:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/entrypoint-tester:1.0
-        name: entrypoint-tester8
-        resources:
-          requests:
-            cpu: 1m
-        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/etcd:3.3.10
-        name: etcd9
-        resources:
-          requests:
-            cpu: 1m
-        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/etcd:v3.3.10
-        name: etcd10
-        resources:
-          requests:
-            cpu: 1m
-        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/fakegitserver:1.0
-        name: fakegitserver11
+      - image: e2eteam/etcd:3.3.15
+        name: etcd-3315
         resources:
           requests:
             cpu: 1m
@@ -89,12 +69,6 @@ spec:
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
       - image: e2eteam/gb-redisslave:v3
         name: gb-redisslave13
-        resources:
-          requests:
-            cpu: 1m
-        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/hazelcast-kubernetes:3.8_1
-        name: hazelcast-kubernetes14
         resources:
           requests:
             cpu: 1m
@@ -117,18 +91,6 @@ spec:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/iperf:1.0
-        name: iperf16
-        resources:
-          requests:
-            cpu: 1m
-        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/java:openjdk-8-jre
-        name: java-openjdk-8
-        resources:
-          requests:
-            cpu: 1m
-        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
       - image: e2eteam/jessie-dnsutils:1.0
         name: jessie-dnsutils17
         resources:
@@ -137,18 +99,6 @@ spec:
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
       - image: e2eteam/kitten:1.0
         name: kitten18
-        resources:
-          requests:
-            cpu: 1m
-        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/liveness:1.1
-        name: liveness19
-        resources:
-          requests:
-            cpu: 1m
-        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/logs-generator:1.0
-        name: logs-generator-10
         resources:
           requests:
             cpu: 1m
@@ -179,6 +129,12 @@ spec:
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
       - image: e2eteam/redis:5.0.5-alpine
         name: redis-505
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/sample-apiserver:1.10
+        name: sample-apiserver-110
         resources:
           requests:
             cpu: 1m

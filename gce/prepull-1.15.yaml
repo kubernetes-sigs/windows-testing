@@ -13,28 +13,26 @@ spec:
     spec:
       nodeSelector:
         kubernetes.io/os: windows
-      # To generate this list from the build-log.txt output of an e2e test
-      # result:
-      #   grep -o -E 'e2eteam/([[:alnum:]_-]+):([[:alnum:]./_-]+)' \
-      #   build-log.txt | sort | uniq
+      # To see containers that are known to be used in e2e tests, run this
+      # command against the build-log.txt output from a test run:
+      #   grep -v 'Node Info: &Node' build-log.txt \
+      #     | grep -ho -E 'e2eteam/([[:alnum:]_-]+):([[:alnum:]./_-]+)' \
+      #     | sort | uniq
+      # NOTE: this command captures only a subset of the test containers,
+      # unfortunately; not all test containers will have their names printed in
+      # the test output. Running the command against the output from multiple
+      # test runs is also recommended. Filtering out the 'Node Info' lines
+      # avoids capturing containers that are only found in the test log
+      # *because* we prepulled them. Overall this command may be useful for
+      # detecting newly-used test containers but there's not a great way to
+      # prune unused containers from this manifest right now.
+      #
       # DaemonSets do not support a RestartPolicy other than 'Always', so we
       # run ping in each container to keep it alive so that kubernetes does not
       # continually restart the containers while we're prepulling.
       containers:
       - image: e2eteam/busybox:1.29
         name: busybox1
-        resources:
-          requests:
-            cpu: 1m
-        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/cassandra:v13
-        name: cassandra5
-        resources:
-          requests:
-            cpu: 1m
-        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/curl:1803
-        name: curl2
         resources:
           requests:
             cpu: 1m
@@ -63,12 +61,6 @@ spec:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/etcd:v3.3.10
-        name: etcd10
-        resources:
-          requests:
-            cpu: 1m
-        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
       - image: e2eteam/fakegitserver:1.0
         name: fakegitserver11
         resources:
@@ -87,12 +79,6 @@ spec:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/hazelcast-kubernetes:3.8_1
-        name: hazelcast-kubernetes14
-        resources:
-          requests:
-            cpu: 1m
-        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
       - image: e2eteam/hostexec:1.1
         name: hostexec15
         resources:
@@ -101,12 +87,6 @@ spec:
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
       - image: e2eteam/iperf:1.0
         name: iperf16
-        resources:
-          requests:
-            cpu: 1m
-        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/java:openjdk-8-jre
-        name: java-openjdk-8
         resources:
           requests:
             cpu: 1m
@@ -207,12 +187,6 @@ spec:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/resource-consumer:1.4
-        name: resource-consumer-14
-        resources:
-          requests:
-            cpu: 1m
-        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
       - image: e2eteam/resource-consumer:1.5
         name: resource-consumer-15
         resources:
@@ -227,6 +201,12 @@ spec:
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
       - image: e2eteam/serve-hostname:1.1
         name: serve-hostname-11
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: e2eteam/webhook:1.15v1
+        name: webhook-115v1
         resources:
           requests:
             cpu: 1m
