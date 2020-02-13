@@ -7,6 +7,11 @@ set -o xtrace
 # When running in prow, the working directory is the root of the test-infra
 # repository.
 
+# In some test scenarios, cluster may not be stable at the beginning,  wait
+# until it is stable, # i.e. both the control plane and nodes are up / running
+# reliably before start running the tests.
+sleep ${INIT_TIMEOUT:-1s}
+
 # Taint the Linux nodes to prevent the test workloads from landing on them.
 # TODO: remove this once the issue is resolved:
 # https://github.com/kubernetes/kubernetes/issues/69892
