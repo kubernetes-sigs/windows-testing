@@ -39,25 +39,41 @@ then
     exit
 fi
 
+function redact_sensitive_content {
+
+    # Some of the log files gathered may contain sensitive information in the form of UUIDs.
+    # Since logging is public, we redact all sensitive info.
+    # If for some reason redacting fails, we exclude that log file from collection process.
+    file=$1
+    regex="[0-9a-f]{9}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+
+    if ! $(sed -i -E "s/${regex}/REDACTED/gI" $file); then
+        echo "Redacting failed. Log file %s will be excluded from log."
+        rm $file
+    fi    
+}
+
+
 # Collect master provisioning logs
 master_logs_output="${ARTIFACTS}/master_provisioning"
 readonly master_provisioning_logs=(
     "/tmp/master_extension.log"
     "/var/log/azure/win-e2e-master-extension.log"
-    # Exclude this file for the moment as it may possibly contain sensitive info.
-    # (TODO atuvenie): add this back when we have a solution for excluding sensitive info.
-    # "/var/log/azure/cluster-provision.log"
+    "/var/log/azure/cluster-provision.log"
     "/var/log/azure/custom-script/handler.log"
 )
 
 mkdir -p "${master_logs_output}"
 
 for log_file in "${master_provisioning_logs[@]}"; do
-    scp ${SSH_OPTS} -i ${SSH_KEY} ${USER}@${MASTER_IP}:${log_file} "${master_logs_output}/$(basename -- ${log_file})"
+    destination="${master_logs_output}/$(basename -- ${log_file})"    
+    scp ${SSH_OPTS} -i ${SSH_KEY} ${USER}@${MASTER_IP}:${log_file} ${destination}
     if [ ! $? -eq 0 ]
     then
          echo "Unable to collect log file ${log_file} from master. Skipping."
+         continue
     fi
+    redact_sensitive_content ${destination}
 done
 
 echo "Finished collecting master provisioning logs."
@@ -78,6 +94,7 @@ IFS=$SAVEIFS
 readonly provisioning_logs=(
     "c:/AzureData/CustomDataSetupScript.log"
 )
+
 
 function collect_windows_vm_logs {
     win_hostname=${1}
