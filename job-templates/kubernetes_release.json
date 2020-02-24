@@ -5,8 +5,8 @@
       "orchestratorType": "Kubernetes",
       "orchestratorRelease": "1.14",
       "kubernetesConfig": {
-        "azureCNIURLLinux": "https://acs-mirror.azureedge.net/cni/azure-vnet-cni-linux-amd64-v1.0.17.tgz",
-        "azureCNIURLWindows": "https://acs-mirror.azureedge.net/cni/azure-vnet-cni-windows-amd64-v1.0.17.zip"
+        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.30/azure-vnet-cni-linux-amd64-v1.0.30.tgz",
+        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.30/azure-vnet-cni-windows-amd64-v1.0.30.zip"
       }
     },
     "masterProfile": {
@@ -37,11 +37,11 @@
     "windowsProfile": {
       "adminUsername": "azureuser",
       "adminPassword": "replacepassword1234$",
+      "windowsDockerVersion": "18.09.0",
       "windowsPublisher": "MicrosoftWindowsServer",
-      "windowsOffer": "WindowsServerSemiAnnual",
-      "windowsSku": "Datacenter-Core-1809-with-Containers-smalldisk",
-      "imageVersion": "1809.0.20190214",
-      "windowsDockerVersion": "18.09.0"
+      "windowsOffer": "WindowsServer",
+      "windowsSku": "2019-Datacenter-Core-with-Containers-smalldisk",
+      "imageVersion": "17763.973.2001110547"
     },
     "linuxProfile": {
       "adminUsername": "azureuser",
