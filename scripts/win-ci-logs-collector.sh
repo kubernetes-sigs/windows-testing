@@ -59,7 +59,7 @@ master_logs_output="${ARTIFACTS}/master_provisioning"
 readonly master_provisioning_logs=(
     "/tmp/master_extension.log"
     "/var/log/azure/win-e2e-master-extension.log"
-    "/var/log/azure/cluster-provision.log"
+    # "/var/log/azure/cluster-provision.log"
     "/var/log/azure/custom-script/handler.log"
 )
 
