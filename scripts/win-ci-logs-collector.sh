@@ -45,7 +45,7 @@ function redact_sensitive_content {
     # Since logging is public, we redact all sensitive info.
     # If for some reason redacting fails, we exclude that log file from collection process.
     file=$1
-    regex="[0-9a-f]{9}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+    regex="[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 
     if ! $(sed -i -E "s/${regex}/REDACTED/gI" $file); then
         echo "Redacting failed. Log file %s will be excluded from log."
@@ -59,7 +59,7 @@ master_logs_output="${ARTIFACTS}/master_provisioning"
 readonly master_provisioning_logs=(
     "/tmp/master_extension.log"
     "/var/log/azure/win-e2e-master-extension.log"
-    # "/var/log/azure/cluster-provision.log"
+    "/var/log/azure/cluster-provision.log"
     "/var/log/azure/custom-script/handler.log"
 )
 
