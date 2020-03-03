@@ -37,6 +37,7 @@
     "windowsProfile": {
       "adminUsername": "azureuser",
       "adminPassword": "replacepassword1234$",
+      "sshEnabled": true,
       "windowsDockerVersion": "18.09.0",
       "windowsPublisher": "MicrosoftWindowsServer",
       "windowsOffer": "WindowsServer",
