@@ -1,9 +1,12 @@
 #!/bin/bash
 
+KUBECONFIG="$(find /home/*/.kube/config)"
+KUBECTL="kubectl --kubeconfig=${KUBECONFIG}"
+
 # Get the IP of the DC as soon as it is available
 while [$DCIP = $null]
 do
-    DCIP=$(kubectl get node --selector="agentpool=windowsgmsa" -o jsonpath="{.items[*].status.addresses[?(@.type=='InternalIP')].address}") > /dev/null 2>&1
+    DCIP=$(${KUBECTL} get node --selector="agentpool=windowsgmsa" -o jsonpath="{.items[*].status.addresses[?(@.type=='InternalIP')].address}") > /dev/null 2>&1
     sleep 5
 done
 
@@ -27,7 +30,7 @@ EOF
 sed "s/DCIP/${DCIP}/g" coredns-custom.sed > coredns-custom.yml
 
 # Apply the config file
-kubectl apply -f coredns-custom.yml
+${KUBECTL} apply -f coredns-custom.yml
 
 # Restart the CoreDNS pods to pick up the changes
-kubectl -n kube-system rollout restart deployment coredns
+${KUBECTL} -n kube-system rollout restart deployment coredns
