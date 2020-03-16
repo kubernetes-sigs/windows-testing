@@ -58,4 +58,4 @@ export KUBE_TEST_REPO_LIST=${WORKSPACE}/repo-list.yaml
 # unschedulable.
 # Do not set --disable-log-dump because upstream cannot handle dumping logs
 # from windows nodes yet.
-./hack/ginkgo-e2e.sh "$@" --report-dir=${ARTIFACTS} --allowed-not-ready-nodes=${LINUX_NODE_COUNT}
+./hack/ginkgo-e2e.sh $@ --report-dir=${ARTIFACTS} --allowed-not-ready-nodes=${LINUX_NODE_COUNT}
