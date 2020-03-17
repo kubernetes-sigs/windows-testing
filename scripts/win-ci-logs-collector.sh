@@ -133,7 +133,7 @@ function collect_windows_vm_logs {
     $(ssh ${SSH_OPTS} -J ${USER}@${MASTER_IP} ${USER}@${win_hostname} "powershell.exe -c \"${win_logs_collector_script_path}\"")
     
     echo "Copying logs from Windows node ${win_hostname}"
-    scp ${SSH_OPTS} -o "ProxyJump ${USER}@${MASTER_IP}" ${USER}@${win_hostname}:"c:\\k\\Debug\\*.zip" "${win_logs_location}/debug.zip"
+    scp ${SSH_OPTS} -o "ProxyJump ${USER}@${MASTER_IP}" ${USER}@${win_hostname}:"c:\\Users\\${USER}\\*.zip" "${win_logs_location}/debug.zip"
     if [ ! $? -eq 0 ]
     then
         echo "Unable to collect log files from Windows Node ${win_hostname}. Skipping."
