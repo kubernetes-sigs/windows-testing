@@ -120,7 +120,7 @@ function collect_windows_vm_logs {
 
     #Collecting k8s logs
     echo "Checking if logs collector script is already present on Windows machine."
-    if ! $(ssh ${SSH_OPTS} -J ${USER}@${MASTER_IP} ${USER}@${win_hostname} "powershell.exe -c Test-Path ${win_logs_collector_script_path}" | grep -q "False")
+    if $(ssh ${SSH_OPTS} -J ${USER}@${MASTER_IP} ${USER}@${win_hostname} "powershell.exe -c Test-Path ${win_logs_collector_script_path}" | grep -q "False")
     then
         echo "Downloading log collector script to Windows machine ${win_hostname}."
         if $(ssh ${SSH_OPTS} -J ${USER}@${MASTER_IP} ${USER}@${win_hostname} "powershell.exe -c \". C:\\AzureData\\k8s\\kuberneteswindowsfunctions.ps1 ; DownloadFileOverHttp -Url ${win_logs_collector_script_url} -DestinationPath ${win_logs_collector_script_path} \""); then
