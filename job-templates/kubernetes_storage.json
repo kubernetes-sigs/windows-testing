@@ -26,7 +26,8 @@
         "windowsProfile": {
             "adminUsername": "azureuser",
             "adminPassword": "replacepassword1234$",
-            "windowsDockerVersion": "19.03.5",
+            "csiProxyURL": "https://kubernetesartifacts.azureedge.net/csi-proxy/master/binaries/csi-proxy.tar.gz",
+            "enableCSIProxy": true,
             "sshEnabled": true
         },
         "linuxProfile": {
