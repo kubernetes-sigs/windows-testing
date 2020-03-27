@@ -27,18 +27,14 @@ spec:
       # detecting newly-used test containers but there's not a great way to
       # prune unused containers from this manifest right now.
       #
+      # Examining initImageConfigs() in https://github.com/kubernetes/kubernetes/blob/master/test/utils/image/manifest.go may also help, but many of the containers listed there are only used for Linux tests.
+      #
       # DaemonSets do not support a RestartPolicy other than 'Always', so we
       # run ping in each container to keep it alive so that kubernetes does not
       # continually restart the containers while we're prepulling.
       containers:
-      - image: e2eteam/agnhost:2.6
-        name: agnhost-26
-        resources:
-          requests:
-            cpu: 1m
-        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/agnhost:2.8
-        name: agnhost-28
+      - image: e2eteam/agnhost:2.12
+        name: agnhost-212
         resources:
           requests:
             cpu: 1m
