@@ -75,12 +75,6 @@ spec:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/httpd:2.4.38-alpine
-        name: httpd-2438
-        resources:
-          requests:
-            cpu: 1m
-        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
       - image: e2eteam/httpd:2.4.39-alpine
         name: httpd-2439
         resources:
