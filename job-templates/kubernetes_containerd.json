@@ -15,7 +15,7 @@
           "--feature-gates": "KubeletPodResources=false"
         },
         "kubernetesConfig": {
-          "networkPlugin": "kubenet",
+          "networkPlugin": "azure",
           "containerRuntime": "containerd",
           "windowsContainerdURL": "https://k8swin.blob.core.windows.net/k8s-windows/windows-cri-containerd-custom.zip",
           "windowsSdnPluginURL": "https://k8swin.blob.core.windows.net/k8s-windows/windows-cni-containerd-custom.zip"
