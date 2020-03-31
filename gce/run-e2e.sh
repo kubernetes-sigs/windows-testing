@@ -37,14 +37,14 @@ kubectl create -f ${SCRIPT_ROOT}/${PREPULL_FILE}
 # Wait a while for the test images to be pulled onto the nodes. In empirical
 # testing it could take up to 30 minutes to finish pulling all the test
 # containers on a node.
-kubectl wait --for=condition=ready pod -l prepull-test-images=e2e --timeout ${PREPULL_TIMEOUT:-30m}
+timeout ${PREPULL_TIMEOUT:-30m} kubectl wait --for=condition=ready pod -l prepull-test-images=e2e --timeout -1s
 # Check the status of the pods.
 kubectl get pods -o wide
 kubectl describe pods
 # Delete the pods anyway since pre-pulling is best-effort
 kubectl delete -f ${SCRIPT_ROOT}/${PREPULL_FILE}
 # Wait a few more minutes for the pod to be cleaned up.
-kubectl wait --for=delete pod -l prepull-test-images=e2e --timeout 3m
+timeout 3m kubectl wait --for=delete pod -l prepull-test-images=e2e --timeout -1s
 
 # Download and set the list of test image repositories to use.
 curl \
