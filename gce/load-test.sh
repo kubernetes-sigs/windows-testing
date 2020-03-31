@@ -11,13 +11,13 @@ set -o xtrace
 SCRIPT_ROOT=$(cd `dirname $0` && pwd)
 kubectl create -f ${SCRIPT_ROOT}/loadtest-prepull.yaml
 # Wait a while for the test images to be pulled onto the nodes.
-kubectl wait --for=condition=ready pod -l prepull-test-images=loadtest --timeout ${PREPULL_TIMEOUT:-10m}
+timeout ${PREPULL_TIMEOUT:-10m} kubectl wait --for=condition=ready pod -l prepull-test-images=loadtest --timeout -1s
 # Check the status of the pods.
 kubectl get pods -o wide
 kubectl describe pods
 # Delete the pods anyway since pre-pulling is best-effort
 kubectl delete -f ${SCRIPT_ROOT}/loadtest-prepull.yaml
 # Wait a few more minutes for the pod to be cleaned up.
-kubectl wait --for=delete pod -l prepull-test-images=loadtest --timeout 3m
+timeout 3m kubectl wait --for=delete pod -l prepull-test-images=loadtest --timeout -1s
 
 $GOPATH/src/k8s.io/perf-tests/run-e2e.sh $@
