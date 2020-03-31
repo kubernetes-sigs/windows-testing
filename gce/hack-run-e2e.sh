@@ -40,6 +40,7 @@ kubectl create -f ${SCRIPT_ROOT}/${PREPULL_FILE}
 kubectl wait --for=condition=ready pod -l prepull-test-images=e2e --timeout ${PREPULL_TIMEOUT:-30m}
 # Check the status of the pods.
 kubectl get pods -o wide
+kubectl describe pods
 # Delete the pods anyway since pre-pulling is best-effort
 kubectl delete -f ${SCRIPT_ROOT}/${PREPULL_FILE}
 # Wait a few more minutes for the pod to be cleaned up.
