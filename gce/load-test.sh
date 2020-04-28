@@ -7,6 +7,11 @@ set -o xtrace
 # When running in prow, the working directory is the root of the test-infra
 # repository.
 
+# In some test scenarios, cluster may not be stable at the beginning,  wait
+# until it is stable, # i.e. both the control plane and nodes are up / running
+# reliably before start running the tests.
+sleep ${INIT_TIMEOUT:-1s}
+
 # Pre-pull all the test images.
 SCRIPT_ROOT=$(cd `dirname $0` && pwd)
 PREPULL_YAML=${PREPULL_YAML:-loadtest-prepull.yaml}
