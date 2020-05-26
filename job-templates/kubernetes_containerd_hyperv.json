@@ -16,7 +16,7 @@
         },
         "networkPlugin": "azure",
         "containerRuntime": "containerd",
-        "windowsContainerdURL": "https://k8swin.blob.core.windows.net/k8s-windows/containerd-0.0.87-public.zip",
+        "windowsContainerdURL": "https://k8swin.blob.core.windows.net/k8s-windows/containerd/containerplat-aks-test-0.0.5.zip",
         "windowsSdnPluginURL": "https://k8swin.blob.core.windows.net/k8s-windows/windows-cni-containerd-custom.zip"
       }
     },
