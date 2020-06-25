@@ -48,6 +48,8 @@
     "windowsProfile": {
       "adminUsername": "azureuser",
       "adminPassword": "replacepassword1234$",
+      "csiProxyURL": "https://k8scsi.blob.core.windows.net/csi-proxy/v0.1.0/binaries/csi-proxy.tar.gz",
+      "enableCSIProxy": true,
       "sshEnabled": true
     },
     "linuxProfile": {
