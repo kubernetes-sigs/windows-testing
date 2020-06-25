@@ -5,11 +5,11 @@
       "orchestratorType": "Kubernetes",
       "orchestratorRelease": "1.17",
       "kubernetesConfig": {
-        "kubeletConfig" : {
+        "kubeletConfig": {
           "--feature-gates": "KubeletPodResources=false"
         },
-	"apiServerConfig": {
-          "--runtime-config":  "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true",
+        "apiServerConfig": {
+          "--runtime-config": "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true",
           "--feature-gates": "WindowsRunAsUserName=true"
         }
       }
@@ -20,9 +20,9 @@
       "vmSize": "Standard_D2_v3",
       "distro": "ubuntu",
       "extensions": [
-          {
-              "name": "master_extension"
-          }
+        {
+          "name": "master_extension"
+        }
       ]
     },
     "agentPoolProfiles": [
@@ -33,11 +33,10 @@
         "osDiskSizeGB": 128,
         "availabilityProfile": "AvailabilitySet",
         "osType": "Windows",
-        "preProvisionExtension":
-            {
-                "name": "agent_preprovision_extension",
-                "singleOrAll": "all"
-            }
+        "preProvisionExtension": {
+          "name": "agent_preprovision_extension",
+          "singleOrAll": "all"
+        }
       }
     ],
     "windowsProfile": {
@@ -47,7 +46,7 @@
       "windowsPublisher": "MicrosoftWindowsServer",
       "windowsOffer": "WindowsServer",
       "windowsSku": "Datacenter-Core-1909-with-Containers-smalldisk",
-      "imageVersion": "18363.720.2003120536"
+      "imageVersion": "18363.900.2006061800"
     },
     "linuxProfile": {
       "adminUsername": "azureuser",
@@ -64,19 +63,19 @@
       "secret": ""
     },
     "extensionProfiles": [
-       {
-          "name":    "agent_preprovision_extension",
-          "version": "v1",
-          "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
-          "script":  "node_setup.ps1"
-        },
-        {
-          "name":                "master_extension",
-          "version":             "v1",
-          "extensionParameters": "parameters",
-          "rootURL":             "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
-          "script":              "win-e2e-master-extension.sh"
-        }
+      {
+        "name": "agent_preprovision_extension",
+        "version": "v1",
+        "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
+        "script": "node_setup.ps1"
+      },
+      {
+        "name": "master_extension",
+        "version": "v1",
+        "extensionParameters": "parameters",
+        "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
+        "script": "win-e2e-master-extension.sh"
+      }
     ]
   }
 }
