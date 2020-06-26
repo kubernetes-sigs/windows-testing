@@ -96,26 +96,27 @@ GO111MODULE=on go install ./kubetest
 
 - Link to AKS engine [release tar file](https://github.com/Azure/aks-engine/releases) or clone aks-engine and build your own using `make dist` then upload to public location.
 - Container registery (ACR or dockerhub). See the [dockerlogin code](https://github.com/kubernetes/test-infra/blob/dd6a466605560e9cbe9a4a2975673cf61dfc7c59/kubetest/aksengine.go#L794) for how it works.
+- [Azure storage account](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-overview) (required when building Kubernetes)
 - [Service Principal](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli?view=azure-cli-latest)
-- Clone [kubernetes/kubernetes](https://github.com/kubernetes/kubernetes) 
+- Clone [kubernetes/kubernetes](https://github.com/kubernetes/kubernetes)
 
 ## Configuration
 Create a toml file with Azure Authorization information:
 
 ```toml
 [Creds]
-  ClientID = ""
-  ClientSecret = ""
-  SubscriptionID = ""
-  TenantID = ""
-  StorageAccountName = ""
-  StorageAccountKey = ""
+  ClientID = "<Service Principal Client ID>"
+  ClientSecret = "<Service Principal Client Secret>"
+  SubscriptionID = "<Azure Subscription ID>"
+  TenantID = "<Azure Tenant ID>"
+  StorageAccountName = "<Azue Storage Account Name>"
+  StorageAccountKey = "<Azure Storage Account Key>"
 ```
 
 Set the following environment variables:
 
-```
-# used for ssh to machines 
+```bash
+# used for ssh to machines
 export K8S_SSH_PUBLIC_KEY_PATH="/home/user/.ssh/id_rsa.pub"
 
 # used during log collection
@@ -127,19 +128,23 @@ export AZURE_CREDENTIALS="/home/user/azure/azure.toml"
 # location logs will be dumped
 export ARTIFACTS="/home/user/out/kubetest"
 
-# docker registry used 
+# docker registry used
 export REGISTRY="yourregistry.azurecr.io"
 
-# File required for windows.
+# azure storage container name
+export AZ_STORAGE_CONTAINER_NAME="azstoragecontainername"
+
+# files required for Windows test pass
 export WIN_BUILD="https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/build/build-windows-k8s.sh"
 export KUBE_TEST_REPO_LIST_DOWNLOAD_LOCATION="https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list"
 ```
 
-`kubetest` must be run from the kubernetes/kubernetes project. The full set of tests will take several hours.
+`kubetest` must be run from the `kubernetes/kubernetes` project. The full set of tests will take several hours.
 
 ```bash
-cd kubernetes
-kubetest --test=true \
+cd $GOPATH/src/k8s.io/kubernetes
+kubetest
+    --test \
     --up \
     --dump=$ARTIFACTS \
     --deployment=aksengine \
@@ -150,10 +155,8 @@ kubetest --test=true \
     --aksengine-download-url=https://github.com/Azure/aks-engine/releases/download/v0.52.0/aks-engine-v0.52.0-linux-amd64.tar.gz \
     --aksengine-public-key=$K8S_SSH_PUBLIC_KEY_PATH \
     --aksengine-private-key=$K8S_SSH_PRIVATE_KEY_PATH \
-    --aksengine-winZipBuildScript=$WIN_BUILD \
     --aksengine-orchestratorRelease=1.18 \
     --aksengine-template-url=https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/job-templates/kubernetes_release_1_18.json \
-    --aksengine-win-binaries \
     --aksengine-agentpoolcount=2 \
     --test_args="--ginkgo.flakeAttempts=2 --node-os-distro=windows --ginkgo.focus=\[Conformance\]|\[NodeConformance\]|\[sig-windows\]|\[sig-apps\].CronJob|\[sig-api-machinery\].ResourceQuota|\[sig-scheduling\].SchedulerPreemption|\[sig-autoscaling\].\[Feature:HPA\]  --ginkgo.skip=\[LinuxOnly\]|\[Serial\]|GMSA|Guestbook.application.should.create.and.stop.a.working.application" \
     --ginkgo-parallel=6
@@ -161,13 +164,19 @@ kubetest --test=true \
 
 A few other parameters you should be aware of:
 
-```
+```bash
 # will tear down the cluster (when doing development it is sometime better to leave the cluster up for analysis)
---down 
+--down
 
-# will build kubernetes locally instead of using --aksengine-orchestratorRelease=1.18 
+# will build kubernetes locally instead of using --aksengine-orchestratorRelease=1.18
 --build=quick
+
+# deploy Kubernetes images built from ${GOPATH}/src/k8s.io/kubernetes for the control plane and Linux nodes
 --aksengine-deploy-custom-k8s
+
+# enable and build Windows Kubernetes ZIP (contains kube-proxy, kubelet, kubectl, etc) and deploy it to Windows nodes
+--aksengine-win-binaries
+--aksengine-winZipBuildScript=$WIN_BUILD
 ```
 
 ## Running unit test
