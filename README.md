@@ -80,53 +80,94 @@ The full list of what is run for TestGrid is in the [sig-windows-config.yaml](ht
 
 Kubetest is a wrapper that includes everything needed to deploy a cluster, test it (using e2e.test), gather logs, then upload the results to a Google Storage account. It has built-in cloud provider scripts to build Linux+Windows clusters using Azure and GCP.
 
+#### Build kubetest
+
+Refer to the [kubetest documentation](https://github.com/kubernetes/test-infra/tree/master/kubetest) for full details.
+
+```
+git clone https://github.com/kubernetes/test-infra.git
+cd test-infra
+GO111MODULE=on go install ./kubetest
+```
 
 #### Azure
 
-> TODO: This section is still under construction
+##### Pre-requisites
 
-Set environment variables:
+- Link to AKS engine [release tar file](https://github.com/Azure/aks-engine/releases) or clone aks-engine and build your own using `make dist` then upload to public location.
+- Container registery (ACR or dockerhub). See the [dockerlogin code](https://github.com/kubernetes/test-infra/blob/dd6a466605560e9cbe9a4a2975673cf61dfc7c59/kubetest/aksengine.go#L794) for how it works.
+- [Service Principal](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli?view=azure-cli-latest)
+- Clone [kubernetes/kubernetes](https://github.com/kubernetes/kubernetes) 
 
-`AZURE_SSH_PUBLIC_KEY_FILE` - Path to the SSH public key you want to use for connecting to the cluster nodes. This is probably `~/.ssh/id_rsa.pub`
-
-`AZURE_CREDENTIALS` - Path to a TOML file with a service account credential that will be used for creating the Azure resources
+## Configuration
+Create a toml file with Azure Authorization information:
 
 ```toml
 [Creds]
   ClientID = ""
   ClientSecret = ""
-  SubscriptionId = ""
+  SubscriptionID = ""
   TenantID = ""
   StorageAccountName = ""
   StorageAccountKey = ""
 ```
 
-Once those are set, you can run `kubetest` and it will do the rest. The full set of tests will take 6-7 hours.
+Set the following environment variables:
+
+```
+# used for ssh to machines 
+export K8S_SSH_PUBLIC_KEY_PATH="/home/user/.ssh/id_rsa.pub"
+
+# used during log collection
+export K8S_SSH_PRIVATE_KEY_PATH="/home/user/.ssh/id_rsa"
+
+# file path to the toml with the auth values
+export AZURE_CREDENTIALS="/home/user/azure/azure.toml"
+
+# location logs will be dumped
+export ARTIFACTS="/home/user/out/kubetest"
+
+# docker registry used 
+export REGISTRY="yourregistry.azurecr.io"
+
+# File required for windows.
+export WIN_BUILD="https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/build/build-windows-k8s.sh"
+export KUBE_TEST_REPO_LIST_DOWNLOAD_LOCATION="https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list"
+```
+
+`kubetest` must be run from the kubernetes/kubernetes project. The full set of tests will take several hours.
 
 ```bash
-export KUBE_MASTER_IP=#IP of master node if running remotely, or localhost if running on master node
-export KUBE_MASTER_URL="http://${KUBE_MASTER_IP}:8080"
-export KUBECONFIG=#path/to/kubeconfig
-curl https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list-ws2019 -o repo_list
-export KUBE_TEST_REPO_LIST=$(pwd)/repo_list
-export AZURE_CREDENTIALS=TODO
+cd kubernetes
 kubetest --test=true \
-  --up=true \
-  --down=true \
-  --deployment=acsengine \
-  --provider=skeleton \
-  --build=bazel \
-  --acsengine-location=westus \
-  --acsengine-admin-username=azureuser \
-  --acsengine-admin-password=MakeItSecure123! \
-  --acsengine-creds=$AZURE_CREDENTIALS \
-  --acsengine-download-url=https://github.com/Azure/aks-engine/releases/download/v0.30.0/aks-engine-v0.30.0-linux-amd64.tar.gz \
-  --acsengine-public-key=$AZURE_SSH_PUBLIC_KEY_FILE \
-  --acsengine-winZipBuildScript=https://raw.githubusercontent.com/Azure/acs-engine/master/scripts/build-windows-k8s.sh \
-  --acsengine-orchestratorRelease=1.13 \
-  --acsengine-template-url=https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/job-templates/kubernetes_release.json \
-  --acsengine-agentpoolcount=3 \
-  --test_args=--node-os-distro=windows --ginkgo.focus=\\[Conformance\\]|\\[NodeConformance\\]|\\[sig-windows\\]|\\[sig-apps\\].CronJob --ginkgo.skip=\\[LinuxOnly\\]|\\[k8s.io\\].Pods.*should.cap.back-off.at.MaxContainerBackOff.\\[Slow\\]\\[NodeConformance\\]|\\[k8s.io\\].Pods.*should.have.their.auto-restart.back-off.timer.reset.on.image.update.\\[Slow\\]\\[NodeConformance\\]
+    --up \
+    --dump=$ARTIFACTS \
+    --deployment=aksengine \
+    --provider=skeleton \
+    --aksengine-admin-username=azureuser \
+    --aksengine-admin-password=AdminPassw0rd \
+    --aksengine-creds=$AZURE_CREDENTIALS \
+    --aksengine-download-url=https://github.com/Azure/aks-engine/releases/download/v0.52.0/aks-engine-v0.52.0-linux-amd64.tar.gz \
+    --aksengine-public-key=$K8S_SSH_PUBLIC_KEY_PATH \
+    --aksengine-private-key=$K8S_SSH_PRIVATE_KEY_PATH \
+    --aksengine-winZipBuildScript=$WIN_BUILD \
+    --aksengine-orchestratorRelease=1.18 \
+    --aksengine-template-url=https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/job-templates/kubernetes_release_1_18.json \
+    --aksengine-win-binaries \
+    --aksengine-agentpoolcount=2 \
+    --test_args="--ginkgo.flakeAttempts=2 --node-os-distro=windows --ginkgo.focus=\[Conformance\]|\[NodeConformance\]|\[sig-windows\]|\[sig-apps\].CronJob|\[sig-api-machinery\].ResourceQuota|\[sig-scheduling\].SchedulerPreemption|\[sig-autoscaling\].\[Feature:HPA\]  --ginkgo.skip=\[LinuxOnly\]|\[Serial\]|GMSA|Guestbook.application.should.create.and.stop.a.working.application" \
+    --ginkgo-parallel=6
+```
+
+A few other parameters you should be aware of:
+
+```
+# will tear down the cluster (when doing development it is sometime better to leave the cluster up for analysis)
+--down 
+
+# will build kubernetes locally instead of using --aksengine-orchestratorRelease=1.18 
+--build=quick
+--aksengine-deploy-custom-k8s
 ```
 
 ## Running unit test
