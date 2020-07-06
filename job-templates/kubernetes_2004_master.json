@@ -18,7 +18,7 @@
       "count": 1,
       "dnsPrefix": "",
       "vmSize": "Standard_D2_v3",
-      "distro": "ubuntu",
+      "distro": "aks-ubuntu-18.04",
       "extensions": [
         {
           "name": "master_extension"
@@ -45,7 +45,7 @@
       "sshEnabled": true,
       "windowsPublisher": "MicrosoftWindowsServer",
       "windowsOffer": "WindowsServer",
-      "windowsSku": "datacenter-core-2004-with-containers-smalldisk",
+      "windowsSku": "Datacenter-Core-2004-with-Containers-smalldisk",
       "imageVersion": "19041.329.2006042019"
     },
     "linuxProfile": {

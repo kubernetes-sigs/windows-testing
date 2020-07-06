@@ -18,7 +18,7 @@
       "count": 1,
       "dnsPrefix": "",
       "vmSize": "Standard_D2_v3",
-      "distro": "ubuntu",
+      "distro": "aks-ubuntu-18.04",
       "extensions": [
         {
           "name": "master_extension"
