@@ -22,7 +22,7 @@
       "count": 1,
       "dnsPrefix": "",
       "vmSize": "Standard_D2_v3",
-      "distro": "ubuntu",
+      "distro": "aks-ubuntu-18.04",
       "extensions": [
         {
           "name": "master_extension"
@@ -74,10 +74,10 @@
       "adminPassword": "replacepassword1234$",
       "sshEnabled": true,
       "windowsDockerVersion": "19.03.4",
-      "windowsPublisher": "MicrosoftWindowsServer",
-      "windowsOffer": "WindowsServer",
-      "windowsSku": "2019-Datacenter-Core-with-Containers-smalldisk",
-      "imageVersion": "17763.1282.2006061953"
+      "windowsPublisher": "microsoft-aks",
+      "windowsOffer": "aks-windows",
+      "windowsSku": "2019-datacenter-core-smalldisk-2007",
+      "imageVersion": "17763.1282.200702"
     },
     "linuxProfile": {
       "adminUsername": "azureuser",
