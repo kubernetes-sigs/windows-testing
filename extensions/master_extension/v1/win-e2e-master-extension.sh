@@ -2,8 +2,8 @@
 
 echo "start master extension" >> /tmp/master_extension.log
 
-KUBECONFIG="$(find /home/*/.kube/config)"
-KUBECTL="kubectl --kubeconfig=${KUBECONFIG}"
+export KUBECONFIG="$(find /home/*/.kube/config)"
+export KUBECTL="kubectl --kubeconfig=${KUBECONFIG}"
 
 wait_for_kube_system_pods() {
     while true; do
