@@ -1,28 +1,83 @@
 #!/bin/bash
 
-echo "start master extension" >> /tmp/master_extension.log
+set -o errexit
+set -o nounset
+set -o pipefail
 
-export KUBECONFIG="$(find /home/*/.kube/config)"
-export KUBECTL="kubectl --kubeconfig=${KUBECONFIG}"
-
-wait_for_kube_system_pods() {
-    while true; do
-    	NOTREADY_PODS=$(${KUBECTL} get pods -n kube-system -o custom-columns=STATUS:status.containerStatuses[0].ready --no-headers | grep -v "true")
-    	if [ -z "${NOTREADY_PODS}" ]; then
-    		echo "$(date -R) - All kube-system pods are ready" >> /tmp/master_extension.log
-    		${KUBECTL} get pods --all-namespaces >> /tmp/master_extension.log
-    		break
-    	fi
-    	sleep 2
-    done
+log() {
+	local msg=$1
+	echo "$(date -R): $msg"
 }
 
+wait_for_coredns_pods() {
+	log "wait for core dns"
+    while true; do
+		# must wait for a pod specifically, if use other mechinisms there is a race condition 
+		# where no system pods are deployed then the taints are applied to the node 
+		# creating a situation where the nodes never become ready for the tests.
+		# This will loop even if core-dns is created yet.
+		COREDNS_READY=$(${KUBECTL} get pods -l k8s-app=kube-dns -n kube-system -o custom-columns=STATUS:status.containerStatuses[0].ready --no-headers)
+		if [ "${COREDNS_READY}" = "true" ]; then
+			log "coredns is ready" 
+			break
+		fi
+		sleep 2
+	done
+	${KUBECTL} get pods --all-namespaces
+}
+
+wait_for_kube_system_pods() {
+	# now that the pods are there we can wait for all system pods
+	log "wait for system pods"
+	${KUBECTL} wait --for=condition=ready pod --all -n kube-system
+	log "All kube-system pods are ready" 
+	${KUBECTL} get pods --all-namespaces
+}
+
+# require exports for timeout which spawns new sub shell
+export KUBECONFIG="$(find /home/*/.kube/config)"
+export KUBECTL="kubectl --kubeconfig=${KUBECONFIG}"
+export -f wait_for_coredns_pods
 export -f wait_for_kube_system_pods
-timeout 300 bash -c wait_for_kube_system_pods || exit 1
+export -f log
+
+log "start master extension" 
+# 10m is a long time to wait but other system pods should be online shortly after
+# track the time so we can have visibility into timing and possibly lower eventually
+time timeout 500 bash -c wait_for_coredns_pods
+time timeout 500 bash -c wait_for_kube_system_pods
 
 master_node=$(${KUBECTL} get nodes | grep master | awk '{print $1}')
 
-${KUBECTL} taint nodes "$master_node" node-role.kubernetes.io/master=:NoSchedule
-${KUBECTL} label nodes "$master_node" node-role.kubernetes.io/master=NoSchedule
+${KUBECTL} taint nodes "$master_node" node-role.kubernetes.io/master=:NoSchedule || true
+${KUBECTL} label nodes "$master_node" node-role.kubernetes.io/master=NoSchedule || true
 
-echo "finish master extension" >> /tmp/master_extension.log
+# For k8s versions 1.16 1.17 1.18 pre-pull because tests images with windowsservercore as base image have a pull time in range of 10+ mins
+# For 1.19+ the images are nanoserver and have much smaller pull times
+# View image by version: https://github.com/kubernetes/kubernetes/blob/master/test/utils/image/manifest.go#L203
+currentMinorVersion=$(kubectl version -o json | jq -r .serverVersion.minor)
+currentMinorVersion=$(echo  ${currentMinorVersion//+}) #drop the + if there on builds from branches
+prepullVersions=("16 17 18")
+log "current server minor version: $currentMinorVersion"
+log "prepullVersions: ${prepullVersions}"
+if [[ " ${prepullVersions[@]} " =~ " ${currentMinorVersion} " ]]; then
+	log "running pre-pull" 
+	prepullFile="https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/gce/prepull-1.${currentMinorVersion}.yaml"
+	log "prepull file: $prepullFile"
+	${KUBECTL} create -f "$prepullFile" || true
+
+	log "wait 15m time period to let large images be pulled onto nodes" 
+	sleep 15m
+	${KUBECTL} get pods -A -o wide 
+	${KUBECTL} get ds -A -o wide
+	${KUBECTL} describe ds
+	${KUBECTL} delete -f "$prepullFile"
+	
+	log "wait 3m period for pods to be removed" 
+	sleep 3m
+fi
+
+# Check the status of all the pods.
+${KUBECTL} get pods -A -o wide 
+${KUBECTL} describe nodes
+log "finish master extension"

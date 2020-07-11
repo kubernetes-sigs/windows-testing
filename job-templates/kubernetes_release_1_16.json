@@ -26,7 +26,7 @@
       "distro": "ubuntu",
       "extensions": [
         {
-          "name": "master_extension_prepull"
+          "name": "master_extension"
         }
       ]
     },
@@ -76,7 +76,7 @@
         "script": "node_setup.ps1"
       },
       {
-        "name": "master_extension_prepull",
+        "name": "master_extension",
         "version": "v1",
         "extensionParameters": "parameters",
         "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
