@@ -60,7 +60,7 @@ There are a few important parameters that you need to use:
 
 ```bash
 export KUBECONFIG=path/to/kubeconfig
-curl https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list-ws2019 -o repo_list
+curl https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list -o repo_list
 export KUBE_TEST_REPO_LIST=$(pwd)/repo_list
 ```
 
