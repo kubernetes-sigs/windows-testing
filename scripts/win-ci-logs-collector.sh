@@ -50,15 +50,15 @@ function redact_sensitive_content {
     if ! $(sed -i -E "s/${regex}/REDACTED/gI" $file); then
         echo "Redacting failed. Log file %s will be excluded from log."
         rm $file
-    fi    
+    fi
 }
-
 
 # Collect master provisioning logs
 master_logs_output="${ARTIFACTS}/master_provisioning"
 readonly master_provisioning_logs=(
     "/tmp/master_extension.log"
     "/var/log/azure/win-e2e-master-extension.log"
+    "/var/log/azure/update-coredns.log"
     "/var/log/azure/cluster-provision.log"
     "/var/log/azure/custom-script/handler.log"
 )
@@ -66,7 +66,7 @@ readonly master_provisioning_logs=(
 mkdir -p "${master_logs_output}"
 
 for log_file in "${master_provisioning_logs[@]}"; do
-    destination="${master_logs_output}/$(basename -- ${log_file})"    
+    destination="${master_logs_output}/$(basename -- ${log_file})"
     scp ${SSH_OPTS} -i ${SSH_KEY} ${USER}@${MASTER_IP}:${log_file} ${destination}
     if [ ! $? -eq 0 ]
     then
@@ -101,7 +101,7 @@ function collect_windows_vm_logs {
     win_logs_location="${ARTIFACTS}/${win_hostname}"
     win_logs_collector_script_path="c:\\k\\Debug\\collect-windows-logs.ps1"
     win_logs_collector_script_url="https://raw.githubusercontent.com/Azure/aks-engine/master/scripts/collect-windows-logs.ps1"
-    
+
     echo "Testing connection to host ${win_hostname}."
     if ! $(ssh ${SSH_OPTS} -J ${USER}@${MASTER_IP} ${USER}@${win_hostname} "exit"); then
         return
@@ -131,7 +131,7 @@ function collect_windows_vm_logs {
 
     echo "Invoke logs_collector_script on Windows node ${win_hostname}"
     $(ssh ${SSH_OPTS} -J ${USER}@${MASTER_IP} ${USER}@${win_hostname} "powershell.exe -c \"${win_logs_collector_script_path}\"")
-    
+
     echo "Copying logs from Windows node ${win_hostname}"
     scp -T ${SSH_OPTS} -o "ProxyJump ${USER}@${MASTER_IP}" ${USER}@${win_hostname}:"c:\\Users\\${USER}\\*.zip" "${win_logs_location}/debug.zip"
     if [ ! $? -eq 0 ]
@@ -143,7 +143,7 @@ function collect_windows_vm_logs {
 
 function collect_agentpool_logs() {
     agentpool_prefix=${1}
-    # TODO (adelina-t): We should actually call this script with the exact number of vms per agent pool. 
+    # TODO (adelina-t): We should actually call this script with the exact number of vms per agent pool.
     # Until we fix this, we can safely assume a maximum of 3 vms per agent pool.
     for i in $(seq 0 2)
     do
@@ -158,7 +158,7 @@ function collect_agentpool_logs() {
 
 
 if [ ! -x $(command -v ssh-agent) ] ; then
-    echo "In order to ProxyJump for collecting Windows logs, ssh-agent is requred. Cannot find ssh-agent. Exiting." 
+    echo "In order to ProxyJump for collecting Windows logs, ssh-agent is requred. Cannot find ssh-agent. Exiting."
 fi
 
 if [ -z ${SSH_AUTH_SOCK} ]; then
