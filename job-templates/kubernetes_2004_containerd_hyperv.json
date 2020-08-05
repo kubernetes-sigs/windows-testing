@@ -16,7 +16,8 @@
         },
         "networkPlugin": "azure",
         "containerRuntime": "containerd",
-        "windowsContainerdURL": "https://github.com/marosset/windows-cri-containerd/releases/download/nightly/windows-cri-containerd.zip"
+        "windowsContainerdURL": "https://k8swin.blob.core.windows.net/k8s-windows/containerd/containerplat-aks-test-0.0.6.zip",
+        "windowsSdnPluginURL": "https://k8swin.blob.core.windows.net/k8s-windows/windows-cni-containerd-custom.zip"
       }
     },
     "masterProfile": {
@@ -48,7 +49,11 @@
       "adminUsername": "azureuser",
       "adminPassword": "replacepassword1234$",
       "enableCSIProxy": true,
-      "sshEnabled": true
+      "sshEnabled": true,
+      "windowsPublisher": "MicrosoftWindowsServer",
+      "windowsOffer": "WindowsServer",
+      "windowsSku": "Datacenter-Core-2004-with-Containers-smalldisk",
+      "imageVersion": "19041.329.2006042019"
     },
     "linuxProfile": {
       "adminUsername": "azureuser",
