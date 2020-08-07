@@ -47,7 +47,6 @@
     "windowsProfile": {
       "adminUsername": "azureuser",
       "adminPassword": "replacepassword1234$",
-      "enableCSIProxy": true,
       "sshEnabled": true,
       "windowsPublisher": "MicrosoftWindowsServer",
       "windowsOffer": "WindowsServer",
