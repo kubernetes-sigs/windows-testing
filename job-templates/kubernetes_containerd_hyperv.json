@@ -52,7 +52,7 @@
       "windowsPublisher": "microsoft-aks",
       "windowsOffer": "aks-windows",
       "windowsSku": "2019-datacenter-core-smalldisk-containerd-2005",
-      "imageVersion": "17763.1158.200501"
+      "imageVersion": "17763.1158.200502"
     },
     "linuxProfile": {
       "adminUsername": "azureuser",

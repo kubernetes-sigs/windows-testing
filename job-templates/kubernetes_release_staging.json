@@ -77,7 +77,7 @@
       "windowsPublisher": "microsoft-aks",
       "windowsOffer": "aks-windows",
       "windowsSku": "2019-datacenter-core-smalldisk-2007",
-      "imageVersion": "17763.1282.200702"
+      "imageVersion": "17763.1339.200718"
     },
     "linuxProfile": {
       "adminUsername": "azureuser",

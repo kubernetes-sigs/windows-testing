@@ -28,7 +28,11 @@
             "adminPassword": "replacepassword1234$",
             "csiProxyURL": "https://k8scsi.blob.core.windows.net/csi-proxy/v0.1.0/binaries/csi-proxy.tar.gz",
             "enableCSIProxy": true,
-            "sshEnabled": true
+            "sshEnabled": true,
+            "windowsPublisher": "microsoft-aks",
+            "windowsOffer": "aks-windows",
+            "windowsSku": "2019-datacenter-core-smalldisk-2007",
+            "imageVersion": "17763.1339.200718"
         },
         "linuxProfile": {
             "adminUsername": "azureuser",
