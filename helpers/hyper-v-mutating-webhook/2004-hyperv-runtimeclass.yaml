@@ -1,0 +1,15 @@
+apiVersion: node.k8s.io/v1beta1
+kind: RuntimeClass
+metadata:
+  name: windows-2004
+handler: 'runhcs-wcow-hypervisor-19041'
+scheduling:
+  nodeSelector:
+    kubernetes.io/os: 'windows'
+    kubernetes.io/arch: 'amd64'
+    node.kubernetes.io/windows-build: '10.0.19041'
+  tolerations:
+  - effect: NoSchedule
+    key: os
+    operator: Equal 
+    value: "windows"
