@@ -60,6 +60,7 @@ readonly master_provisioning_logs=(
     "/var/log/azure/win-e2e-master-extension.log"
     "/var/log/azure/update-coredns.log"
     "/var/log/azure/cluster-provision.log"
+    "/var/log/azure/configure-hyperv-webhook.log"
     "/var/log/azure/custom-script/handler.log"
 )
 
