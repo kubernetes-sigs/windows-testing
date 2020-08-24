@@ -27,22 +27,21 @@ agent_nodes=$(${KUBECTL} get nodes | grep agent | awk '{print $1}' | tr '\n' ' '
 ${KUBECTL} taint nodes $agent_nodes os=windows:NoSchedule
 
 log "installing runtime-class"
-${KUBECTL} apply -f https://raw.githubusercontent.com/marosset/windows-testing/hyper-v-admission-controller/helpers/hyper-v-mutating-webhook/2004-hyperv-runtimeclass.yaml
+${KUBECTL} apply -f https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/helpers/hyper-v-mutating-webhook/2004-hyperv-runtimeclass.yaml
 
 log "installing cert-manager"
 ${KUBECTL} apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.2/cert-manager.yaml
 
 log "wait for cert-manager pods to start"
-kubectl wait --for=condition=ready pod --all -n cert-manager --timeout 5m
+timeout 5m ${KUBECTL} wait --for=condition=ready pod --all -n cert-manager --timeout -1s
 
 log "installing admission controller webhook"
-${KUBECTL} apply -f https://raw.githubusercontent.com/marosset/windows-testing/hyper-v-admission-controller/helpers/hyper-v-mutating-webhook/deployment.yaml
+${KUBECTL} apply -f https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/helpers/hyper-v-mutating-webhook/deployment.yaml
 
 log "wait for webhook pods to go start"
-kubectl wait --for=condition=ready pod --all -n hyper-v-mutator-system --timeout 5m
+timeout 5m ${KUBECTL} wait --for=condition=ready pod --all -n hyper-v-mutator-system --timeout -1s
 
 log "taining master nodes again"
-master_node=$(${KUBECTL} get nodes | grep master | awk '{print $1}')
 ${KUBECTL} taint nodes "$master_node" node-role.kubernetes.io/master=:NoSchedule || true
 
 log "exiting configure-hyperv-webhook extension"
