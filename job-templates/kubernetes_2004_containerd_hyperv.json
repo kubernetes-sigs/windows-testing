@@ -16,8 +16,7 @@
         },
         "networkPlugin": "azure",
         "containerRuntime": "containerd",
-        "windowsContainerdURL": "https://k8swin.blob.core.windows.net/k8s-windows/containerd/containerplat-aks-test-0.0.8.zip",
-        "windowsSdnPluginURL": "https://k8swin.blob.core.windows.net/k8s-windows/windows-cni-containerd-custom.zip"
+        "windowsContainerdURL": "https://k8swin.blob.core.windows.net/k8s-windows/containerd/containerplat-aks-test-0.0.8.zip"
       }
     },
     "masterProfile": {
@@ -28,6 +27,9 @@
       "extensions": [
         {
           "name": "master_extension"
+        },
+        {
+          "name": "hyperv-mutating-webhook"
         }
       ]
     },
@@ -81,6 +83,13 @@
         "extensionParameters": "parameters",
         "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
         "script": "win-e2e-master-extension.sh"
+      },
+      {
+        "name": "hyperv-mutating-webhook",
+        "version": "v1",
+        "extensionParameters": "parameters",
+        "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
+        "script": "configure-hyperv-webhook.sh"
       }
     ]
   }
