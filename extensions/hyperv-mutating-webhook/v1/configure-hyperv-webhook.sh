@@ -23,6 +23,9 @@ master_node=$(${KUBECTL} get nodes | grep master | awk '{print $1}')
 ${KUBECTL} taint nodes "$master_node" node-role.kubernetes.io/master=:NoSchedule- || true
 
 log "tainting Windows agent nodes"
+# We need to taint the Windows nodes so certmanager and webhook pods land on the master node
+# which runs linux then untaint the nodes again afterward to pass a node readiness check at
+# the beginning of the e2e run.
 agent_nodes=$(${KUBECTL} get nodes | grep agent | awk '{print $1}' | tr '\n' ' ')
 ${KUBECTL} taint nodes $agent_nodes os=windows:NoSchedule
 
@@ -40,6 +43,9 @@ ${KUBECTL} apply -f https://raw.githubusercontent.com/kubernetes-sigs/windows-te
 
 log "wait for webhook pods to go start"
 timeout 5m ${KUBECTL} wait --for=condition=ready pod --all -n hyper-v-mutator-system --timeout -1s
+
+log "untainting Windows agent nodes"
+${KUBECTL} taint nodes $agent_nodes os=windows:NoSchedule-
 
 log "taining master nodes again"
 ${KUBECTL} taint nodes "$master_node" node-role.kubernetes.io/master=:NoSchedule || true
