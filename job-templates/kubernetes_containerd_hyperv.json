@@ -16,8 +16,7 @@
         },
         "networkPlugin": "azure",
         "containerRuntime": "containerd",
-        "windowsContainerdURL": "https://k8swin.blob.core.windows.net/k8s-windows/containerd/containerplat-aks-test-0.0.8.zip",
-        "windowsSdnPluginURL": "https://k8swin.blob.core.windows.net/k8s-windows/windows-cni-containerd-custom.zip"
+        "windowsContainerdURL": "https://k8swin.blob.core.windows.net/k8s-windows/containerd/containerplat-aks-test-0.0.8.zip"
       }
     },
     "masterProfile": {
@@ -52,7 +51,15 @@
       "windowsPublisher": "microsoft-aks",
       "windowsOffer": "aks-windows",
       "windowsSku": "2019-datacenter-core-smalldisk-containerd-2005",
-      "imageVersion": "17763.1158.200502"
+      "imageVersion": "17763.1158.200502",
+      "windowsRuntimes": {
+        "default": "hyperv",
+        "hypervRuntimes": [
+          {
+            "buildNumber": "17763"
+          }
+        ]
+      }
     },
     "linuxProfile": {
       "adminUsername": "azureuser",
