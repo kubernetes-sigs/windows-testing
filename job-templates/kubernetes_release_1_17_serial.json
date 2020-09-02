@@ -26,6 +26,9 @@
       "extensions": [
         {
           "name": "master_extension"
+        },
+        {
+          "name": "gmsa-coredns"
         }
       ]
     },
@@ -40,7 +43,30 @@
         "preProvisionExtension": {
           "name": "agent_preprovision_extension",
           "singleOrAll": "all"
-        }
+        },
+        "extensions": [
+          {
+            "name": "gmsa-member",
+            "singleOrAll": "all"
+          }
+        ]
+      },
+      {
+        "name": "windowsgmsa",
+        "count": 1,
+        "vmSize": "Standard_D2s_v3",
+        "osDiskSizeGB": 128,
+        "availabilityProfile": "AvailabilitySet",
+        "osType": "Windows",
+        "preProvisionExtension": {
+          "name": "agent_preprovision_extension",
+          "singleOrAll": "all"
+        },
+        "extensions": [
+          {
+            "name": "gmsa-dc"
+          }
+        ]
       }
     ],
     "windowsProfile": {
@@ -79,6 +105,23 @@
         "extensionParameters": "parameters",
         "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
         "script": "win-e2e-master-extension.sh"
+      },
+      {
+        "name": "gmsa-coredns",
+        "version": "v1",
+        "extensionParameters": "parameters",
+        "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
+        "script": "update-coredns.sh"
+      },
+      {
+        "name": "gmsa-member",
+        "version": "v1",
+        "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/"
+      },
+      {
+        "name": "gmsa-dc",
+        "version": "v1",
+        "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/"
       }
     ]
   }
