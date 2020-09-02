@@ -36,11 +36,7 @@
         "vmSize": "Standard_D2s_v3",
         "osDiskSizeGB": 128,
         "availabilityProfile": "AvailabilitySet",
-        "osType": "Windows",
-        "preProvisionExtension": {
-          "name": "agent_preprovision_extension",
-          "singleOrAll": "all"
-        }
+        "osType": "Windows"
       }
     ],
     "windowsProfile": {
@@ -67,12 +63,6 @@
       "secret": ""
     },
     "extensionProfiles": [
-      {
-        "name": "agent_preprovision_extension",
-        "version": "v1",
-        "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
-        "script": "node_setup.ps1"
-      },
       {
         "name": "master_extension",
         "version": "v1",
