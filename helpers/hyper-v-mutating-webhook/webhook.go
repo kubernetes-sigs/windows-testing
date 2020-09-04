@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	corev1 "k8s.io/api/core/v1"
@@ -38,16 +39,25 @@ func (a *podUpdater) Handle(ctx context.Context, req admission.Request) admissio
 	}
 
 	podName := pod.Name
-	os := pod.Spec.NodeSelector["kubernetes.io/os"]
-	webhookLogger.Info("Inspecing pod '%s' - 'kubernetes.io/os=%s'", podName, os)
 
-	if os == "windows" {
-		webhookLogger.Info("Updating pod '%s'", podName)
-		pod.Spec.RuntimeClassName = &windows2004
-		c := pod.Spec.Containers[0]
+	// e2e.test does not add nodeSelector fields to pods it schedules so this will
+	// update image fields for ALL pods scheduled to the cluster.
+	webhookLogger.Info(fmt.Sprintf("Adding '%s' runtimeClass to containers in pod '%s'", windows2004, podName))
+	pod.Spec.RuntimeClassName = &windows2004
+
+	containers := []corev1.Container{}
+	for _, c := range pod.Spec.Containers {
 		c.Image = c.Image + "-windows-amd64-2004"
-		pod.Spec.Containers[0] = c
+		containers = append(containers, c)
 	}
+	pod.Spec.Containers = containers
+
+	containers = []corev1.Container{}
+	for _, c := range pod.Spec.InitContainers {
+		c.Image = c.Image + "-windows-amd64-2004"
+		containers = append(containers, c)
+	}
+	pod.Spec.InitContainers = containers
 
 	marshaledPod, err := json.Marshal(pod)
 	if err != nil {
