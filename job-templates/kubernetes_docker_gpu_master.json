@@ -1,0 +1,72 @@
+{
+  "apiVersion": "vlabs",
+  "properties": {
+    "featureFlags": {
+      "enableTelemetry": true
+    },
+    "orchestratorProfile": {
+      "orchestratorType": "Kubernetes",
+      "orchestratorRelease": "",
+      "kubernetesConfig": {
+        "apiServerConfig": {
+          "--runtime-config": "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true"
+        },
+        "kubeletConfig": {
+          "--feature-gates": "KubeletPodResources=false"
+        },
+        "networkPlugin": "azure",
+        "containerRuntime": "docker"
+      }
+    },
+    "masterProfile": {
+      "count": 1,
+      "dnsPrefix": "",
+      "vmSize": "Standard_D2_v3",
+      "distro": "aks-ubuntu-18.04",
+      "extensions": [
+        {
+          "name": "master_extension"
+        }
+      ]
+    },
+    "agentPoolProfiles": [
+      {
+        "name": "windowspool1",
+        "count": 1,
+        "vmSize": "Standard_NC6",
+        "osDiskSizeGB": 128,
+        "availabilityProfile": "AvailabilitySet",
+        "osType": "Windows"
+      }
+    ],
+    "windowsProfile": {
+      "adminUsername": "azureuser",
+      "adminPassword": "replacepassword1234$",
+      "enableCSIProxy": true,
+      "sshEnabled": true
+    },
+    "linuxProfile": {
+      "adminUsername": "azureuser",
+      "ssh": {
+        "publicKeys": [
+          {
+            "keyData": ""
+          }
+        ]
+      }
+    },
+    "servicePrincipalProfile": {
+      "clientId": "",
+      "secret": ""
+    },
+    "extensionProfiles": [
+      {
+        "name": "master_extension",
+        "version": "v1",
+        "extensionParameters": "parameters",
+        "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
+        "script": "win-e2e-master-extension.sh"
+      }
+    ]
+  }
+}
