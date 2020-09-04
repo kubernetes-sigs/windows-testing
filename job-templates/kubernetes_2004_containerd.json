@@ -6,7 +6,7 @@
     },
     "orchestratorProfile": {
       "orchestratorType": "Kubernetes",
-      "orchestratorRelease": "1.18",
+      "orchestratorRelease": "",
       "kubernetesConfig": {
         "apiServerConfig": {
           "--runtime-config": "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true"
@@ -16,7 +16,7 @@
         },
         "networkPlugin": "azure",
         "containerRuntime": "containerd",
-        "windowsContainerdURL": "https://github.com/marosset/windows-cri-containerd/releases/download/nightly/windows-cri-containerd.zip"
+        "windowsContainerdURL": "https://github.com/containerd/containerd/releases/download/v1.4.0/containerd-1.4.0-windows-amd64.tar.gz"
       }
     },
     "masterProfile": {
@@ -37,11 +37,7 @@
         "vmSize": "Standard_D2s_v3",
         "osDiskSizeGB": 128,
         "availabilityProfile": "AvailabilitySet",
-        "osType": "Windows",
-        "preProvisionExtension": {
-          "name": "agent_preprovision_extension",
-          "singleOrAll": "all"
-        }
+        "osType": "Windows"
       }
     ],
     "windowsProfile": {
@@ -68,12 +64,6 @@
       "secret": ""
     },
     "extensionProfiles": [
-      {
-        "name": "agent_preprovision_extension",
-        "version": "v1",
-        "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
-        "script": "node_setup.ps1"
-      },
       {
         "name": "master_extension",
         "version": "v1",

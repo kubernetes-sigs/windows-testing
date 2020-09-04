@@ -6,17 +6,17 @@
     },
     "orchestratorProfile": {
       "orchestratorType": "Kubernetes",
-      "orchestratorRelease": "1.16",
+      "orchestratorRelease": "1.19",
       "kubernetesConfig": {
-        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.30/azure-vnet-cni-linux-amd64-v1.0.30.tgz",
-        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.0.30/azure-vnet-cni-windows-amd64-v1.0.30.zip",
+        "apiServerConfig": {
+          "--runtime-config": "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true"
+        },
         "kubeletConfig": {
           "--feature-gates": "KubeletPodResources=false"
         },
-        "apiServerConfig": {
-          "--runtime-config": "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true",
-          "--feature-gates": "WindowsRunAsUserName=true"
-        }
+        "networkPlugin": "azure",
+        "containerRuntime": "containerd",
+        "windowsContainerdURL": "https://github.com/containerd/containerd/releases/download/v1.4.0/containerd-1.4.0-windows-amd64.tar.gz"
       }
     },
     "masterProfile": {
@@ -43,12 +43,12 @@
     "windowsProfile": {
       "adminUsername": "azureuser",
       "adminPassword": "replacepassword1234$",
+      "enableCSIProxy": true,
       "sshEnabled": true,
-      "windowsDockerVersion": "18.09.7",
       "windowsPublisher": "microsoft-aks",
       "windowsOffer": "aks-windows",
-      "windowsSku": "2019-datacenter-core-smalldisk-2008",
-      "imageVersion": "17763.1397.200820"
+      "windowsSku": "2019-datacenter-core-smalldisk-containerd-2005",
+      "imageVersion": "17763.1158.200502"
     },
     "linuxProfile": {
       "adminUsername": "azureuser",

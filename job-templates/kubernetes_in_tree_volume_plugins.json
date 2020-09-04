@@ -6,7 +6,7 @@
         },
         "orchestratorProfile": {
             "orchestratorType": "Kubernetes",
-            "orchestratorRelease": "1.18"
+            "orchestratorRelease": ""
         },
         "masterProfile": {
             "count": 1,
