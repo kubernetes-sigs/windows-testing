@@ -193,7 +193,7 @@ spec:
         - --enable-leader-election
         command:
         - /manager
-        image: e2eteam/hyper-v-mutating-webhook:0.1.0
+        image: e2eteam/hyper-v-mutating-webhook:0.1.1
         imagePullPolicy: Always
         name: manager
         ports:
