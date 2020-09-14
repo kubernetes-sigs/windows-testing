@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -16,9 +17,10 @@ import (
 // +kubebuilder:webhook:path=/mutate-v1-pod,mutating=true,failurePolicy=fail,groups="",resources=pods,verbs=create;update,versions=v1,name=mpod.kb.io
 
 var (
-	webhookLogger = ctrl.Log.WithName("webhook")
-	windows2019   = "windows-2019"
-	windows2004   = "windows-2004"
+	webhookLogger        = ctrl.Log.WithName("webhook")
+	windows2019          = "windows-2019"
+	windows2004          = "windows-2004"
+	windows2004tagSuffix = "-windows-amd64-2004"
 )
 
 // podUpdater updates Pods
@@ -47,14 +49,18 @@ func (a *podUpdater) Handle(ctx context.Context, req admission.Request) admissio
 
 	containers := []corev1.Container{}
 	for _, c := range pod.Spec.Containers {
-		c.Image = c.Image + "-windows-amd64-2004"
+		if !strings.HasSuffix(c.Image, windows2004tagSuffix) {
+			c.Image = c.Image + windows2004tagSuffix
+		}
 		containers = append(containers, c)
 	}
 	pod.Spec.Containers = containers
 
 	containers = []corev1.Container{}
 	for _, c := range pod.Spec.InitContainers {
-		c.Image = c.Image + "-windows-amd64-2004"
+		if !strings.HasSuffix(c.Image, windows2004tagSuffix) {
+			c.Image = c.Image + windows2004tagSuffix
+		}
 		containers = append(containers, c)
 	}
 	pod.Spec.InitContainers = containers
