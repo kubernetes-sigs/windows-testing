@@ -16,7 +16,7 @@
         },
         "networkPlugin": "azure",
         "containerRuntime": "containerd",
-        "windowsContainerdURL": "https://k8swin.blob.core.windows.net/k8s-windows/containerd/containerplat-aks-test-0.0.8.zip"
+        "windowsContainerdURL": "https://kubernetesartifacts.azureedge.net/containerd/ms/0.0.11-1/binaries/containerd-windows-0.0.11-1.zip"
       }
     },
     "masterProfile": {
