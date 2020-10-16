@@ -53,7 +53,7 @@ export -f log
 log "start master extension"
 # 10m is a long time to wait but other system pods should be online shortly after
 # track the time so we can have visibility into timing and possibly lower eventually
-time timeout 500 bash -c wait_for_agent_nodes
+time timeout 900 bash -c wait_for_agent_nodes
 time timeout 500 bash -c wait_for_coredns_pods
 time timeout 500 bash -c wait_for_kube_system_pods
 
