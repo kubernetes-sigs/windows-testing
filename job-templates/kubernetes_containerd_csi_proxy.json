@@ -7,8 +7,10 @@
         "orchestratorProfile": {
             "orchestratorType": "Kubernetes",
             "orchestratorRelease": "",
-            "containerRuntime": "containerd",
-            "windowsContainerdURL": "https://github.com/marosset/windows-cri-containerd/releases/download/nightly/windows-cri-containerd.zip"
+            "kubernetesConfig": {
+                "containerRuntime": "containerd",
+                "windowsContainerdURL": "https://github.com/marosset/windows-cri-containerd/releases/download/nightly/windows-cri-containerd.zip"
+            }
         },
         "masterProfile": {
             "count": 1,
