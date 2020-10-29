@@ -17,7 +17,7 @@
         },
         "networkPlugin": "azure",
         "containerRuntime": "containerd",
-        "windowsContainerdURL": "https://kubernetesartifacts.azureedge.net/containerd/ms/0.0.13/binaries/containerd-windows-0.0.13.zip"
+        "windowsContainerdURL": "https://kubernetesartifacts.azureedge.net/containerd/ms/0.0.14/binaries/containerd-windows-0.0.14.zip"
       }
     },
     "masterProfile": {
