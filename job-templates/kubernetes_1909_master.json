@@ -5,6 +5,7 @@
       "orchestratorType": "Kubernetes",
       "orchestratorRelease": "",
       "kubernetesConfig": {
+        "useManagedIdentity": false,
         "kubeletConfig": {
           "--feature-gates": "KubeletPodResources=false"
         },
