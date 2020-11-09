@@ -8,6 +8,7 @@
             "orchestratorType": "Kubernetes",
             "orchestratorRelease": "",
             "kubernetesConfig": {
+                "useManagedIdentity": false,
                 "containerRuntime": "containerd",
                 "windowsContainerdURL": "https://github.com/marosset/windows-cri-containerd/releases/download/nightly/windows-cri-containerd.zip"
             }

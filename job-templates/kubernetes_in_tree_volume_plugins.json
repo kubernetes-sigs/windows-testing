@@ -6,7 +6,10 @@
         },
         "orchestratorProfile": {
             "orchestratorType": "Kubernetes",
-            "orchestratorRelease": ""
+            "orchestratorRelease": "",
+            "kubernetesConfig": {
+                "useManagedIdentity": false
+            }
         },
         "masterProfile": {
             "count": 1,
