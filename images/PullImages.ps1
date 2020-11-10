@@ -13,7 +13,7 @@
 # limitations under the License.
 
 Param(
-    [string]$Repository = "e2eteam"
+    [string]$Repository = "k8sprow.azurecr.io/kubernetes-e2e-test-images"
  )
 
 $VerbosePreference = "continue"

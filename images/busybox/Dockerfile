@@ -13,7 +13,7 @@
 # limitations under the License.
 
 ARG BASE_IMAGE=microsoft/windowsservercore:1803
-FROM e2eteam/curl:1803 AS prep
+FROM k8sprow.azurecr.io/kubernetes-e2e-test-images/curl:1803 AS prep
 FROM $BASE_IMAGE
 
 COPY --from=prep /curl/ /curl

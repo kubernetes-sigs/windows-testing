@@ -193,7 +193,7 @@ spec:
         - --enable-leader-election
         command:
         - /manager
-        image: e2eteam/hyper-v-mutating-webhook:0.1.1
+        image: k8sprow.azurecr.io/kubernetes-e2e-test-images/hyper-v-mutating-webhook:0.1.1
         imagePullPolicy: Always
         name: manager
         ports:

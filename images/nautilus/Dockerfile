@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_IMAGE=e2eteam/test-webserver:1.0
+ARG BASE_IMAGE=k8sprow.azurecr.io/kubernetes-e2e-test-images/test-webserver:1.0
 FROM $BASE_IMAGE
 COPY html/nautilus.jpg nautilus.jpg
 COPY html/data.json data.json
