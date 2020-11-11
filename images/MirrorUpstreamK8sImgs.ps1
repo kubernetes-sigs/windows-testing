@@ -94,7 +94,7 @@ function ManifestList
 
     $image | Add-Member -MemberType NoteProperty -Name LinuxImage -Value $linuxImage
 
-    $windowsImage = ImageFullName -Repo "e2eteam" -Name $image.Name
+    $windowsImage = ImageFullName -Repo "k8sprow.azurecr.io/kubernetes-e2e-test-images" -Name $image.Name
     $image | Add-Member -MemberType NoteProperty -Name WindowsImage -Value $windowsImage
 
 

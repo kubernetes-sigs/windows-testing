@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_BUSYBOX_IMAGE=e2eteam/busybox:1.29
+ARG BASE_BUSYBOX_IMAGE=k8sprow.azurecr.io/kubernetes-e2e-test-images/busybox:1.29
 FROM $BASE_BUSYBOX_IMAGE
 
 # install download RethinkDB.

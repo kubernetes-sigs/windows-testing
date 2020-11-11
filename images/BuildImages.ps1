@@ -14,7 +14,7 @@
 
 Param(
     [string]$BaseImage = "microsoft/windowsservercore:1803",
-    [string]$Repository = "e2eteam",
+    [string]$Repository = "k8sprow.azurecr.io/kubernetes-e2e-test-images",
     [bool]$Recreate = $true,
     [bool]$PushToDocker = $false
  )

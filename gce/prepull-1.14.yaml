@@ -16,7 +16,7 @@ spec:
       # To see containers that are known to be used in e2e tests, run this
       # command against the build-log.txt output from a test run:
       #   grep -v 'Node Info: &Node' build-log.txt \
-      #     | grep -ho -E 'e2eteam/([[:alnum:]_-]+):([[:alnum:]./_-]+)' \
+      #     | grep -ho -E 'k8sprow.azurecr.io/kubernetes-e2e-test-images/([[:alnum:]_-]+):([[:alnum:]./_-]+)' \
       #     | sort | uniq
       # NOTE: this command captures only a subset of the test containers,
       # unfortunately; not all test containers will have their names printed in
@@ -31,193 +31,193 @@ spec:
       # run ping in each container to keep it alive so that kubernetes does not
       # continually restart the containers while we're prepulling.
       containers:
-      - image: e2eteam/busybox:1.29
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/busybox:1.29
         name: busybox1
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/dnsutils:1.1
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/dnsutils:1.1
         name: dnsutils-11
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/echoserver:2.2
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/echoserver:2.2
         name: echoserver-22
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/entrypoint-tester:1.0
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/entrypoint-tester:1.0
         name: entrypoint-tester-10
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/etcd:v3.3.10
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/etcd:v3.3.10
         name: etcd-v3310
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/fakegitserver:1.0
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/fakegitserver:1.0
         name: fakegitserver-10
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/gb-frontend:v6
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/gb-frontend:v6
         name: gb-frontend-v6
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/gb-redisslave:v3
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/gb-redisslave:v3
         name: gb-redisslave-v3
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/hostexec:1.1
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/hostexec:1.1
         name: hostexec-11
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/iperf:1.0
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/iperf:1.0
         name: iperf-10
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/jessie-dnsutils:1.0
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/jessie-dnsutils:1.0
         name: jessie-dnsutils17
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/kitten:1.0
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/kitten:1.0
         name: kitten18
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/liveness:1.1
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/liveness:1.1
         name: liveness19
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/logs-generator:1.0
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/logs-generator:1.0
         name: logs-generator20
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/mounttest:1.0
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/mounttest:1.0
         name: mounttest21
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/nautilus:1.0
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/nautilus:1.0
         name: nautilus22
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/net:1.0
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/net:1.0
         name: net23
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/netexec:1.1
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/netexec:1.1
         name: netexec24
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/nettest:1.0
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/nettest:1.0
         name: nettest25
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/nginx:1.14-alpine
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/nginx:1.14-alpine
         name: nginx26
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/nginx:1.15-alpine
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/nginx:1.15-alpine
         name: nginx27
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/no-snat-test:1.0
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/no-snat-test:1.0
         name: no-snat-test28
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/pause:3.1
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/pause:3.1
         name: pause29
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/porter:1.0
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/porter:1.0
         name: porter31
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/port-forward-tester:1.0
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/port-forward-tester:1.0
         name: port-forward-tester30
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/redis:1.0
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/redis:1.0
         name: redis32
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/resource-consumer:1.5
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/resource-consumer:1.5
         name: resource-consumer-15
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/resource-consumer-controller:1.0
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/resource-consumer-controller:1.0
         name: resource-consumer-controller34
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/sample-apiserver:1.10
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/sample-apiserver:1.10
         name: sample-apiserver36
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/serve-hostname:1.1
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/serve-hostname:1.1
         name: serve-hostname37
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/webhook:1.14v1
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/webhook:1.14v1
         name: webhook38
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: e2eteam/test-webserver:1.0
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/test-webserver:1.0
         name: test-webserver4
         resources:
           requests:

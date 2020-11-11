@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_IMAGE=e2eteam/java:openjdk-8-jre
+ARG BASE_IMAGE=k8sprow.azurecr.io/kubernetes-e2e-test-images/java:openjdk-8-jre
 FROM $BASE_IMAGE
 
 # install CassandraDB.
