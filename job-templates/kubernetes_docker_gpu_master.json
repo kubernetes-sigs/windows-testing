@@ -43,7 +43,7 @@
     "windowsProfile": {
       "adminUsername": "azureuser",
       "adminPassword": "replacepassword1234$",
-      "enableCSIProxy": true,
+      "enableCSIProxy": false,
       "sshEnabled": true
     },
     "linuxProfile": {
