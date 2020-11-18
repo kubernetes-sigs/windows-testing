@@ -16,37 +16,14 @@ The rest of this page has a summary of those steps tailored for testing clusters
 
 ## Building the tests
 
-### Build the Kubernetes generic e2e.test binary
+Testing windows is not different from regular testing of k8s clusters.  If you have never used a tool such as *e2e.test* or *sonobuoy* to run the Conformance (or other ginkgo based) test suites, then you should familiarize your self with that, first.
 
-The official steps for running k8s e2es are in [kubernetes/community](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/e2e-tests.md#building-kubernetes-and-running-the-tests). For more details, be sure to read that doc.
+Some resources introducing the e2e test framework:
 
-This is just a short summary
+- https://kubernetes.io/blog/2019/03/22/kubernetes-end-to-end-testing-for-everyone/
+- https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/e2e-tests.md#building-kubernetes-and-running-the-tests
 
-Make sure you have a working [Kubernetes development environment](https://github.com/kubernetes/community/blob/master/contributors/devel/development.md) on a Mac or Linux machine. If you're using Windows, you can use WSL, but it will be slower than a Linux VM. The tests can be run from the same VM, as long as you have a working KUBECONFIG.
-
-```bash
-go get -d k8s.io/kubernetes
-cd $GOPATH/src/k8s.io/kubernetes
-./build/run.sh make WHAT=test/e2e/e2e.test
-```
-Once complete, the binary will be available at: `~/go/src/k8s.io/kubernetes/_output/dockerized/bin/linux/amd64/e2e.test`
-
-#### Cross-building for Mac or Windows
-
-To build a binary to run on Mac or Windows, you can add `KUBE_BUILD_PLATFORMS`.
-
-For Windows
-```bash
-./build/run.sh make KUBE_BUILD_PLATFORMS=windows/amd64 WHAT=test/e2e/e2e.test
-```
-
-For Mac
-```bash
-./build/run.sh make KUBE_BUILD_PLATFORMS=darwin/amd64 WHAT=test/e2e/e2e.test
-```
-
-Your binaries will be available at `~/go/src/k8s.io/kubernetes/_output/dockerized/bin/linux/amd64/e2e.test` where `linux/amd64/` is replaced by `KUBE_BUILD_PLATFORMS` if you are building on Mac or Windows.
-
+Now, assuming you are able to build an e2e.test binary, we'll proceed with how windows the tests work.
 
 ## Running the e2e.test binary on a windows enabled cluster
 
@@ -258,3 +235,65 @@ go test  # Run the tests
 ## Building Test Images
 
 [images/](images/README.md) - has all of the container images used in e2e test passes and the scripts to build them. They are replacement Windows containers for those in [kubernetes/test/images](https://github.com/kubernetes/kubernetes/tree/master/test/images)
+
+# Questions
+
+## Is there an equivalent to a Conformance test suite for windows ? 
+
+There is not yet a formal equivalent.  The purpose of this repo is to store existing tests which sig-windows currently runs, and to provide CI signal for windows to upstream Kubernetes.  If you run the e2e.test suite with the `sig-windows` ginkgo filter and the `--ginkgo.dryRun` option, you'll see the list of tests which are currently in upstream.  these are listed below.  In order to implement Conformance tests for windows - we would need to, on a large scale, implement windows specific logic for certain things.  There has been made some progress on this (for example, with the agnhost container), but by in large the ability to run most tests on windows/linux interchangeably doesn't yet exist.
+
+## Can I run sonobuoy as a way to test windows Conformance ? 
+
+Sonobuoy is currently not aware of windows/linux taints, and thus might not currently run the end to end test suites on a mixed windows/linux cluster, and also does not yet have an option for enabling specific node-os behaviour (via the `node-os-distro` flag).
+
+## How many tests run ? 
+
+As of Kubernetes 1.19, there are currently tests in upstream Kubernetes (1.19) which specifically target the windows feature.
+
+• [sig-windows] [Feature:Windows] SecurityContext should not be able to create pods with unknown usernames"
+• [sig-windows] [Feature:Windows] SecurityContext should override SecurityContext username if set"
+• [sig-windows] Windows volume mounts  check volume mount permissions container should have readOnly permissions on emptyDir"
+• [sig-windows] [Feature:Windows] Density [Serial] [Slow] create a batch of pods latency/resource should be within limit when create 10 pods with 0s interval"
+• [sig-windows] [Feature:Windows] SecurityContext should be able create pods and run containers with a given username"
+• [sig-windows] [Feature:Windows] Cpu Resources [Serial] Container limits should not be exceeded after waiting 2 minutes" 
+• [sig-windows] Services should be able to create a functioning NodePort service for Windows", 
+• [sig-windows] [Feature:Windows] SecurityContext should ignore Linux Specific SecurityContext if 
+• [sig-windows] [Feature:Windows] GMSA Full [Serial] [Slow] GMSA support works end to end" 
+• [sig-windows] [Feature:Windows] GMSA Kubelet [Slow] kubelet GMSA support when creating a pod with correct GMSA credential 
+• [sig-windows] [Feature:Windows] Kubelet-Stats [Serial] Kubelet stats collection for Windows nodes when running 10 pods should return within 10 seconds"
+• [sig-windows] Hybrid cluster network for all supported CNIs should have stable networking for Linux and Windows pods"
+• [sig-windows] [Feature:Windows] Memory Limits [Serial] [Slow] Allocatable node memory should be equal to a calculated allocatable memory value"
+• [sig-windows] [Feature:Windows] Memory Limits [Serial] [Slow] attempt to deploy past allocatable memory limits should fail deployments of pods once there isn't enough memory"
+• [sig-windows] Windows volume mounts  check volume mount permissions container should have readOnly permissions
+
+## How do i biuld the e2e.test binary? 
+
+### Build the Kubernetes generic e2e.test binary
+
+This is just a short summary
+
+Make sure you have a working [Kubernetes development environment](https://github.com/kubernetes/community/blob/master/contributors/devel/development.md) on a Mac or Linux machine. If you're using Windows, you can use WSL, but it will be slower than a Linux VM. The tests can be run from the same VM, as long as you have a working KUBECONFIG.
+
+```bash
+go get -d k8s.io/kubernetes
+cd $GOPATH/src/k8s.io/kubernetes
+./build/run.sh make WHAT=test/e2e/e2e.test
+```
+Once complete, the binary will be available at: `~/go/src/k8s.io/kubernetes/_output/dockerized/bin/linux/amd64/e2e.test`
+
+#### Cross-building for Mac or Windows
+
+To build a binary to run on Mac or Windows, you can add `KUBE_BUILD_PLATFORMS`.
+
+For Windows
+```bash
+./build/run.sh make KUBE_BUILD_PLATFORMS=windows/amd64 WHAT=test/e2e/e2e.test
+```
+
+For Mac
+```bash
+./build/run.sh make KUBE_BUILD_PLATFORMS=darwin/amd64 WHAT=test/e2e/e2e.test
+```
+
+Your binaries will be available at `~/go/src/k8s.io/kubernetes/_output/dockerized/bin/linux/amd64/e2e.test` where `linux/amd64/` is replaced by `KUBE_BUILD_PLATFORMS` if you are building on Mac or Windows.
+
