@@ -1,4 +1,4 @@
-# kubernetes-sigs/windows-testing
+# Testing Kubernetes for Windows Clusters
 
 This repo is a collection of scripts, containers, and documentation needed to run Kubernetes end to end tests on clusters with Windows worker nodes.
 
@@ -31,7 +31,7 @@ Now, assuming you are able to build an e2e.test binary, we'll proceed with how w
 
 If you already have a cluster, you will likely just need to build e2e.test, and run it with windows options.
 
-### Using an existing cluster
+### Method 1: Using an existing cluster
 
 All of the tests are built into the `e2e.test` binary, which you can as a standalone binary to test an existing cluster.
 
@@ -63,7 +63,7 @@ The full list of what is run for TestGrid is in the [sig-windows-config.yaml](ht
 ./e2e.test --provider=skeleton --node-os-distro=windows --ginkgo.focus=\\[Conformance\\]|\\[NodeConformance\\]|\\[sig-windows\\]|\\[sig-apps\\].CronJob --ginkgo.skip=\\[LinuxOnly\\]|\\[k8s.io\\].Pods.*should.cap.back-off.at.MaxContainerBackOff.\\[Slow\\]\\[NodeConformance\\]|\\[k8s.io\\].Pods.*should.have.their.auto-restart.back-off.timer.reset.on.image.update.\\[Slow\\]\\[NodeConformance\\]"
 ```
 
-## Creating infrastructure and running e2e tests 
+## Method 2: Creating infrastructure and running e2e tests 
 
 If you don't yet have a cluster up, you can use `kubetest` to 
 - deploy a cluster
@@ -172,7 +172,7 @@ A few other parameters you should be aware of:
 --aksengine-winZipBuildScript=$WIN_BUILD
 ```
 
-## Running unit test
+## Running unit tests
 
 Unit tests for files that have a `// +build windows` at the first line should be
 running on windows environment. Running in Linux with command
