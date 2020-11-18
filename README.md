@@ -25,6 +25,8 @@ Some resources introducing the e2e test framework:
 
 Now, assuming you are able to build an e2e.test binary, we'll proceed with how windows the tests work.
 
+**See the Questions section at the bottom of this doc** for pointers on how to build the e2e tests. 
+
 ## Running the e2e.test binary on a windows enabled cluster
 
 If you already have a cluster, you will likely just need to build e2e.test, and run it with windows options.
@@ -266,7 +268,7 @@ As of Kubernetes 1.19, there are currently tests in upstream Kubernetes (1.19) w
 • [sig-windows] [Feature:Windows] Memory Limits [Serial] [Slow] attempt to deploy past allocatable memory limits should fail deployments of pods once there isn't enough memory"
 • [sig-windows] Windows volume mounts  check volume mount permissions container should have readOnly permissions
 
-## How do i biuld the e2e.test binary? 
+## How do i build the e2e.test binary? 
 
 ### Build the Kubernetes generic e2e.test binary
 
@@ -296,4 +298,3 @@ For Mac
 ```
 
 Your binaries will be available at `~/go/src/k8s.io/kubernetes/_output/dockerized/bin/linux/amd64/e2e.test` where `linux/amd64/` is replaced by `KUBE_BUILD_PLATFORMS` if you are building on Mac or Windows.
-
