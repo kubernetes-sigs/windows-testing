@@ -1,19 +1,26 @@
 # kubernetes-sigs/windows-testing
 
-This repo is a collection of scripts, containers, and documentation needed to run Kubernetes test passes on clusters with Windows worker nodes. It is maintained by [sig-windows](https://github.com/kubernetes/community/tree/master/sig-windows).
+This repo is a collection of scripts, containers, and documentation needed to run Kubernetes end to end tests on clusters with Windows worker nodes.
 
+- It is maintained by [sig-windows](https://github.com/kubernetes/community/tree/master/sig-windows).
 
-If you're looking for the latest test results, look at [TestGrid](https://testgrid.k8s.io/sig-windows) for the SIG-Windows results. These are the periodic test passes scheduled by Prow ([see: config](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml)). If you have questions interpreting the results, please join us on Slack in #SIG-Windows.
+- It leverages the existing upstream e2e tests, which live in Kubernetes.
 
+- If you're looking for the latest test results, look at [TestGrid](https://testgrid.k8s.io/sig-windows) for the SIG-Windows results. These are the periodic test passes scheduled by Prow ([see: config](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml)). 
 
-If you're new to building and testing Kubernetes, it's probably best to read the official [End-to-End Testing in Kubernetes](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/e2e-tests.md) page first. The rest of this page has a summary of those steps tailored to testing clusters with Windows nodes.
+- If you have questions interpreting the results, please join us on Slack in #SIG-Windows.
 
+If you're new to building and testing Kubernetes, it's probably best to read the official [End-to-End Testing in Kubernetes](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/e2e-tests.md) page first.
 
-## Building Tests
+The rest of this page has a summary of those steps tailored for testing clusters that have Windows nodes.
 
-### e2e.test
+## Building the tests
 
-The official steps are in [kubernetes/community](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/e2e-tests.md#building-kubernetes-and-running-the-tests). For more details, be sure to read that doc. This is just a short summary.
+### Build the Kubernetes generic e2e.test binary
+
+The official steps for running k8s e2es are in [kubernetes/community](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/e2e-tests.md#building-kubernetes-and-running-the-tests). For more details, be sure to read that doc.
+
+This is just a short summary
 
 Make sure you have a working [Kubernetes development environment](https://github.com/kubernetes/community/blob/master/contributors/devel/development.md) on a Mac or Linux machine. If you're using Windows, you can use WSL, but it will be slower than a Linux VM. The tests can be run from the same VM, as long as you have a working KUBECONFIG.
 
@@ -41,8 +48,9 @@ For Mac
 Your binaries will be available at `~/go/src/k8s.io/kubernetes/_output/dockerized/bin/linux/amd64/e2e.test` where `linux/amd64/` is replaced by `KUBE_BUILD_PLATFORMS` if you are building on Mac or Windows.
 
 
-## Running an e2e test pass
+## Running the e2e.test binary on a windows enabled cluster
 
+If you already have a cluster, you will likely just need to build e2e.test, and run it with windows options.
 
 ### Using an existing cluster
 
@@ -76,9 +84,15 @@ The full list of what is run for TestGrid is in the [sig-windows-config.yaml](ht
 ./e2e.test --provider=skeleton --node-os-distro=windows --ginkgo.focus=\\[Conformance\\]|\\[NodeConformance\\]|\\[sig-windows\\]|\\[sig-apps\\].CronJob --ginkgo.skip=\\[LinuxOnly\\]|\\[k8s.io\\].Pods.*should.cap.back-off.at.MaxContainerBackOff.\\[Slow\\]\\[NodeConformance\\]|\\[k8s.io\\].Pods.*should.have.their.auto-restart.back-off.timer.reset.on.image.update.\\[Slow\\]\\[NodeConformance\\]"
 ```
 
-### Using kubetest to deploy, test, and clean up a cluster
+## Creating infrastructure and running e2e tests 
 
-Kubetest is a wrapper that includes everything needed to deploy a cluster, test it (using e2e.test), gather logs, then upload the results to a Google Storage account. It has built-in cloud provider scripts to build Linux+Windows clusters using Azure and GCP.
+If you don't yet have a cluster up, you can use `kubetest` to 
+- deploy a cluster
+- test it (using e2e.test)
+- gather logs
+- upload the results to a Google Storage account. It has built-in cloud provider scripts to build Linux+Windows clusters using Azure and GCP.  
+
+This is useful, for example, for contributing CI results upstream.
 
 #### Build kubetest
 
