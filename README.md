@@ -256,7 +256,7 @@ Sonobuoy is currently not aware of windows/linux taints, and thus might not curr
 
 ## How many tests run ? 
 
-As of Kubernetes 1.19, there are currently tests in upstream Kubernetes (1.19) which specifically target the windows feature.
+As of Kubernetes 1.19, there are currently ~15 tests in upstream Kubernetes (1.19) which specifically target the windows feature.
 
 • [sig-windows] [Feature:Windows] SecurityContext should not be able to create pods with unknown usernames"
 • [sig-windows] [Feature:Windows] SecurityContext should override SecurityContext username if set"
