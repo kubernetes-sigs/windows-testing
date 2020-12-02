@@ -61,7 +61,7 @@ export KUBE_TEST_REPO_LIST=$(pwd)/repo_list
 
 ### Running the test-grid tests exactly as run in CI
 
-The full list of what is run for TestGrid is in the [sig-windows-config.yaml](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml) after `--test-args`. You can copy the parameters there for a full test to pass.
+The full list of what is run for TestGrid is in the [sig-windows-config.yaml](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml) after `--test_args`. You can copy the parameters there for a full test to pass.  There are different parameters according to the type of test job it is (i.e there are parallel and serial test runs which exercise different set of tests)
 
 You can run these similarly to the above tests, just modifying the ginkgo.focus flag like so, and adding the `--ginkgo-skip` flag so as to skip a few tests which are known to fail.  This is thus suitable for CI deploymeents.
 
