@@ -1,6 +1,6 @@
 # Testing Kubernetes for Windows Clusters
 
-This repo is a collection of scripts, containers, and documentation needed to run Kubernetes end to end tests on clusters with Windows worker nodes.
+This repo is a collection of scripts, containers, and documentation needed to help run Kubernetes end to end tests on clusters with Windows worker nodes.
 
 - It is maintained by [sig-windows](https://github.com/kubernetes/community/tree/master/sig-windows).
 
