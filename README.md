@@ -4,7 +4,7 @@ This repo is a collection of scripts, containers, and documentation needed to ru
 
 - It is maintained by [sig-windows](https://github.com/kubernetes/community/tree/master/sig-windows).
 
-- It leverages the existing upstream e2e tests, which live in Kubernetes.
+- It leverages the existing upstream e2e tests, which live in [Kubernetes repository](https://github.com/kubernetes/kubernetes/tree/master/test/e2e).
 
 - If you're looking for the latest test results, look at [TestGrid](https://testgrid.k8s.io/sig-windows) for the SIG-Windows results. These are the periodic test passes scheduled by Prow ([see: config](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml)). 
 
