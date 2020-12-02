@@ -1,10 +1,10 @@
 # Testing Kubernetes for Windows Clusters
 
-This repo is a collection of scripts, containers, and documentation needed to help run Kubernetes end to end tests on clusters with Windows worker nodes.
+This repo is a collection of scripts, containers, and documentation needed to run Kubernetes end to end tests on clusters with Windows worker nodes.
 
 - It is maintained by [sig-windows](https://github.com/kubernetes/community/tree/master/sig-windows).
 
-- It leverages the existing upstream e2e tests, which live in [Kubernetes repository](https://github.com/kubernetes/kubernetes/tree/master/test/e2e).
+- It leverages the existing upstream e2e tests, which live in Kubernetes.
 
 - If you're looking for the latest test results, look at [TestGrid](https://testgrid.k8s.io/sig-windows) for the SIG-Windows results. These are the periodic test passes scheduled by Prow ([see: config](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml)). 
 
@@ -33,6 +33,8 @@ If you already have a cluster, you will likely just need to build e2e.test, and 
 
 ### Method 1: Using an existing cluster
 
+- FIRST you need to taint/label all linux and master nodes with `node-role.kubernetes.io/master=NoSchedule`... this way, any `windows` specific tests are gauranteed to run on Windows nodes.
+
 All of the tests are built into the `e2e.test` binary, which you can as a standalone binary to test an existing cluster. 
 If you don't know how to build `e2e.test`, instructions for this are at the bottom of this doc.
 
@@ -46,8 +48,6 @@ Note that, when running these **You need to set the KUBE_TEST_REPO_LIST** enviro
 - `--ginkgo.skip="..."` - this regex chooses what tests to skip
 - If you're not sure what test cases will run, add `--gingkgo.dryRun=true` and it will give a list of test cases selected without actually running them.
 
-- `e2e.test` also needs a few environment variables set to connect to the cluster, and choose the right test container images. Here's an example:
-
 ### Running the full suite of tests:
 
 You can thus run all of the `[SIG-Windows]` tests like so:
@@ -59,12 +59,15 @@ export KUBE_TEST_REPO_LIST=$(pwd)/repo_list
 ./e2e.test --provider=skeleton --ginkgo.noColor --ginkgo.focus="\[sig-windows\]" --node-os-distro="windows"
 ```
 
+NOTE: `e2e.test` also needs a few environment variables set to connect to the cluster, and choose the right test container images. Here's an example:
+
 ### Running the test-grid tests exactly as run in CI
 
-The full list of what is run for TestGrid is in the [sig-windows-config.yaml](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml) after `--test_args`. You can copy the parameters there for a full test to pass.  There are different parameters according to the type of test job it is (i.e there are parallel and serial test runs which exercise different set of tests)
+The full list of what is run for TestGrid is in the [sig-windows-config.yaml](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml) after `--test-args`. You can copy the parameters there for a full test to pass.
 
-You can run these similarly to the above tests, just modifying the ginkgo.focus flag like so, and adding the `--ginkgo-skip` flag so as to skip a few tests which are known to fail.  This is thus suitable for CI deploymeents.
+You can run these similarly to the above tests, just modifying the ginkgo.focus flag like so, and adding the `--ginkgo-skip` flag so as to skip a few tests which are known to fail.  This is thus suitable for CI deployments.
 
+This is an example:
 ```
 --ginkgo.focus=\\[Conformance\\]|\\[NodeConformance\\]|\\[sig-windows\\]|\\[sig-apps\\].CronJob --ginkgo.skip=\\[LinuxOnly\\]|\\[k8s.io\\].Pods.*should.cap.back-off.at.MaxContainerBackOff.\\[Slow\\]\\[NodeConformance\\]|\\[k8s.io\\].Pods.*should.have.their.auto-restart.back-off.timer.reset.on.image.update.\\[Slow\\]\\[NodeConformance\\]"
 ```
