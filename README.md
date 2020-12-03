@@ -262,19 +262,34 @@ Sonobuoy is currently not aware of windows/linux taints, and thus might not curr
 As of Kubernetes 1.19, there are currently ~15 tests in upstream Kubernetes (1.19) which specifically target the windows feature.
 
 • [sig-windows] [Feature:Windows] SecurityContext should not be able to create pods with unknown usernames"
+
 • [sig-windows] [Feature:Windows] SecurityContext should override SecurityContext username if set"
+
 • [sig-windows] Windows volume mounts  check volume mount permissions container should have readOnly permissions on emptyDir"
+
 • [sig-windows] [Feature:Windows] Density [Serial] [Slow] create a batch of pods latency/resource should be within limit when create 10 pods with 0s interval"
+
 • [sig-windows] [Feature:Windows] SecurityContext should be able create pods and run containers with a given username"
+
+
 • [sig-windows] [Feature:Windows] Cpu Resources [Serial] Container limits should not be exceeded after waiting 2 minutes" 
+
 • [sig-windows] Services should be able to create a functioning NodePort service for Windows", 
+
 • [sig-windows] [Feature:Windows] SecurityContext should ignore Linux Specific SecurityContext if 
+
 • [sig-windows] [Feature:Windows] GMSA Full [Serial] [Slow] GMSA support works end to end" 
+
 • [sig-windows] [Feature:Windows] GMSA Kubelet [Slow] kubelet GMSA support when creating a pod with correct GMSA credential 
+
 • [sig-windows] [Feature:Windows] Kubelet-Stats [Serial] Kubelet stats collection for Windows nodes when running 10 pods should return within 10 seconds"
+
 • [sig-windows] Hybrid cluster network for all supported CNIs should have stable networking for Linux and Windows pods"
+
 • [sig-windows] [Feature:Windows] Memory Limits [Serial] [Slow] Allocatable node memory should be equal to a calculated allocatable memory value"
+
 • [sig-windows] [Feature:Windows] Memory Limits [Serial] [Slow] attempt to deploy past allocatable memory limits should fail deployments of pods once there isn't enough memory"
+
 • [sig-windows] Windows volume mounts  check volume mount permissions container should have readOnly permissions
 
 ## How do i build the e2e.test binary? 
