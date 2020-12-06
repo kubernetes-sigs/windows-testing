@@ -33,7 +33,7 @@ If you already have a cluster, you will likely just need to build e2e.test, and 
 
 ### Method 1: Using an existing cluster
 
-- FIRST you need to taint/label all linux and master nodes with `node-role.kubernetes.io/master=NoSchedule`... this way, any `windows` specific tests are gauranteed to run on Windows nodes.
+- FIRST you need to taint/label all linux and master nodes with `node-role.kubernetes.io/master=NoSchedule`... this way, any `windows` specific tests are guaranteed to run on Windows nodes.
 
 All of the tests are built into the `e2e.test` binary, which you can as a standalone binary to test an existing cluster. 
 If you don't know how to build `e2e.test`, instructions for this are at the bottom of this doc.
