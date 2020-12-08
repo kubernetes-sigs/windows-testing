@@ -19,7 +19,7 @@
         },
         "networkPlugin": "azure",
         "containerRuntime": "containerd",
-        "windowsContainerdURL": "https://github.com/containerd/containerd/releases/download/v1.4.1/containerd-1.4.1-windows-amd64.tar.gz"
+        "windowsContainerdURL": "https://github.com/containerd/containerd/releases/download/v1.4.3/containerd-1.4.3-windows-amd64.tar.gz"
       }
     },
     "masterProfile": {
