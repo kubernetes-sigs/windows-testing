@@ -15,7 +15,7 @@
           "--runtime-config": "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true"
         },
         "kubeletConfig": {
-          "--feature-gates": "KubeletPodResources=false"
+          "--feature-gates": "ExecProbeTimeout=true,KubeletPodResources=false"
         },
         "networkPlugin": "azure",
         "containerRuntime": "containerd",
