@@ -1,54 +1,46 @@
-# kubernetes-sigs/windows-testing
+# Testing Kubernetes for Windows Clusters
 
-This repo is a collection of scripts, containers, and documentation needed to run Kubernetes test passes on clusters with Windows worker nodes. It is maintained by [sig-windows](https://github.com/kubernetes/community/tree/master/sig-windows).
+This repo is a collection of scripts, containers, and documentation needed to run Kubernetes end to end tests on clusters with Windows worker nodes.
 
+- It is maintained by [sig-windows](https://github.com/kubernetes/community/tree/master/sig-windows).
 
-If you're looking for the latest test results, look at [TestGrid](https://testgrid.k8s.io/sig-windows) for the SIG-Windows results. These are the periodic test passes scheduled by Prow ([see: config](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml)). If you have questions interpreting the results, please join us on Slack in #SIG-Windows.
+- It leverages the existing upstream e2e tests, which live in Kubernetes.
 
+- If you're looking for the latest test results, look at [TestGrid](https://testgrid.k8s.io/sig-windows) for the SIG-Windows results. These are the periodic test passes scheduled by Prow ([see: config](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml)). 
 
-If you're new to building and testing Kubernetes, it's probably best to read the official [End-to-End Testing in Kubernetes](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/e2e-tests.md) page first. The rest of this page has a summary of those steps tailored to testing clusters with Windows nodes.
+- If you have questions interpreting the results, please join us on Slack in #SIG-Windows.
 
+If you're new to building and testing Kubernetes, it's probably best to read the official [End-to-End Testing in Kubernetes](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/e2e-tests.md) page first.
 
-## Building Tests
+The rest of this page has a summary of those steps tailored for testing clusters that have Windows nodes.
 
-### e2e.test
+## Building the tests
 
-The official steps are in [kubernetes/community](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/e2e-tests.md#building-kubernetes-and-running-the-tests). For more details, be sure to read that doc. This is just a short summary.
+Testing windows is not different from regular testing of k8s clusters.  If you have never used a tool such as *e2e.test* or *sonobuoy* to run the Conformance (or other ginkgo based) test suites, then you should familiarize your self with that, first.
 
-Make sure you have a working [Kubernetes development environment](https://github.com/kubernetes/community/blob/master/contributors/devel/development.md) on a Mac or Linux machine. If you're using Windows, you can use WSL, but it will be slower than a Linux VM. The tests can be run from the same VM, as long as you have a working KUBECONFIG.
+Some resources introducing the e2e test framework:
 
-```bash
-go get -d k8s.io/kubernetes
-cd $GOPATH/src/k8s.io/kubernetes
-./build/run.sh make WHAT=test/e2e/e2e.test
-```
-Once complete, the binary will be available at: `~/go/src/k8s.io/kubernetes/_output/dockerized/bin/linux/amd64/e2e.test`
+- https://kubernetes.io/blog/2019/03/22/kubernetes-end-to-end-testing-for-everyone/
+- https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/e2e-tests.md#building-kubernetes-and-running-the-tests
 
-#### Cross-building for Mac or Windows
+Now, assuming you are able to build an e2e.test binary, we'll proceed with how windows the tests work.
 
-To build a binary to run on Mac or Windows, you can add `KUBE_BUILD_PLATFORMS`.
+**See the Questions section at the bottom of this doc** for pointers on how to build the e2e tests. 
 
-For Windows
-```bash
-./build/run.sh make KUBE_BUILD_PLATFORMS=windows/amd64 WHAT=test/e2e/e2e.test
-```
+## Running the e2e.test binary on a windows enabled cluster
 
-For Mac
-```bash
-./build/run.sh make KUBE_BUILD_PLATFORMS=darwin/amd64 WHAT=test/e2e/e2e.test
-```
+If you already have a cluster, you will likely just need to build e2e.test, and run it with windows options.
 
-Your binaries will be available at `~/go/src/k8s.io/kubernetes/_output/dockerized/bin/linux/amd64/e2e.test` where `linux/amd64/` is replaced by `KUBE_BUILD_PLATFORMS` if you are building on Mac or Windows.
+### Method 1: Using an existing cluster
 
+- FIRST you need to taint/label all linux and master nodes with `node-role.kubernetes.io/master=NoSchedule`... this way, any `windows` specific tests are guaranteed to run on Windows nodes.
 
-## Running an e2e test pass
+All of the tests are built into the `e2e.test` binary, which you can as a standalone binary to test an existing cluster. 
+If you don't know how to build `e2e.test`, instructions for this are at the bottom of this doc.
 
+Note that, when running these **You need to set the KUBE_TEST_REPO_LIST** environment variable when running the windows end to end tests, otherwise, windows images will not be pullable and all your tests will fail !
 
-### Using an existing cluster
-
-All of the tests are built into the `e2e.test` binary, which you can as a standalone binary to test an existing cluster.
-
-There are a few important parameters that you need to use:
+- There are a few important parameters that you need to use, including:
 
 - `--provider=skeleton` - this will avoid using a cloud provider to provision new resources such as storage volumes or load balancers
 - `--ginkgo.focus="..."` - this regex chooses what [Ginkgo](http://onsi.github.io/ginkgo/) tests to run.
@@ -56,29 +48,39 @@ There are a few important parameters that you need to use:
 - `--ginkgo.skip="..."` - this regex chooses what tests to skip
 - If you're not sure what test cases will run, add `--gingkgo.dryRun=true` and it will give a list of test cases selected without actually running them.
 
-`e2e.test` also needs a few environment variables set to connect to the cluster, and choose the right test container images. Here's an example:
+### Running the full suite of tests:
 
-```bash
+You can thus run all of the `[SIG-Windows]` tests like so:
+
+```
 export KUBECONFIG=path/to/kubeconfig
 curl https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list -o repo_list
 export KUBE_TEST_REPO_LIST=$(pwd)/repo_list
-```
-
-Once those are set, you could run all the `[SIG-Windows]` tests with:
-
-```
 ./e2e.test --provider=skeleton --ginkgo.noColor --ginkgo.focus="\[sig-windows\]" --node-os-distro="windows"
 ```
 
-The full list of what is run for TestGrid is in the [sig-windows-config.yaml](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml) after `--test-args`. You can copy the parameters there for a full test pass.
+NOTE: `e2e.test` also needs a few environment variables set to connect to the cluster, and choose the right test container images. Here's an example:
 
+### Running the test-grid tests exactly as run in CI
+
+The full list of what is run for TestGrid is in the [sig-windows-config.yaml](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml) after `--test-args`. You can copy the parameters there for a full test to pass.
+
+You can run these similarly to the above tests, just modifying the ginkgo.focus flag like so, and adding the `--ginkgo-skip` flag so as to skip a few tests which are known to fail.  This is thus suitable for CI deployments.
+
+This is an example:
 ```
-./e2e.test --provider=skeleton --node-os-distro=windows --ginkgo.focus=\\[Conformance\\]|\\[NodeConformance\\]|\\[sig-windows\\]|\\[sig-apps\\].CronJob --ginkgo.skip=\\[LinuxOnly\\]|\\[k8s.io\\].Pods.*should.cap.back-off.at.MaxContainerBackOff.\\[Slow\\]\\[NodeConformance\\]|\\[k8s.io\\].Pods.*should.have.their.auto-restart.back-off.timer.reset.on.image.update.\\[Slow\\]\\[NodeConformance\\]"
+--ginkgo.focus=\\[Conformance\\]|\\[NodeConformance\\]|\\[sig-windows\\]|\\[sig-apps\\].CronJob --ginkgo.skip=\\[LinuxOnly\\]|\\[k8s.io\\].Pods.*should.cap.back-off.at.MaxContainerBackOff.\\[Slow\\]\\[NodeConformance\\]|\\[k8s.io\\].Pods.*should.have.their.auto-restart.back-off.timer.reset.on.image.update.\\[Slow\\]\\[NodeConformance\\]"
 ```
 
-### Using kubetest to deploy, test, and clean up a cluster
+## Method 2: Creating infrastructure and running e2e tests 
 
-Kubetest is a wrapper that includes everything needed to deploy a cluster, test it (using e2e.test), gather logs, then upload the results to a Google Storage account. It has built-in cloud provider scripts to build Linux+Windows clusters using Azure and GCP.
+If you don't yet have a cluster up, you can use `kubetest` to 
+- deploy a cluster
+- test it (using e2e.test)
+- gather logs
+- upload the results to a Google Storage account. It has built-in cloud provider scripts to build Linux+Windows clusters using Azure and GCP.  
+
+This is useful, for example, for contributing CI results upstream.
 
 #### Build kubetest
 
@@ -179,7 +181,7 @@ A few other parameters you should be aware of:
 --aksengine-winZipBuildScript=$WIN_BUILD
 ```
 
-## Running unit test
+## Running unit tests
 
 Unit tests for files that have a `// +build windows` at the first line should be
 running on windows environment. Running in Linux with command
@@ -244,3 +246,79 @@ go test  # Run the tests
 ## Building Test Images
 
 [images/](images/README.md) - has all of the container images used in e2e test passes and the scripts to build them. They are replacement Windows containers for those in [kubernetes/test/images](https://github.com/kubernetes/kubernetes/tree/master/test/images)
+
+# Questions
+
+## Is there an equivalent to a Conformance test suite for windows ? 
+
+There is not yet a formal equivalent.  The purpose of this repo is to store existing tests which sig-windows currently runs, and to provide CI signal for windows to upstream Kubernetes.  If you run the e2e.test suite with the `sig-windows` ginkgo filter and the `--ginkgo.dryRun` option, you'll see the list of tests which are currently in upstream.  these are listed below.  In order to implement Conformance tests for windows - we would need to, on a large scale, implement windows specific logic for certain things.  There has been made some progress on this (for example, with the agnhost container), but by in large the ability to run most tests on windows/linux interchangeably doesn't yet exist.
+
+## Can I run sonobuoy as a way to test windows Conformance ? 
+
+Sonobuoy is currently not aware of windows/linux taints, and thus might not currently run the end to end test suites on a mixed windows/linux cluster, and also does not yet have an option for enabling specific node-os behaviour (via the `node-os-distro` flag).
+
+## How many tests run ? 
+
+As of Kubernetes 1.19, there are currently ~15 tests in upstream Kubernetes (1.19) which specifically target the windows feature.
+
+• [sig-windows] [Feature:Windows] SecurityContext should not be able to create pods with unknown usernames"
+
+• [sig-windows] [Feature:Windows] SecurityContext should override SecurityContext username if set"
+
+• [sig-windows] Windows volume mounts  check volume mount permissions container should have readOnly permissions on emptyDir"
+
+• [sig-windows] [Feature:Windows] Density [Serial] [Slow] create a batch of pods latency/resource should be within limit when create 10 pods with 0s interval"
+
+• [sig-windows] [Feature:Windows] SecurityContext should be able create pods and run containers with a given username"
+
+
+• [sig-windows] [Feature:Windows] Cpu Resources [Serial] Container limits should not be exceeded after waiting 2 minutes" 
+
+• [sig-windows] Services should be able to create a functioning NodePort service for Windows", 
+
+• [sig-windows] [Feature:Windows] SecurityContext should ignore Linux Specific SecurityContext if 
+
+• [sig-windows] [Feature:Windows] GMSA Full [Serial] [Slow] GMSA support works end to end" 
+
+• [sig-windows] [Feature:Windows] GMSA Kubelet [Slow] kubelet GMSA support when creating a pod with correct GMSA credential 
+
+• [sig-windows] [Feature:Windows] Kubelet-Stats [Serial] Kubelet stats collection for Windows nodes when running 10 pods should return within 10 seconds"
+
+• [sig-windows] Hybrid cluster network for all supported CNIs should have stable networking for Linux and Windows pods"
+
+• [sig-windows] [Feature:Windows] Memory Limits [Serial] [Slow] Allocatable node memory should be equal to a calculated allocatable memory value"
+
+• [sig-windows] [Feature:Windows] Memory Limits [Serial] [Slow] attempt to deploy past allocatable memory limits should fail deployments of pods once there isn't enough memory"
+
+• [sig-windows] Windows volume mounts  check volume mount permissions container should have readOnly permissions
+
+## How do i build the e2e.test binary? 
+
+### Build the Kubernetes generic e2e.test binary
+
+This is just a short summary
+
+Make sure you have a working [Kubernetes development environment](https://github.com/kubernetes/community/blob/master/contributors/devel/development.md) on a Mac or Linux machine. If you're using Windows, you can use WSL, but it will be slower than a Linux VM. The tests can be run from the same VM, as long as you have a working KUBECONFIG.
+
+```bash
+go get -d k8s.io/kubernetes
+cd $GOPATH/src/k8s.io/kubernetes
+./build/run.sh make WHAT=test/e2e/e2e.test
+```
+Once complete, the binary will be available at: `~/go/src/k8s.io/kubernetes/_output/dockerized/bin/linux/amd64/e2e.test`
+
+#### Cross-building for Mac or Windows
+
+To build a binary to run on Mac or Windows, you can add `KUBE_BUILD_PLATFORMS`.
+
+For Windows
+```bash
+./build/run.sh make KUBE_BUILD_PLATFORMS=windows/amd64 WHAT=test/e2e/e2e.test
+```
+
+For Mac
+```bash
+./build/run.sh make KUBE_BUILD_PLATFORMS=darwin/amd64 WHAT=test/e2e/e2e.test
+```
+
+Your binaries will be available at `~/go/src/k8s.io/kubernetes/_output/dockerized/bin/linux/amd64/e2e.test` where `linux/amd64/` is replaced by `KUBE_BUILD_PLATFORMS` if you are building on Mac or Windows.
