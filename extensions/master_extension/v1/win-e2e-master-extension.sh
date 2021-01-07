@@ -62,12 +62,12 @@ master_node=$(${KUBECTL} get nodes | grep master | awk '{print $1}')
 ${KUBECTL} taint nodes "$master_node" node-role.kubernetes.io/master=:NoSchedule || true
 ${KUBECTL} label nodes "$master_node" node-role.kubernetes.io/master=NoSchedule || true
 
-# For k8s versions 1.16 1.17 1.18 pre-pull because tests images with windowsservercore as base image have a pull time in range of 10+ mins
+# For k8s versions 1.17 1.18 pre-pull because tests images with windowsservercore as base image have a pull time in range of 10+ mins
 # For 1.19+ the images are nanoserver and have much smaller pull times
 # View image by version: https://github.com/kubernetes/kubernetes/blob/master/test/utils/image/manifest.go#L203
 currentMinorVersion=$(kubectl version -o json | jq -r .serverVersion.minor)
 currentMinorVersion=$(echo  ${currentMinorVersion//+}) #drop the + if there on builds from branches
-prepullVersions=("16 17 18")
+prepullVersions=("17 18")
 log "current server minor version: $currentMinorVersion"
 log "prepullVersions: ${prepullVersions}"
 if [[ " ${prepullVersions[@]} " =~ " ${currentMinorVersion} " ]]; then
