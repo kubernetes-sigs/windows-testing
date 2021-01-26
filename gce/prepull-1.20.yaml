@@ -42,6 +42,12 @@ spec:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/agnhost:2.21
+        name: agnhost-221
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
       - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/busybox:1.29
         name: busybox1
         resources:
@@ -74,6 +80,12 @@ spec:
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
       - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/gb-redisslave:v3
         name: gb-redisslave-v3
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/httpd:2.4.38-alpine
+        name: httpd-2438
         resources:
           requests:
             cpu: 1m
@@ -116,6 +128,12 @@ spec:
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
       - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/pause:3.1
         name: pause-31
+        resources:
+          requests:
+            cpu: 1m
+        command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
+      - image: k8sprow.azurecr.io/kubernetes-e2e-test-images/pause:3.2
+        name: pause-32
         resources:
           requests:
             cpu: 1m
