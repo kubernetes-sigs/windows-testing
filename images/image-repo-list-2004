@@ -1,4 +1,3 @@
-dockerLibraryRegistry: k8sprow.azurecr.io/kubernetes-e2e-test-images
 e2eRegistry: k8sprow.azurecr.io/kubernetes-e2e-test-images
 gcAuthenticatedRegistry: e2eprivate
 etcdRegistry: k8sprow.azurecr.io/kubernetes-e2e-test-images
