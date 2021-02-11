@@ -48,7 +48,7 @@ timeout 3m kubectl wait --for=delete pod -l prepull-test-images=e2e --timeout -1
 
 # Download and set the list of test image repositories to use.
 curl \
-  https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list \
+  ${KUBE_TEST_REPO_LIST_DOWNLOAD_LOCATION:-https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list} \
   -o ${WORKSPACE}/repo-list.yaml
 export KUBE_TEST_REPO_LIST=${WORKSPACE}/repo-list.yaml
 
