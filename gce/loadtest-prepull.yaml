@@ -14,7 +14,7 @@ spec:
       nodeSelector:
         kubernetes.io/os: windows
       containers:
-      - image: gcr.io/gke-release/pause-win:1.2.1
+      - image: k8s.gcr.io/pause:3.4.1
         name: pause
       - image: mcr.microsoft.com/windows/servercore/iis
         name: iis
