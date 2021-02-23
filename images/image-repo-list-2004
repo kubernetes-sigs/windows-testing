@@ -1,5 +1,6 @@
 e2eRegistry: k8sprow.azurecr.io/kubernetes-e2e-test-images
 gcAuthenticatedRegistry: e2eprivate
+promoterE2eRegistry: k8sprow.azurecr.io/kubernetes-e2e-test-images
 etcdRegistry: k8sprow.azurecr.io/kubernetes-e2e-test-images
 gcEtcdRegistry: k8sprow.azurecr.io/kubernetes-e2e-test-images
 gcHttpdRegistry: k8sprow.azurecr.io/kubernetes-e2e-test-images
