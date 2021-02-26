@@ -6,7 +6,7 @@ This repo is a collection of scripts, containers, and documentation needed to ru
 
 - It leverages the existing upstream e2e tests, which live in Kubernetes.
 
-- If you're looking for the latest test results, look at [TestGrid](https://testgrid.k8s.io/sig-windows) for the SIG-Windows results. These are the periodic test passes scheduled by Prow ([see: config](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml)). 
+- If you're looking for the latest test results, look at [TestGrid](https://testgrid.k8s.io/sig-windows) for the SIG-Windows results. These are the periodic test passes scheduled by Prow ([see: config](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml)).
 
 - If you have questions interpreting the results, please join us on Slack in #SIG-Windows.
 
@@ -25,7 +25,7 @@ Some resources introducing the e2e test framework:
 
 Now, assuming you are able to build an e2e.test binary, we'll proceed with how windows the tests work.
 
-**See the Questions section at the bottom of this doc** for pointers on how to build the e2e tests. 
+**See the Questions section at the bottom of this doc** for pointers on how to build the e2e tests.
 
 ## Running the e2e.test binary on a windows enabled cluster
 
@@ -35,10 +35,10 @@ If you already have a cluster, you will likely just need to build e2e.test, and 
 
 - FIRST you need to taint/label all linux and master nodes with `node-role.kubernetes.io/master=NoSchedule`... this way, any `windows` specific tests are guaranteed to run on Windows nodes.
 
-All of the tests are built into the `e2e.test` binary, which you can as a standalone binary to test an existing cluster. 
+All of the tests are built into the `e2e.test` binary, which you can as a standalone binary to test an existing cluster.
 If you don't know how to build `e2e.test`, instructions for this are at the bottom of this doc.
 
-Note that, when running these **You need to set the KUBE_TEST_REPO_LIST** environment variable when running the windows end to end tests, otherwise, windows images will not be pullable and all your tests will fail !
+Note that, when running these **You need to set the KUBE_TEST_REPO_LIST** environment variable when running the windows end to end tests, otherwise, windows images will not be pullable and all your tests will fail! You will need to download the appropriate image-repo-list depending on which Kubernetes version/Windows OS version you are using. See the [image repository list](images/README.md#image-repository-list) table on which image-repo-list to use
 
 - There are a few important parameters that you need to use, including:
 
@@ -72,13 +72,13 @@ This is an example:
 --ginkgo.focus=\\[Conformance\\]|\\[NodeConformance\\]|\\[sig-windows\\]|\\[sig-apps\\].CronJob --ginkgo.skip=\\[LinuxOnly\\]|\\[k8s.io\\].Pods.*should.cap.back-off.at.MaxContainerBackOff.\\[Slow\\]\\[NodeConformance\\]|\\[k8s.io\\].Pods.*should.have.their.auto-restart.back-off.timer.reset.on.image.update.\\[Slow\\]\\[NodeConformance\\]"
 ```
 
-## Method 2: Creating infrastructure and running e2e tests 
+## Method 2: Creating infrastructure and running e2e tests
 
-If you don't yet have a cluster up, you can use `kubetest` to 
+If you don't yet have a cluster up, you can use `kubetest` to
 - deploy a cluster
 - test it (using e2e.test)
 - gather logs
-- upload the results to a Google Storage account. It has built-in cloud provider scripts to build Linux+Windows clusters using Azure and GCP.  
+- upload the results to a Google Storage account. It has built-in cloud provider scripts to build Linux+Windows clusters using Azure and GCP.
 
 This is useful, for example, for contributing CI results upstream.
 
@@ -249,15 +249,15 @@ go test  # Run the tests
 
 # Questions
 
-## Is there an equivalent to a Conformance test suite for windows ? 
+## Is there an equivalent to a Conformance test suite for windows ?
 
 There is not yet a formal equivalent.  The purpose of this repo is to store existing tests which sig-windows currently runs, and to provide CI signal for windows to upstream Kubernetes.  If you run the e2e.test suite with the `sig-windows` ginkgo filter and the `--ginkgo.dryRun` option, you'll see the list of tests which are currently in upstream.  these are listed below.  In order to implement Conformance tests for windows - we would need to, on a large scale, implement windows specific logic for certain things.  There has been made some progress on this (for example, with the agnhost container), but by in large the ability to run most tests on windows/linux interchangeably doesn't yet exist.
 
-## Can I run sonobuoy as a way to test windows Conformance ? 
+## Can I run sonobuoy as a way to test windows Conformance ?
 
 Sonobuoy is currently not aware of windows/linux taints, and thus might not currently run the end to end test suites on a mixed windows/linux cluster, and also does not yet have an option for enabling specific node-os behaviour (via the `node-os-distro` flag).
 
-## How many tests run ? 
+## How many tests run ?
 
 As of Kubernetes 1.19, there are currently ~15 tests in upstream Kubernetes (1.19) which specifically target the windows feature.
 
@@ -272,15 +272,15 @@ As of Kubernetes 1.19, there are currently ~15 tests in upstream Kubernetes (1.1
 • [sig-windows] [Feature:Windows] SecurityContext should be able create pods and run containers with a given username"
 
 
-• [sig-windows] [Feature:Windows] Cpu Resources [Serial] Container limits should not be exceeded after waiting 2 minutes" 
+• [sig-windows] [Feature:Windows] Cpu Resources [Serial] Container limits should not be exceeded after waiting 2 minutes"
 
-• [sig-windows] Services should be able to create a functioning NodePort service for Windows", 
+• [sig-windows] Services should be able to create a functioning NodePort service for Windows",
 
-• [sig-windows] [Feature:Windows] SecurityContext should ignore Linux Specific SecurityContext if 
+• [sig-windows] [Feature:Windows] SecurityContext should ignore Linux Specific SecurityContext if
 
-• [sig-windows] [Feature:Windows] GMSA Full [Serial] [Slow] GMSA support works end to end" 
+• [sig-windows] [Feature:Windows] GMSA Full [Serial] [Slow] GMSA support works end to end"
 
-• [sig-windows] [Feature:Windows] GMSA Kubelet [Slow] kubelet GMSA support when creating a pod with correct GMSA credential 
+• [sig-windows] [Feature:Windows] GMSA Kubelet [Slow] kubelet GMSA support when creating a pod with correct GMSA credential
 
 • [sig-windows] [Feature:Windows] Kubelet-Stats [Serial] Kubelet stats collection for Windows nodes when running 10 pods should return within 10 seconds"
 
@@ -292,7 +292,7 @@ As of Kubernetes 1.19, there are currently ~15 tests in upstream Kubernetes (1.1
 
 • [sig-windows] Windows volume mounts  check volume mount permissions container should have readOnly permissions
 
-## How do i build the e2e.test binary? 
+## How do i build the e2e.test binary?
 
 ### Build the Kubernetes generic e2e.test binary
 
