@@ -14,6 +14,17 @@ If you're new to building and testing Kubernetes, it's probably best to read the
 
 The rest of this page has a summary of those steps tailored for testing clusters that have Windows nodes.
 
+## Running Windows E2E tests against your kubernetes/kubernetes PR
+
+To manually trigger Windows E2E tests to run against your PR add the following as comments on your PR:
+
+```
+/test pull-kubernetes-e2e-aks-engine-azure-windows
+/test pull-kubernetes-e2e-aks-engine-windows-containerd
+```
+
+A full list of Windows PR jobs can be found at https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml
+
 ## Building the tests
 
 Testing windows is not different from regular testing of k8s clusters.  If you have never used a tool such as *e2e.test* or *sonobuoy* to run the Conformance (or other ginkgo based) test suites, then you should familiarize your self with that, first.
