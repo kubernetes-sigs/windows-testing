@@ -12,7 +12,6 @@
         "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.2.2/azure-vnet-cni-linux-amd64-v1.2.2.tgz",
         "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.2.2/azure-vnet-cni-windows-amd64-v1.2.2.zip",
         "apiServerConfig": {
-          "--service-account-issuer": "https://kubernetes.default.svc.cluster.local",
           "--runtime-config": "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true"
         },
         "kubeletConfig": {

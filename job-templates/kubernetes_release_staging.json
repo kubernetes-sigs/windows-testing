@@ -15,7 +15,6 @@
           "--feature-gates": "ExecProbeTimeout=true,KubeletPodResources=false"
         },
         "apiServerConfig": {
-          "--service-account-issuer": "https://kubernetes.default.svc.cluster.local",
           "--runtime-config": "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true"
         }
       }
