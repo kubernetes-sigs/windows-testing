@@ -3,8 +3,5 @@ e2eRegistry: k8sprow.azurecr.io/kubernetes-e2e-test-images
 promoterE2eRegistry: k8sprow.azurecr.io/kubernetes-e2e-test-images
 etcdRegistry: k8sprow.azurecr.io/kubernetes-e2e-test-images
 gcRegistry: k8sprow.azurecr.io/kubernetes-e2e-test-images
-hazelcastRegistry: k8sprow.azurecr.io/kubernetes-e2e-test-images
 PrivateRegistry: e2eteam
 sampleRegistry: k8sprow.azurecr.io/kubernetes-e2e-test-images
-stormRegistry: k8sprow.azurecr.io/kubernetes-e2e-test-images
-zookeeperRegistry: k8sprow.azurecr.io/kubernetes-e2e-test-images
