@@ -124,7 +124,7 @@ function collect_windows_vm_logs {
     if $(ssh ${SSH_OPTS} -J ${USER}@${MASTER_IP} ${USER}@${win_hostname} "powershell.exe -c Test-Path ${win_logs_collector_script_path}" | grep -q "False")
     then
         echo "Downloading log collector script to Windows machine ${win_hostname}."
-        if $(ssh ${SSH_OPTS} -J ${USER}@${MASTER_IP} ${USER}@${win_hostname} "powershell.exe -c \". C:\\AzureData\\k8s\\kuberneteswindowsfunctions.ps1 ; DownloadFileOverHttp -Url ${win_logs_collector_script_url} -DestinationPath ${win_logs_collector_script_path} \""); then
+        if $(ssh ${SSH_OPTS} -J ${USER}@${MASTER_IP} ${USER}@${win_hostname} "powershell.exe -c \"curl.exe --retry 5 --retry-delay 0 -L ${win_logs_collector_script_url} -o ${win_logs_collector_script_path} \""); then
             echo "Unable to download logs_collector_script to machine ${win_hostname}"
             return 1
         fi
