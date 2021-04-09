@@ -9,8 +9,8 @@
       "orchestratorRelease": "1.20",
       "kubernetesConfig": {
         "useManagedIdentity": false,
-        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.2.2/azure-vnet-cni-linux-amd64-v1.2.2.tgz",
-        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.2.2/azure-vnet-cni-windows-amd64-v1.2.2.zip",
+        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.2.8/azure-vnet-cni-linux-amd64-v1.2.8.tgz",
+        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.2.8/azure-vnet-cni-windows-amd64-v1.2.8.zip",
         "kubeletConfig": {
           "--feature-gates": "KubeletPodResources=false"
         },
@@ -19,7 +19,7 @@
         },
         "networkPlugin": "azure",
         "containerRuntime": "containerd",
-        "windowsContainerdURL": "https://github.com/containerd/containerd/releases/download/v1.4.3/containerd-1.4.3-windows-amd64.tar.gz"
+        "windowsContainerdURL": "https://github.com/containerd/containerd/releases/download/v1.4.4/containerd-1.4.4-windows-amd64.tar.gz"
       }
     },
     "masterProfile": {
