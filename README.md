@@ -19,7 +19,7 @@ The rest of this page has a summary of those steps tailored for testing clusters
 To manually trigger Windows E2E tests to run against your PR add the following as comments on your PR:
 
 ```
-/test pull-kubernetes-e2e-aks-engine-azure-windows
+/test pull-kubernetes-e2e-aks-engine-windows-dockershim
 /test pull-kubernetes-e2e-aks-engine-windows-containerd
 ```
 
