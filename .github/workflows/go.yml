@@ -1,0 +1,27 @@
+name: Go
+
+on:
+  schedule:
+  - cron: "0/10 0/4 * * *"
+  workflow_dispatch:
+    
+jobs:
+  test:
+    runs-on: windows-2019
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        repository: kubernetes/kubernetes
+        
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+
+    - name: setup k8s for running tests on windows
+      run: go mod vendor
+
+    - name: Run fs util tests
+      run: |
+        cd pkg/volume/fs/util
+        go test . -mod=mod
