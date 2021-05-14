@@ -16,7 +16,10 @@
         },
         "apiServerConfig": {
           "--runtime-config": "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true"
-        }
+        },
+        "networkPlugin": "azure",
+        "containerRuntime": "containerd",
+        "windowsContainerdURL": "https://github.com/containerd/containerd/releases/download/v1.4.4/containerd-1.4.4-windows-amd64.tar.gz"
       }
     },
     "masterProfile": {
@@ -46,8 +49,8 @@
       "sshEnabled": true,
       "windowsPublisher": "microsoft-aks",
       "windowsOffer": "aks-windows",
-      "windowsSku": "2019-datacenter-core-smalldisk-2104",
-      "imageVersion": "17763.1879.210414"
+      "windowsSku": "2019-datacenter-core-ctrd-2101",
+      "imageVersion": "17763.1637.210111"
     },
     "linuxProfile": {
       "adminUsername": "azureuser",
