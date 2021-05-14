@@ -19,7 +19,19 @@
         },
         "networkPlugin": "azure",
         "containerRuntime": "containerd",
-        "windowsContainerdURL": "https://kubernetesartifacts.azureedge.net/containerd/ms/0.0.14/binaries/containerd-windows-0.0.14.zip"
+        "windowsContainerdURL": "https://kubernetesartifacts.azureedge.net/containerd/ms/0.0.14/binaries/containerd-windows-0.0.14.zip",
+        "components": [
+          {
+            "name": "kube-addon-manager",
+            "enabled": true,
+            "containers": [
+              {
+                "name": "kube-addon-manager",
+                "image": "mcr.microsoft.com/oss/kubernetes/kube-addon-manager:v9.1.5"
+              }
+            ]
+          }
+        ]
       }
     },
     "masterProfile": {

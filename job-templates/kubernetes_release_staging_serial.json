@@ -16,7 +16,19 @@
         },
         "apiServerConfig": {
           "--runtime-config": "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true"
-        }
+        },
+        "components": [
+          {
+            "name": "kube-addon-manager",
+            "enabled": true,
+            "containers": [
+              {
+                "name": "kube-addon-manager",
+                "image": "mcr.microsoft.com/oss/kubernetes/kube-addon-manager:v9.1.5"
+              }
+            ]
+          }
+        ]
       }
     },
     "masterProfile": {
