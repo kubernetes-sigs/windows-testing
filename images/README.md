@@ -9,5 +9,5 @@ Currently, for Windows jobs, we override the test image registry by defining the
 | Kubernetes Branch | Windows OS Version | Image Repository List                                                                                  |
 |-------------------|--------------------|--------------------------------------------------------------------------------------------------------|
 | *                 | 2004               | https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list-2004   |
-| master            | *                  | https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list-master |
-| release-1.xx      | *                  | https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list        |
+| >= release-1.21 and master            | *                  | https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list-master |
+| < release-1.21      | *                  | https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list        |
