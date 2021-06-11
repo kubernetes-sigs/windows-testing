@@ -254,9 +254,9 @@ go test  # Run the tests
 
 > TODO: This section is still under construction
 
-## Building Test Images
+## Test Images
 
-[images/](images/README.md) - has all of the container images used in e2e test passes and the scripts to build them. They are replacement Windows containers for those in [kubernetes/test/images](https://github.com/kubernetes/kubernetes/tree/master/test/images)
+See [images/](images/README.md) for details regarding selecting the correct test images based on the Kubernetes/Windows versions.
 
 # Questions
 
