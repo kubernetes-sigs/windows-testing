@@ -20,7 +20,7 @@
         },
         "networkPlugin": "azure",
         "containerRuntime": "containerd",
-        "windowsContainerdURL": "https://testgridjs.blob.core.windows.net/containerd/containerd-1.5.2-windows-hostprocess-amd64.tar.gz"
+        "windowsContainerdURL": "https://github.com/marosset/windows-cri-containerd/releases/download/nightly/windows-cri-containerd.tar.gz"
       }
     },
     "masterProfile": {
