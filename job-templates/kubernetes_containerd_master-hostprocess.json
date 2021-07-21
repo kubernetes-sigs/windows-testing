@@ -20,7 +20,7 @@
         },
         "networkPlugin": "azure",
         "containerRuntime": "containerd",
-        "windowsContainerdURL": "https://github.com/marosset/windows-cri-containerd/releases/download/nightly/windows-cri-containerd.tar.gz"
+        "windowsContainerdURL": "https://github.com/kubernetes-sigs/sig-windows-tools/releases/download/windows-containerd-hostprocess/windows-containerd-hostprocess.tar.gz"
       }
     },
     "masterProfile": {
