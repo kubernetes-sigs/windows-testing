@@ -9,8 +9,8 @@
       "orchestratorRelease": "1.19",
       "kubernetesConfig": {
         "useManagedIdentity": false,
-        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.4/azure-vnet-cni-linux-amd64-v1.4.4.tgz",
-        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.4/azure-vnet-cni-windows-amd64-v1.4.4.zip",
+        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.9/azure-vnet-cni-linux-amd64-v1.4.9.tgz",
+        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.9/azure-vnet-cni-windows-amd64-v1.4.9.zip",
         "kubeletConfig": {
           "--feature-gates": "KubeletPodResources=false"
         },
