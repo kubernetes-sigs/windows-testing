@@ -6,17 +6,20 @@
     },
     "orchestratorProfile": {
       "orchestratorType": "Kubernetes",
-      "orchestratorRelease": "1.18",
+      "orchestratorRelease": "1.22",
       "kubernetesConfig": {
         "useManagedIdentity": false,
-        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.2.8/azure-vnet-cni-linux-amd64-v1.2.8.tgz",
-        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.2.8/azure-vnet-cni-windows-amd64-v1.2.8.zip",
+        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.9/azure-vnet-cni-linux-amd64-v1.4.9.tgz",
+        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.9/azure-vnet-cni-windows-amd64-v1.4.9.zip",
         "kubeletConfig": {
-          "--feature-gates": "KubeletPodResources=false"
+          "--feature-gates": "ExecProbeTimeout=true,KubeletPodResources=false"
         },
         "apiServerConfig": {
           "--runtime-config": "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true"
-        }
+        },
+        "networkPlugin": "azure",
+        "containerRuntime": "containerd",
+        "windowsContainerdURL": "https://github.com/containerd/containerd/releases/download/v1.5.4/containerd-1.5.4-windows-amd64.tar.gz"
       }
     },
     "masterProfile": {
@@ -27,9 +30,6 @@
       "extensions": [
         {
           "name": "master_extension"
-        },
-        {
-          "name": "gmsa-coredns"
         }
       ]
     },
@@ -40,26 +40,7 @@
         "vmSize": "Standard_D2s_v3",
         "osDiskSizeGB": 128,
         "availabilityProfile": "AvailabilitySet",
-        "osType": "Windows",
-        "extensions": [
-          {
-            "name": "gmsa-member",
-            "singleOrAll": "all"
-          }
-        ]
-      },
-      {
-        "name": "windowsgmsa",
-        "count": 1,
-        "vmSize": "Standard_D2s_v3",
-        "osDiskSizeGB": 128,
-        "availabilityProfile": "AvailabilitySet",
-        "osType": "Windows",
-        "extensions": [
-          {
-            "name": "gmsa-dc"
-          }
-        ]
+        "osType": "Windows"
       }
     ],
     "windowsProfile": {
@@ -68,8 +49,8 @@
       "sshEnabled": true,
       "windowsPublisher": "microsoft-aks",
       "windowsOffer": "aks-windows",
-      "windowsSku": "2019-datacenter-core-smalldisk-2104",
-      "imageVersion": "17763.1879.210414"
+      "windowsSku": "2019-datacenter-core-ctrd-2107",
+      "imageVersion": "17763.2061.210716"
     },
     "linuxProfile": {
       "adminUsername": "azureuser",
@@ -92,23 +73,6 @@
         "extensionParameters": "parameters",
         "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
         "script": "win-e2e-master-extension.sh"
-      },
-      {
-        "name": "gmsa-coredns",
-        "version": "v1",
-        "extensionParameters": "parameters",
-        "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/",
-        "script": "update-coredns.sh"
-      },
-      {
-        "name": "gmsa-member",
-        "version": "v1",
-        "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/"
-      },
-      {
-        "name": "gmsa-dc",
-        "version": "v1",
-        "rootURL": "https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/"
       }
     ]
   }

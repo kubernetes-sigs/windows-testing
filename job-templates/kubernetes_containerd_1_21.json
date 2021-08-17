@@ -9,8 +9,8 @@
       "orchestratorRelease": "1.21",
       "kubernetesConfig": {
         "useManagedIdentity": false,
-        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.4/azure-vnet-cni-linux-amd64-v1.4.4.tgz",
-        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.4/azure-vnet-cni-windows-amd64-v1.4.4.zip",
+        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.9/azure-vnet-cni-linux-amd64-v1.4.9.tgz",
+        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.9/azure-vnet-cni-windows-amd64-v1.4.9.zip",
         "kubeletConfig": {
           "--feature-gates": "ExecProbeTimeout=true,KubeletPodResources=false"
         },
@@ -49,8 +49,8 @@
       "sshEnabled": true,
       "windowsPublisher": "microsoft-aks",
       "windowsOffer": "aks-windows",
-      "windowsSku": "2019-datacenter-core-ctrd-2101",
-      "imageVersion": "17763.1637.210111"
+      "windowsSku": "2019-datacenter-core-ctrd-2107",
+      "imageVersion": "17763.2061.210716"
     },
     "linuxProfile": {
       "adminUsername": "azureuser",
