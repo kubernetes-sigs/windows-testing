@@ -12,7 +12,7 @@
         "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.9/azure-vnet-cni-linux-amd64-v1.4.9.tgz",
         "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.9/azure-vnet-cni-windows-amd64-v1.4.9.zip",
         "apiServerConfig": {
-          "--runtime-config": "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true",
+          "--runtime-config": "extensions/v1beta1/podsecuritypolicies=true",
           "--feature-gates": "WindowsHostProcessContainers=true"
         },
         "kubeletConfig": {
