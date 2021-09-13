@@ -40,6 +40,8 @@
             "adminUsername": "azureuser",
             "adminPassword": "replacepassword1234$",
             "sshEnabled": true,
+            "csiProxyURL": "https://kubernetesartifacts.azureedge.net/csi-proxy/v1.0.0/binaries/csi-proxy-v1.0.0.tar.gz",
+            "enableCSIProxy": true,
             "windowsPublisher": "microsoft-aks",
             "windowsOffer": "aks-windows",
             "windowsSku": "2019-datacenter-core-smalldisk-2104",
