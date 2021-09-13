@@ -1,0 +1,69 @@
+{
+    "apiVersion": "vlabs",
+    "properties": {
+        "featureFlags": {
+            "enableTelemetry": true
+        },
+        "orchestratorProfile": {
+            "orchestratorType": "Kubernetes",
+            "orchestratorRelease": "",
+            "kubernetesConfig": {
+                "useManagedIdentity": false,
+                "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.9/azure-vnet-cni-linux-amd64-v1.4.9.tgz",
+                "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.9/azure-vnet-cni-windows-amd64-v1.4.9.zip",
+                "networkPlugin": "azure",
+                "containerRuntime": "containerd",
+                "windowsContainerdURL": "https://github.com/containerd/containerd/releases/download/v1.5.4/containerd-1.5.4-windows-amd64.tar.gz",
+                "addons": [
+                    {
+                        "name": "azuredisk-csi-driver",
+                        "enabled": true
+                    },
+                    {
+                        "name": "azurefile-csi-driver",
+                        "enabled": true
+                    }
+                ]
+            }
+        },
+        "masterProfile": {
+            "count": 1,
+            "dnsPrefix": "",
+            "vmSize": "Standard_D2_v3"
+        },
+        "agentPoolProfiles": [
+            {
+                "name": "windowspool1",
+                "count": 2,
+                "vmSize": "Standard_D2s_v3",
+                "osDiskSizeGB": 128,
+                "osType": "Windows"
+            }
+        ],
+        "windowsProfile": {
+            "adminUsername": "azureuser",
+            "adminPassword": "replacepassword1234$",
+            "sshEnabled": true,
+            "csiProxyURL": "https://kubernetesartifacts.azureedge.net/csi-proxy/v1.0.0/binaries/csi-proxy-v1.0.0.tar.gz",
+            "enableCSIProxy": true,
+            "windowsPublisher": "microsoft-aks",
+            "windowsOffer": "aks-windows",
+            "windowsSku": "2019-datacenter-core-ctrd-2107",
+            "imageVersion": "17763.2061.210716"
+        },
+        "linuxProfile": {
+            "adminUsername": "azureuser",
+            "ssh": {
+                "publicKeys": [
+                    {
+                        "keyData": ""
+                    }
+                ]
+            }
+        },
+        "servicePrincipalProfile": {
+            "clientID": "",
+            "secret": ""
+        }
+    }
+}
