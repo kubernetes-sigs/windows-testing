@@ -10,7 +10,7 @@
             "kubernetesConfig": {
                 "useManagedIdentity": false,
                 "containerRuntime": "containerd",
-                "windowsContainerdURL": "https://acs-mirror.azureedge.net/containerd/windows/v0.0.41/binaries/containerd-v0.0.41-windows-amd64.tar.gz"
+                "windowsContainerdURL": "https://github.com/containerd/containerd/releases/download/v1.5.6/containerd-1.5.6-windows-amd64.tar.gz"
             }
         },
         "masterProfile": {
