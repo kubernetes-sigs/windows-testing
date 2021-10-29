@@ -15,7 +15,7 @@
           "--feature-gates": "ExecProbeTimeout=true,KubeletPodResources=false"
         },
         "containerRuntime": "containerd",
-        "windowsContainerdURL": "https://github.com/containerd/containerd/releases/download/v1.4.11/containerd-1.4.11-windows-amd64.tar.gz"
+        "windowsContainerdURL": "https://github.com/containerd/containerd/releases/download/v1.5.6/containerd-1.5.6-windows-amd64.tar.gz"
       }
     },
     "masterProfile": {
