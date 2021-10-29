@@ -9,13 +9,13 @@
       "orchestratorRelease": "1.20",
       "kubernetesConfig": {
         "useManagedIdentity": false,
-        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.2.8/azure-vnet-cni-linux-amd64-v1.2.8.tgz",
-        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.2.8/azure-vnet-cni-windows-amd64-v1.2.8.zip",
+        "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.13/azure-vnet-cni-linux-amd64-v1.4.13.tgz",
+        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.13/azure-vnet-cni-windows-amd64-v1.4.13.zip",
         "kubeletConfig": {
           "--feature-gates": "KubeletPodResources=false"
         },
         "apiServerConfig": {
-          "--runtime-config": "extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true"
+          "--runtime-config": "extensions/v1beta1/podsecuritypolicies=true"
         }
       }
     },

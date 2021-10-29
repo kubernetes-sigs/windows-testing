@@ -266,7 +266,7 @@ There is not yet a formal equivalent.  The purpose of this repo is to store exis
 
 ## Can I run sonobuoy as a way to test windows Conformance ?
 
-Sonobuoy is currently not aware of windows/linux taints, and thus might not currently run the end to end test suites on a mixed windows/linux cluster, and also does not yet have an option for enabling specific node-os behaviour (via the `node-os-distro` flag).
+Sonobuoy can be used as a way to test windows Conformance. Checkout for [Running E2E Tests On Windows Clusters](https://sonobuoy.io/windows-e2e-tests-with-sonobuoy/) reference.
 
 ## How many tests run ?
 
