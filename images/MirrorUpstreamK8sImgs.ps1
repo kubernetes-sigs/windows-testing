@@ -68,7 +68,7 @@ function ManifestList
     (
         $Name,
         $Versions = "1.0",
-        $LinuxImageUpstreamK8sRepo = "gcr.io/kubernetes-e2e-test-images",
+        $LinuxImageUpstreamK8sRepo = "k8s.gcr.io/e2e-test-images",
         $LinuxImageSuffix = "-amd64",
         $Mirror = $true
     )
