@@ -54,6 +54,17 @@ log "start master extension"
 # 10m is a long time to wait but other system pods should be online shortly after
 # track the time so we can have visibility into timing and possibly lower eventually
 time timeout 1800 bash -c wait_for_agent_nodes
+
+# due to bug in provisioning in aks-engine that has become more frequent recently
+# we add some debugging as well as restart the kube-addon manager so that it doesn't 
+# get stuck in a bad loop looking for "/etc/kubernetes/addons/init"
+# A restart when it is running sucessfully doesn't trigger any changes to 
+# already running pods managed by the addon manager
+#
+# See https://github.com/Azure/aks-engine/issues/4753 for more details
+${KUBECTL} get pods -A
+${KUBECTL} delete pod -n kube-system -l app=kube-addon-manager
+
 time timeout 500 bash -c wait_for_coredns_pods
 time timeout 500 bash -c wait_for_kube_system_pods
 
