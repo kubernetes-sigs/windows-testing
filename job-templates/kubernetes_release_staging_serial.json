@@ -10,7 +10,7 @@
       "kubernetesConfig": {
         "useManagedIdentity": false,
         "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.13/azure-vnet-cni-linux-amd64-v1.4.13.tgz",
-        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.13/azure-vnet-cni-windows-amd64-v1.4.13.zip", 
+        "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.13/azure-vnet-cni-windows-amd64-v1.4.13.zip",
         "apiServerConfig": {
           "--feature-gates": "HPAContainerMetrics=true",
           "--runtime-config": "extensions/v1beta1/podsecuritypolicies=true"
@@ -26,7 +26,7 @@
     "masterProfile": {
       "count": 1,
       "dnsPrefix": "",
-      "vmSize": "Standard_D2_v3",
+      "vmSize": "Standard_D4s_v3",
       "distro": "aks-ubuntu-18.04",
       "extensions": [
         {
