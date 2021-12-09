@@ -6,20 +6,17 @@
     },
     "orchestratorProfile": {
       "orchestratorType": "Kubernetes",
-      "orchestratorRelease": "",
+      "orchestratorRelease": "1.23",
       "kubernetesConfig": {
         "useManagedIdentity": false,
         "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.13/azure-vnet-cni-linux-amd64-v1.4.13.tgz",
         "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.13/azure-vnet-cni-windows-amd64-v1.4.13.zip",
-        "apiServerConfig": {
-          "--runtime-config": "extensions/v1beta1/podsecuritypolicies=true"
-        },
         "kubeletConfig": {
           "--feature-gates": "ExecProbeTimeout=true,KubeletPodResources=false"
         },
-        "networkPlugin": "azure",
-        "containerRuntime": "containerd",
-        "windowsContainerdURL": "https://github.com/containerd/containerd/releases/download/v1.5.8/containerd-1.5.8-windows-amd64.tar.gz"
+        "apiServerConfig": {
+          "--runtime-config": "extensions/v1beta1/podsecuritypolicies=true"
+        }
       }
     },
     "masterProfile": {
@@ -37,20 +34,21 @@
       {
         "name": "windowspool1",
         "count": 2,
-        "vmSize": "Standard_D2s_v3",
+        "vmSize": "Standard_D4s_v3",
         "osDiskSizeGB": 128,
         "availabilityProfile": "AvailabilitySet",
-        "osType": "Windows"
+        "osType": "Windows",
+        "acceleratedNetworkingEnabledWindows": true
       }
     ],
     "windowsProfile": {
       "adminUsername": "azureuser",
       "adminPassword": "replacepassword1234$",
       "sshEnabled": true,
-      "windowsPublisher": "MicrosoftWindowsServer",
-      "windowsOffer": "WindowsServer",
-      "windowsSku": "Datacenter-Core-2004-with-Containers-smalldisk",
-      "imageVersion": "19041.329.2006042019"
+      "windowsPublisher": "microsoft-aks",
+      "windowsOffer": "aks-windows",
+      "windowsSku": "2019-datacenter-core-smalldisk-2109",
+      "imageVersion": "17763.2213.210927"
     },
     "linuxProfile": {
       "adminUsername": "azureuser",
