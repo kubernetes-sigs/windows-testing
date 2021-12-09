@@ -14,11 +14,11 @@
                 "addons": [
                     {
                         "name": "azuredisk-csi-driver",
-                        "enabled": false
+                        "enabled": true
                     },
                     {
                         "name": "azurefile-csi-driver",
-                        "enabled": false
+                        "enabled": true
                     }
                 ]
             }
