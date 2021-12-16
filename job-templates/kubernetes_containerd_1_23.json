@@ -19,7 +19,7 @@
         },
         "networkPlugin": "azure",
         "containerRuntime": "containerd",
-        "windowsContainerdURL": "https://github.com/containerd/containerd/releases/download/v1.6.0-beta.3/cri-containerd-1.6.0-beta.3-windows-amd64.tar.gz"
+        "windowsContainerdURL": "https://github.com/containerd/containerd/releases/download/v1.6.0-beta.4/containerd-1.6.0-beta.4-windows-amd64.tar.gz"
       }
     },
     "masterProfile": {
