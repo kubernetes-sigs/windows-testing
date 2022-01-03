@@ -1,2 +1,1 @@
-gcEtcdRegistry: k8sprow.azurecr.io/kubernetes-e2e-test-images
 privateRegistry: e2eteam
