@@ -15,7 +15,11 @@
           "--feature-gates": "ExecProbeTimeout=true,KubeletPodResources=false"
         },
         "apiServerConfig": {
+          "--feature-gates": "HPAContainerMetrics=true",
           "--runtime-config": "extensions/v1beta1/podsecuritypolicies=true"
+        },
+        "cloudControllerManagerConfig":{
+          "--feature-gates": "HPAContainerMetrics=true"
         },
         "networkPlugin": "azure",
         "containerRuntime": "containerd",
