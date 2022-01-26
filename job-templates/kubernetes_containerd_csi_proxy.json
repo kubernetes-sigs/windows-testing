@@ -46,8 +46,8 @@
             "sshEnabled": true,
             "windowsPublisher": "microsoft-aks",
             "windowsOffer": "aks-windows",
-            "windowsSku": "2019-datacenter-core-ctrd-2104",
-            "imageVersion": "17763.1879.210414"
+            "windowsSku": "2019-datacenter-core-ctrd-2201",
+            "imageVersion": "17763.2300.220111"
         },
         "linuxProfile": {
             "adminUsername": "azureuser",
