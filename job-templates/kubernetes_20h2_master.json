@@ -13,7 +13,7 @@
           "--runtime-config": "extensions/v1beta1/podsecuritypolicies=true"
         },
         "cloudControllerManagerConfig":{
-          "--feature-gates": "HPAContainerMetrics=true"
+          "--feature-gates": "HPAContainerMetrics=true,LegacyServiceAccountTokenNoAutoGeneration=false"
         },
         "kubeletConfig": {
           "--feature-gates": "ExecProbeTimeout=true,KubeletPodResources=false"
