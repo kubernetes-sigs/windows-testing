@@ -16,6 +16,7 @@ $PSDefaultParameterValues['*:ErrorAction'] = 'Stop'
 
 # Set script variables
 $GMSARoot = "C:\gmsa"
+$RemoteFolder = "C:\write_test"
 
 # Function to check AD services
 function CheckADServices()
@@ -58,7 +59,19 @@ function ImportADPS()
         return $false
         }
     }
-	
+
+# Function to create a folder on Active Directory for file reading/writing test
+function CreateRemoteFolder()
+    {
+    try {
+        mkdir $RemoteFolder
+        New-SmbShare -Name "write_test" -Path $RemoteFolder -FullAccess "gmsa-e2e$"
+        return $true
+    } catch {
+        return $false
+        }
+    }
+
 function New-CredentialSpec {
 
     <#
@@ -255,6 +268,9 @@ if (Get-AdGroupMember -Identity "Enterprise Admins" | Select-String -Pattern "gm
 
     # Import AD Module and Setup gMSA
     New-ADServiceAccount -Name gmsa-e2e -DNSHostName gmsa-e2e.k8sgmsa.lan -PrincipalsAllowedToRetrieveManagedPassword "Domain Computers" -ServicePrincipalnames http/gmsa-e2e.k8sgmsa.lan
+
+    # Make sure a folder is created on Active Directory server for file reading/writing test
+    do {$Fileresult = CreateRemoteFolder} while ($Fileresult -eq $false)
 
     # Run New-CredntialSpec to provide the Yaml CredSpec
     New-CredentialSpec -Name gmsa-e2e -AccountName gmsa-e2e
