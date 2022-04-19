@@ -9,6 +9,9 @@
             "orchestratorRelease": "",
             "kubernetesConfig": {
                 "useManagedIdentity": false,
+		"controllerManagerConfig": {
+                    "--feature-gates": "LegacyServiceAccountTokenNoAutoGeneration=false"
+                },
                 "containerRuntime": "containerd",
                 "windowsContainerdURL": "https://github.com/containerd/containerd/releases/download/v1.5.8/containerd-1.5.8-windows-amd64.tar.gz",
                 "addons": [
