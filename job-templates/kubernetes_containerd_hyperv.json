@@ -14,6 +14,9 @@
         "apiServerConfig": {
           "--runtime-config": "extensions/v1beta1/podsecuritypolicies=true"
         },
+        "controllerManagerConfig": {
+          "--feature-gates": "LegacyServiceAccountTokenNoAutoGeneration=false"
+        },
         "kubeletConfig": {
           "--feature-gates": "ExecProbeTimeout=true,KubeletPodResources=false"
         },
