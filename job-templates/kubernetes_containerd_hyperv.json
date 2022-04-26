@@ -12,7 +12,11 @@
         "azureCNIURLLinux": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.13/azure-vnet-cni-linux-amd64-v1.4.13.tgz",
         "azureCNIURLWindows": "https://github.com/Azure/azure-container-networking/releases/download/v1.4.13/azure-vnet-cni-windows-amd64-v1.4.13.zip",
         "apiServerConfig": {
+          "--feature-gates": "HPAContainerMetrics=true",
           "--runtime-config": "extensions/v1beta1/podsecuritypolicies=true"
+        },
+        "cloudControllerManagerConfig":{
+          "--feature-gates": "HPAContainerMetrics=true"
         },
         "controllerManagerConfig": {
           "--feature-gates": "LegacyServiceAccountTokenNoAutoGeneration=false"
