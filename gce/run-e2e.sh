@@ -15,11 +15,13 @@ sleep ${INIT_TIMEOUT:-1s}
 # Taint the Linux nodes to prevent the test workloads from landing on them.
 # TODO: remove this once the issue is resolved:
 # https://github.com/kubernetes/kubernetes/issues/69892
-LINUX_NODES=$(kubectl get nodes -l beta.kubernetes.io/os=linux -o name)
-LINUX_NODE_COUNT=$(echo ${LINUX_NODES} | wc -w)
-for node in $LINUX_NODES; do
-  kubectl taint node $node node-under-test=false:NoSchedule
-done
+if [[ ! -v NO_LINUX_POOL_TAINT ]]; then
+  LINUX_NODES=$(kubectl get nodes -l beta.kubernetes.io/os=linux -o name)
+  LINUX_NODE_COUNT=$(echo ${LINUX_NODES} | wc -w)
+  for node in $LINUX_NODES; do
+    kubectl taint node $node node-under-test=false:NoSchedule
+  done
+fi
 
 # Untaint the windows nodes to allow test workloads without tolerations to be
 # scheduled onto them.
