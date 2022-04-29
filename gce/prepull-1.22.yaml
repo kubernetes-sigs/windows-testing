@@ -35,81 +35,74 @@ spec:
       # DaemonSets do not support a RestartPolicy other than 'Always', so we
       # run ping in each container to keep it alive so that kubernetes does not
       # continually restart the containers while we're prepulling.
-      #
-      #
-      # Note: This file is updated to match the master/1.25 test images.
-      #       It won't be maintained going forward, please pass "-prepull-images=true"
-      #       for jobs >= 1.23. and don't set PREPULL_YAML env var at all if using gce/run-e2e.sh. 
-      #
-      #
       containers:
-      - image: k8s.gcr.io/e2e-test-images/agnhost:2.36
-        name: agnhost-236
+      - image: k8s.gcr.io/e2e-test-images/agnhost:2.32
+        name: agnhost-232
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: k8s.gcr.io/e2e-test-images/busybox:1.29-2
+      - image: k8s.gcr.io/e2e-test-images/busybox:1.29-1
         name: busybox1
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: k8s.gcr.io/e2e-test-images/echoserver:2.4
-        name: echoserver24
+      - image: k8s.gcr.io/e2e-test-images/echoserver:2.3
+        name: echoserver23
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: k8s.gcr.io/e2e-test-images/httpd:2.4.38-2
+      - image: k8s.gcr.io/e2e-test-images/httpd:2.4.38-1
         name: httpd-2438
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: k8s.gcr.io/e2e-test-images/httpd:2.4.39-2
+      - image: k8s.gcr.io/e2e-test-images/httpd:2.4.39-1
         name: httpd-2439
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: k8s.gcr.io/e2e-test-images/jessie-dnsutils:1.5
-        name: jessie-dnsutils15
+      - image: k8s.gcr.io/e2e-test-images/jessie-dnsutils:1.4
+        name: jessie-dnsutils14
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: k8s.gcr.io/e2e-test-images/kitten:1.5
-        name: kitten15
+      - image: k8s.gcr.io/e2e-test-images/kitten:1.4
+        name: kitten14
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: k8s.gcr.io/e2e-test-images/nautilus:1.5
-        name: nautilus15
+      - image: k8s.gcr.io/e2e-test-images/nautilus:1.4
+        name: nautilus14
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: k8s.gcr.io/e2e-test-images/nginx:1.14-2
+      - image: k8s.gcr.io/e2e-test-images/nginx:1.14-1
         name: nginx114
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: k8s.gcr.io/e2e-test-images/nginx:1.15-2
+      - image: k8s.gcr.io/e2e-test-images/nginx:1.15-1
         name: nginx115
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: k8s.gcr.io/e2e-test-images/pause:3.7
-        name: pause-37
+      - image: k8s.gcr.io/e2e-test-images/pause:3.5
+        name: pause-35
         resources:
           requests:
             cpu: 1m
         command: ['cmd.exe', '/c', 'ping -n 1800 127.0.0.1 >NUL']
-      - image: k8s.gcr.io/e2e-test-images/sample-apiserver:1.17.5
+      - image: k8s.gcr.io/e2e-test-images/sample-apiserver:1.17.4
         name: sample-apiserver-117
         resources:
           requests:
