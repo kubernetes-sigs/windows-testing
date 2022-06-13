@@ -8,6 +8,8 @@ Currently, for Windows jobs, we override the test image registry by defining the
 
 | Kubernetes Branch | Windows OS Version | Image Repository List                                                                                  |
 |-------------------|--------------------|--------------------------------------------------------------------------------------------------------|
-| *                 | 2004               | https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list-2004   |
-| >= release-1.21 and master            | *                  | https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list-master |
-| < release-1.21      | *                  | https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list        |
+| >= release-1.21 and <= release-1.24            | *                  | https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list |
+| >= release-1.25        | WS 2022 or WS 2019    | https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list-private-registry |
+| >= release-1.25        | WS 2019              | none - can use the image-repo-list-private-registry or non for ws 2019  |
+
+The private image repository doesn't have a way to promote images: https://github.com/kubernetes/k8s.io/pull/1929. We don't have a Windows Server 2022 image in the `gcr.io/authenticated-image-pulling` and use the `e2eprivate` dockerhub repository instead which allows sig-windows to update images for new Server versions.
