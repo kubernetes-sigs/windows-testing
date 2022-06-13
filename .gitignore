@@ -1,1 +1,9 @@
 *.exe
+**/_artifacts
+**/kubernetes
+**/.sshkey
+**/.sshkey.pub
+**/*.kubeconfig
+**/kubernetes-test-linux-amd64.tar.gz
+**/kube-proxy-windows.yaml
+**/capz-conf-*.yaml
