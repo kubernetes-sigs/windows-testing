@@ -8,7 +8,7 @@ SCRIPT_ROOT=$(dirname "${BASH_SOURCE[0]}")
 export CAPZ_DIR="${CAPZ_DIR:-"${GOPATH}/src/sigs.k8s.io/cluster-api-provider-azure"}"
 : "${CAPZ_DIR:?Environment variable empty or not defined.}"
 if [[ ! -d $CAPZ_DIR ]]; then
-    echo "Must have capz repo present"
+    log "Must have capz repo present"
 fi
 
 main() {
@@ -22,7 +22,7 @@ main() {
     # other config
     export ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
     export CLUSTER_NAME="${CLUSTER_NAME:-capz-conf-$(head /dev/urandom | LC_ALL=C tr -dc a-z0-9 | head -c 6 ; echo '')}"
-    export CAPI_EXTENSION_SOURCE="${CAPI_EXTENSION_SOURCE:-"https://github.com/Azure/azure-capi-cli-extension/releases/download/v0.0.5/capi-0.0.5-py2.py3-none-any.whl"}"
+    export CAPI_EXTENSION_SOURCE="${CAPI_EXTENSION_SOURCE:-"https://testgridjs.blob.core.windows.net/k8s/capi-0.0.5-py2.py3-none-any.whl"}"
     export IMAGE_SKU="${IMAGE_SKU:-"${WINDOWS_SERVER_VERSION:=windows-2019}-containerd-gen1"}"
     
     # TODO if GMSA do additional set up
@@ -37,25 +37,28 @@ main() {
 
 cleanup() {
     # currently set KUBECONFIG is the workload cluster so reset to the management cluster
-
+    log "cleaning up"
     unset KUBECONFIG
     if [[ "$CI" == "true" ]]; then
         # we don't provide an ssh key in ci so it is created.  the ssh code in the logger cann't find it via relative paths so 
-        # give it the absolut
+        # give it the absolute path
         export AZURE_SSH_PUBLIC_KEY_FILE="${PWD}"/.sshkey.pub
     fi
 
-    
     pushd ${CAPZ_DIR}
+
+    # there is an issue in ci with the go client conflicting with the kubectl client failing to get logs for 
+    # control plane node.  This is a mitigation being tried 
+    rm -rf "$HOME/.kube/cache/"
     # don't stop on errors here, so we always cleanup
     go run -tags e2e "${CAPZ_DIR}/test/logger.go" --name "${CLUSTER_NAME}" --namespace default --artifacts-folder "${ARTIFACTS}" || true
     popd
     
     "${CAPZ_DIR}/hack/log/redact.sh" || true
     if [[ -z "${SKIP_CLEANUP:-}" ]]; then
-        az group delete --name "$CLUSTER_NAME" --no-wait -y --force-deletion-types=Microsoft.Compute/virtualMachines --force-deletion-types=Microsoft.Compute/virtualMachineScaleSets
+        az group delete --name "$CLUSTER_NAME" --no-wait -y --force-deletion-types=Microsoft.Compute/virtualMachines --force-deletion-types=Microsoft.Compute/virtualMachineScaleSets || true
     else
-        echo "skipping clean up"
+        log "skipping clean up"
     fi
 }
 
@@ -63,11 +66,13 @@ create_cluster(){
     export SKIP_CREATE="${SKIP_CREATE:-"false"}"
     if [[ ! "$SKIP_CREATE" == "true" ]]; then
         ## create cluster
+        log "starting to create cluster"
         az extension add -y --upgrade --source $CAPI_EXTENSION_SOURCE || true
-        az capi create -mg "${CLUSTER_NAME}" -y -w -n "${CLUSTER_NAME}" -l "$AZURE_LOCATION" --template "$SCRIPT_ROOT"/templates/windows-base.yaml
+        az capi create -mg "${CLUSTER_NAME}" -y -w -n "${CLUSTER_NAME}" -l "$AZURE_LOCATION" --template "$SCRIPT_ROOT"/templates/windows-base.yaml --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
         
         # put a date on the rg to ensure it is deleted if failure to clean up
-        az group update --resource-group "${CLUSTER_NAME}" --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+        #az group update --resource-group "${CLUSTER_NAME}" --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+        log "cluster creation complete"
     fi
     export KUBECONFIG="$PWD"/"${CLUSTER_NAME}".kubeconfig
 }
@@ -106,6 +111,7 @@ run_e2e_test() {
             ADDITIONAL_E2E_ARGS+="--docker-config-file=${DOCKER_CONFIG_FILE}"
         fi
 
+        log "starting to run e2e tests"
         set -x
         "$PWD"/kubernetes/test/bin/ginkgo --nodes="${GINKGO_NODES}" "$PWD"/kubernetes/test/bin/e2e.test -- \
             --provider=skeleton \
@@ -125,21 +131,27 @@ run_e2e_test() {
             --prepull-images=true \
             --v=5 "${ADDITIONAL_E2E_ARGS[@]}"
         set +x
+        log "e2e tests complete"
     fi
 }
 
 wait_for_nodes() {
-    echo "Waiting for ${CONTROL_PLANE_MACHINE_COUNT} control plane machine(s) and ${WINDOWS_WORKER_MACHINE_COUNT} windows machine(s) to become Ready"
-
+    log "Waiting for ${CONTROL_PLANE_MACHINE_COUNT} control plane machine(s) and ${WINDOWS_WORKER_MACHINE_COUNT} windows machine(s) to become Ready"
+    kubectl get nodes -o wide
+    kubectl get pods -A -o wide
+    
     # Ensure that all nodes are registered with the API server before checking for readiness
     local total_nodes="$((CONTROL_PLANE_MACHINE_COUNT + WINDOWS_WORKER_MACHINE_COUNT))"
     while [[ $(kubectl get nodes -ojson | jq '.items | length') -ne "${total_nodes}" ]]; do
-        kubectl get nodes -o wide
-        kubectl get pods -A -o wide
         sleep 10
     done
 
-    kubectl wait --for=condition=Ready node --all --timeout=5m
+    kubectl get nodes -o wide
+    kubectl get pods -A -o wide
+
+    log "waiting for nodes to be Ready"
+    kubectl wait --for=condition=Ready node --all --timeout=20m
+    log "Nodes Ready"
     kubectl get nodes -owide
 }
 
@@ -162,6 +174,11 @@ set_azure_envs() {
     export AZURE_LOCATION="${AZURE_LOCATION:-$(capz::util::get_random_region)}"
 }
 
+log() {
+	local msg=$1
+	echo "$(date -R): $msg"
+}
+
 set_ci_version() {
     # select correct windows version for tests
     if [[ "$(capz::util::should_build_kubernetes)" == "true" ]]; then
@@ -181,9 +198,8 @@ set_ci_version() {
         export CI_VERSION="${CI_VERSION:-$(curl -sSL ${CI_VERSION_URL})}"
         export KUBERNETES_VERSION="${CI_VERSION}"
 
-        echo "Selected Kubernetes version:"
-        echo $CI_VERSION
-        echo $KUBERNETES_VERSION
+        log "Selected Kubernetes version:"
+        log $KUBERNETES_VERSION
     fi
 }
 
