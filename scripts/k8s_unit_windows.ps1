@@ -37,7 +37,7 @@ function Prepare-Vendor {
 }
 
 $JUNIT_FILE_NAME="junit"
-$TEST_PACKAGES = @("./pkg/proxy/...")
+$TEST_PACKAGES = @("./pkg/...", "./cmd/...")
 
 function Run-K8sUnitTests {
 
