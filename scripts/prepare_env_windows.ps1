@@ -38,5 +38,3 @@ mkdir c:\Logs
 go env > c:\Logs\go-env.txt
 cat c:\Logs\go-env.txt
 
-# Pull junit conversion tool
-go install github.com/jstemmer/go-junit-report@v0.9.1
