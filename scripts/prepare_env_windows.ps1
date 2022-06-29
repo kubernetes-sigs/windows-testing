@@ -31,9 +31,6 @@ Write-Host $env:PATH
 
 [Environment]::SetEnvironmentVariable("PATH", $env:PATH, 'User')
 
-# Prepare Log dir
-mkdir c:\Logs
-
 # Log go env for future reference:
 go env
 
