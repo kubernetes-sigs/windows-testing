@@ -1,7 +1,8 @@
 $LogsDirPath = "c:/Logs"
 $K8sPath = "c:/Kubernetes"
 $K8sRepo = "https://github.com/kubernetes/kubernetes"
-
+$JUNIT_FILE_NAME="junit"
+$TEST_PACKAGES = @("./pkg/...", "./cmd/...")
 
 function Prepare-LogsDir {
     
@@ -35,9 +36,6 @@ function Prepare-Vendor {
     Pop-Location
 
 }
-
-$JUNIT_FILE_NAME="junit"
-$TEST_PACKAGES = @("./pkg/...", "./cmd/...")
 
 function Run-K8sUnitTests {
 

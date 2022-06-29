@@ -26,11 +26,24 @@ function onError(){
 
 trap onError ERR 
 
+parse_cred() {
+    grep -E -o "\b$1[[:blank:]]*=[[:blank:]]*\"[^[:space:]\"]+\"" | cut -d '"' -f 2
+}
+
 ensure_azure_envs() {
-    : "${AZURE_SUB_ID:?Environment variable empty or not defined.}"
-    : "${AZURE_TENANT_ID:?Environment variable empty or not defined.}"
-    : "${AZURE_CLIENT_ID:?Environment variable empty or not defined.}"
-    : "${AZURE_CLIENT_SECRET:?Environment variable empty or not defined.}"
+
+# for Prow we use the provided AZURE_CREDENTIALS file.
+# the file is expected to be in toml format.
+    if [[ -n "${AZURE_CREDENTIALS:-}" ]]; then
+        AZURE_SUBSCRIPTION_ID="$(parse_cred SubscriptionID < "${AZURE_CREDENTIALS}")"
+        AZURE_TENANT_ID="$(parse_cred TenantID < "${AZURE_CREDENTIALS}")"
+        AZURE_CLIENT_ID="$(parse_cred ClientID < "${AZURE_CREDENTIALS}")"
+        AZURE_CLIENT_SECRET="$(parse_cred ClientSecret < "${AZURE_CREDENTIALS}")"
+        AZURE_MULTI_TENANCY_ID="$(parse_cred MultiTenancyClientID < "${AZURE_CREDENTIALS}")"
+        AZURE_MULTI_TENANCY_SECRET="$(parse_cred MultiTenancyClientSecret < "${AZURE_CREDENTIALS}")"
+        AZURE_STORAGE_ACCOUNT="$(parse_cred StorageAccountName < "${AZURE_CREDENTIALS}")"
+        AZURE_STORAGE_KEY="$(parse_cred StorageAccountKey < "${AZURE_CREDENTIALS}")"
+    fi
 } 
 
 ensure_azure_cli() {
@@ -43,13 +56,11 @@ ensure_azure_cli() {
   	apt-get update && apt-get install -y azure-cli
   	az login --service-principal -u "${AZURE_CLIENT_ID}" -p "${AZURE_CLIENT_SECRET}" --tenant "${AZURE_TENANT_ID}" > /dev/null
     fi
-
 }
 
 
 build_resource_group() {
 	az group create -n ${AZURE_RESOURCE_GROUP} -l ${VM_LOCATION} --tags creationTimestamp=$(date -u '+%Y-%m-%dT%H:%M:%SZ') 
-
 }
 
 destroy_resource_group() {
@@ -79,7 +90,6 @@ build_test_vm() {
             exit 1
         fi
         VM_PUB_IP=$PUB_IP
-
 }
 
 generate_ssh_key() {
@@ -99,7 +109,6 @@ generate_ssh_key() {
 }
 
 copy_from() {
-    
     
     if [ -z $1 ]
     then
@@ -122,7 +131,6 @@ copy_from() {
 
     echo "Copying $REMOTE_PATH from $SSH_HOST:$REMOTE_PATH to ${LOCAL_PATH}"
     scp -i ${SSH_KEY_FILE} ${SSH_OPTS} azureuser@${SSH_HOST}:${REMOTE_PATH} ${LOCAL_PATH}
-
 }
 
 copy_to() {
@@ -169,13 +177,11 @@ test_ssh_connection() {
 	echo "Testing ssh connection to Windows VM"
     SSH_KEY_FILE=.sshkey
 	if ! ssh -i ${SSH_KEY_FILE} ${SSH_OPTS} azureuser@${VM_PUB_IP}  "hostname";
-        then
-           exit 1
-        fi
+    then
+        exit 1
+    fi
     echo "Windows VM SSH connection OK"
 }
-
-
 
 ensure_azure_envs
 ensure_azure_cli

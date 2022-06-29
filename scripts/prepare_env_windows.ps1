@@ -35,6 +35,5 @@ Write-Host $env:PATH
 mkdir c:\Logs
 
 # Log go env for future reference:
-go env > c:\Logs\go-env.txt
-cat c:\Logs\go-env.txt
+go env
 
