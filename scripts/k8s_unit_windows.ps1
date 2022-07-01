@@ -1,6 +1,14 @@
+param (
+    [string]$repoName = "kubernetes", 
+    [string]$repoOrg = "kubernetes",    
+    [string]$pullRequestNo,
+    [string]$pullBaseRef = "master"
+)
+
 $LogsDirPath = "c:/Logs"
-$K8sPath = "c:/Kubernetes"
-$K8sRepo = "https://github.com/kubernetes/kubernetes"
+$RepoPath = "c:/$repoName"
+$RepoURL = "https://github.com/$repoOrg/$repoName"
+$LocalPullBranch = "testBranch"
 $JUNIT_FILE_NAME="junit"
 $TEST_PACKAGES = @("./pkg/...", "./cmd/...")
 
@@ -10,19 +18,29 @@ function Prepare-LogsDir {
 
 }
 
-function Clone-K8s {
-    Write-Host "Cloning Kubernetes repo"
-    git clone $K8sRepo $K8sPath --depth=1
+function Clone-TestRepo {
+    Write-Host "Cloning $repoName repo"
+    git clone --branch $pullBaseRef $RepoURL $RepoPath --depth=1
+    if (($pullRequestNo -ne $null) -and ($pullRequestNo -ne "")) {
+        Write-Host "Pulling PR $pullRequestNo changes"
+        cd $RepoPath
+        git fetch origin refs/pull/$pullRequestNo/head:$LocalPullBranch
+        git checkout $LocalPullBranch
+        if (! $?) {
+            Write-Host "Failed to pull PR $pullRequestNo changes. Exiting"
+            exit
+        }
+    }
 }
 
 function Install-Tools {
 
     Write-Host "Install testing tools"
-    Push-Location "$K8sPath/hack/tools"
+    Push-Location "$RepoPath/hack/tools"
     go install gotest.tools/gotestsum
     Pop-Location
 
-    Push-Location "$K8sPath/cmd/prune-junit-xml"
+    Push-Location "$RepoPath/cmd/prune-junit-xml"
     go install .
     Pop-Location
 
@@ -31,7 +49,7 @@ function Install-Tools {
 function Prepare-Vendor {
     
     Write-Host "Downloading vendor files"
-    Push-Location "$K8sPath"
+    Push-Location "$RepoPath"
     go mod vendor
     Pop-Location
 
@@ -39,7 +57,7 @@ function Prepare-Vendor {
 
 function Run-K8sUnitTests {
 
-    Push-Location "$K8spath"
+    Push-Location "$RepoPath"
     for ( $index = 0; $index -lt $TEST_PACKAGES.count; $index++ ) {
         
         echo "Running unit tests for packages" $TEST_PACKAGES[$index]
@@ -52,7 +70,7 @@ function Run-K8sUnitTests {
 }
 
 Prepare-LogsDir
-Clone-K8s
+Clone-TestRepo
 Prepare-Vendor
 Install-Tools
 Run-K8sUnitTests

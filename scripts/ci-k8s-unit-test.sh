@@ -183,6 +183,18 @@ test_ssh_connection() {
     echo "Windows VM SSH connection OK"
 }
 
+wait_for_vm_restart() {
+    echo "Waiting for VM restart"
+    # Waiting 30 seconds. SSH might respond while server is shutting down.
+    sleep 30
+    while [ ! $( ssh -i ${SSH_KEY_FILE} ${SSH_OPTS} azureuser@${VM_PUB_IP}  "hostname") ];
+    do
+        echo "Unable to connect to azurevm"
+        sleep 5
+    done
+    echo "Connection reestablished. VM restarted succesfully."
+}
+
 ensure_azure_envs
 ensure_azure_cli
 build_resource_group
@@ -194,6 +206,18 @@ echo "Test VM created. SSH connection working"
 copy_to ./scripts/prepare_env_windows.ps1 '/prepare_env_windows.ps1' ${VM_PUB_IP}
 copy_to ./scripts/k8s_unit_windows.ps1 '/k8s_unit_windows.ps1' ${VM_PUB_IP}
 run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} 'c:/prepare_env_windows.ps1'
-run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} 'c:/k8s_unit_windows.ps1'
+
+echo "Install container features in VM"
+run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "powershell.exe -command { Install-WindowsFeature -Name 'Containers' -Restart }"
+wait_for_vm_restart
+
+if [ "${JOB_TEST}" == "presubmit" ]
+then
+    echo "Running a presubmit job"
+    run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_unit_windows.ps1 -repoName ${REPO_NAME} -repoOrg ${REPO_OWNER} -pullRequestNo ${PULL_NUMBER} -pullBaseRef ${PULL_BASE_REF}"
+else
+    echo "Running periodic job"
+    run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} 'c:/k8s_unit_windows.ps1'
+fi
 copy_from 'c:/Logs/*.xml' ${ARTIFACTS} ${VM_PUB_IP}
 destroy_resource_group
