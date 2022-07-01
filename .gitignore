@@ -7,3 +7,7 @@
 **/kubernetes-test-linux-amd64.tar.gz
 **/kube-proxy-windows.yaml
 **/capz-conf-*.yaml
+# gmsa files
+**/gmsa/domain.init
+capz/gmsa/configuration/configuration
+capz/gmsa/configuration/gmsa-spec-writer-output.txt

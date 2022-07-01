@@ -283,6 +283,9 @@ spec:
       role: node
     vnet:
       name: ${AZURE_VNET_NAME:=${CLUSTER_NAME}-vnet}
+      peerings:
+      - remoteVnetName: dc-${GMSA_ID}-vnet
+        resourceGroup: ${GMSA_NODE_RG}
   resourceGroup: ${AZURE_RESOURCE_GROUP:=${CLUSTER_NAME}}
   subscriptionID: ${AZURE_SUBSCRIPTION_ID}
 ---
@@ -339,6 +342,7 @@ spec:
       annotations:
         runtime: containerd
     spec:
+      identity: UserAssigned
       image:
         marketplace:
           offer: capi-windows
@@ -351,4 +355,7 @@ spec:
           storageAccountType: Premium_LRS
         osType: Windows
       sshPublicKey: ${AZURE_SSH_PUBLIC_KEY_B64:=""}
+      userAssignedIdentities:
+      - providerID: /subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${CI_RG}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/cloud-provider-user-identity
+      - providerID: /subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${CI_RG}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/gmsa-user-identity
       vmSize: ${AZURE_NODE_MACHINE_TYPE:-"Standard_D4s_v3"}

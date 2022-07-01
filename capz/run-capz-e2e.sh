@@ -18,35 +18,50 @@ main() {
     export WINDOWS_WORKER_MACHINE_COUNT="${WINDOWS_WORKER_MACHINE_COUNT:-"2"}"
     export WINDOWS_SERVER_VERSION="${WINDOWS_SERVER_VERSION:-"windows-2019"}"
     export WINDOWS_CONTAINERD_URL="${WINDOWS_CONTAINERD_URL:-"https://github.com/containerd/containerd/releases/download/v1.6.4/containerd-1.6.4-windows-amd64.tar.gz"}"
-    
+    export GMSA="${GMSA:-""}" 
+
     # other config
     export ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
     export CLUSTER_NAME="${CLUSTER_NAME:-capz-conf-$(head /dev/urandom | LC_ALL=C tr -dc a-z0-9 | head -c 6 ; echo '')}"
     export CAPI_EXTENSION_SOURCE="${CAPI_EXTENSION_SOURCE:-"https://github.com/Azure/azure-capi-cli-extension/releases/download/az-capi-nightly/capi-0.0.vnext-py2.py3-none-any.whl"}"
     export IMAGE_SKU="${IMAGE_SKU:-"${WINDOWS_SERVER_VERSION:=windows-2019}-containerd-gen1"}"
     
-    # TODO if GMSA do additional set up
-
     # CI is an environment variable set by a prow job: https://github.com/kubernetes/test-infra/blob/master/prow/jobs.md#job-environment-variables
     export CI="${CI:-""}"
-
+    
     set_azure_envs
     set_ci_version
+    if [[ "${GMSA}" == "true" ]]; then create_gmsa_domain; fi
+
     create_cluster
     apply_workload_configuraiton
     wait_for_nodes
     run_e2e_test
 }
 
+create_gmsa_domain(){
+    log "running gmsa setup"
+
+    export CI_RG="${CI_RG:-capz-ci}"
+    export GMSA_ID="${RANDOM}"
+    export GMSA_NODE_RG="gmsa-dc-${GMSA_ID}"
+    export GMSA_KEYVAULT_URL="https://${GMSA_KEYVAULT:-$CI_RG-gmsa}.vault.azure.net"
+
+    log "setting up domain vm in $GMSA_NODE_RG with keyvault $CI_RG-gmsa"
+    "${SCRIPT_ROOT}/gmsa/ci-gmsa.sh"
+
+    # export the ip Address so it can be used in e2e test
+    vmname="dc-${GMSA_ID}"
+    vmip=$(az vm list-ip-addresses -n ${vmname} -g $GMSA_NODE_RG --query "[?virtualMachine.name=='$vmname'].virtualMachine.network.privateIpAddresses" -o tsv)
+    export GMSA_DNS_IP=$vmip
+}
+
 cleanup() {
-    # currently set KUBECONFIG is the workload cluster so reset to the management cluster
     log "cleaning up"
+    kubectl get nodes -owide
+
+    # currently KUBECONFIG is set to the workload cluster so reset to the management cluster
     unset KUBECONFIG
-    if [[ "$CI" == "true" ]]; then
-        # we don't provide an ssh key in ci so it is created.  the ssh code in the logger cann't find it via relative paths so 
-        # give it the absolute path
-        export AZURE_SSH_PUBLIC_KEY_FILE="${PWD}"/.sshkey.pub
-    fi
 
     pushd "${CAPZ_DIR}"
 
@@ -59,7 +74,18 @@ cleanup() {
     
     "${CAPZ_DIR}/hack/log/redact.sh" || true
     if [[ -z "${SKIP_CLEANUP:-}" ]]; then
+        log "deleting cluster"
         az group delete --name "$CLUSTER_NAME" --no-wait -y --force-deletion-types=Microsoft.Compute/virtualMachines --force-deletion-types=Microsoft.Compute/virtualMachineScaleSets || true
+
+        # clean up GMSA NODE RG
+        if [[ -n ${GMSA:-} ]]; then
+            echo "Cleaning up gMSA resources $GMSA_NODE_RG with keyvault $GMSA_KEYVAULT_URL"
+            az keyvault secret list --vault-name "${GMSA_KEYVAULT:-$CI_RG-gmsa}" --query "[? contains(name, '${GMSA_ID}')].name" -o tsv | while read -r secret ; do
+                az keyvault secret delete -n "$secret" --vault-name "${GMSA_KEYVAULT:-$CI_RG-gmsa}"
+            done
+
+            az group delete --name "$GMSA_NODE_RG" --no-wait -y --force-deletion-types=Microsoft.Compute/virtualMachines --force-deletion-types=Microsoft.Compute/virtualMachineScaleSets || true
+        fi
     else
         log "skipping clean up"
     fi
@@ -68,19 +94,26 @@ cleanup() {
 create_cluster(){
     export SKIP_CREATE="${SKIP_CREATE:-"false"}"
     if [[ ! "$SKIP_CREATE" == "true" ]]; then
-        ## create cluster
+        # create cluster
         log "starting to create cluster"
         az extension add -y --upgrade --source "$CAPI_EXTENSION_SOURCE" || true
-        az capi create -mg "${CLUSTER_NAME}" -y -w -n "${CLUSTER_NAME}" -l "$AZURE_LOCATION" --template "$SCRIPT_ROOT"/templates/windows-base.yaml --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+
+        # select correct template
+        template="$SCRIPT_ROOT"/templates/windows-base.yaml
+        if [[ "${GMSA}" == "true" ]]; then
+            template="$SCRIPT_ROOT"/templates/gmsa.yaml
+        fi
+        echo "Using $template"
+        
+        az capi create -mg "${CLUSTER_NAME}" -y -w -n "${CLUSTER_NAME}" -l "$AZURE_LOCATION" --template "$template" --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
         
         # copy generated template to logs
         mkdir -p "${ARTIFACTS}"/clusters/bootstrap
         cp "${CLUSTER_NAME}.yaml" "${ARTIFACTS}"/clusters/bootstrap || true
-
-        # put a date on the rg to ensure it is deleted if failure to clean up
-        #az group update --resource-group "${CLUSTER_NAME}" --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
         log "cluster creation complete"
     fi
+
+    # set the kube config to the workload cluster
     export KUBECONFIG="$PWD"/"${CLUSTER_NAME}".kubeconfig
 }
 
@@ -107,9 +140,7 @@ run_e2e_test() {
         export GINKGO_SKIP=${GINKGO_SKIP:-"\[LinuxOnly\]|\[Serial\]|\[Slow\]|\[Excluded:WindowsDocker\]|Networking.Granular.Checks(.*)node-pod.communication|Guestbook.application.should.create.and.stop.a.working.application|device.plugin.for.Windows|Container.Lifecycle.Hook.when.create.a.pod.with.lifecycle.hook.should.execute(.*)http.hook.properly|\[sig-api-machinery\].Garbage.collector"}
         export GINKGO_NODES="${GINKGO_NODES:-"4"}"
 
-        # CI is an environment variable set by a prow job: https://github.com/kubernetes/test-infra/blob/master/prow/jobs.md#job-environment-variables
         ADDITIONAL_E2E_ARGS=()
-        CI="${CI:-""}"
         if [[ "$CI" == "true" ]]; then
             # private image repository doesn't have a way to promote images: https://github.com/kubernetes/k8s.io/pull/1929
             # So we are using a custom repository for the test "Container Runtime blackbox test when running a container with a new image should be able to pull from private registry with secret [NodeConformance]"
@@ -161,6 +192,17 @@ wait_for_nodes() {
     kubectl wait --for=condition=Ready node --all --timeout=20m
     log "Nodes Ready"
     kubectl get nodes -owide
+
+    if [[ "${GMSA}" == "true" ]]; then
+        log "Configuring workload cluster nodes for gmsa tests"
+        # require kubeconfig to be pointed at management cluster 
+        unset KUBECONFIG
+        pushd  "$SCRIPT_ROOT"/gmsa/configuration
+        go run --tags e2e configure.go --name "${CLUSTER_NAME}" --namespace default
+        popd
+        export KUBECONFIG="$PWD"/"${CLUSTER_NAME}".kubeconfig
+    fi
+
 }
 
 set_azure_envs() {
@@ -181,6 +223,14 @@ set_azure_envs() {
     capz::util::generate_ssh_key
 
     export AZURE_LOCATION="${AZURE_LOCATION:-$(capz::util::get_random_region)}"
+
+    if [[ "${CI:-}" == "true" ]]; then
+        # we don't provide an ssh key in ci so it is created.  
+        # the ssh code in the logger and gmsa configuration
+        # can't find it via relative paths so 
+        # give it the absolute path
+        export AZURE_SSH_PUBLIC_KEY_FILE="${PWD}"/.sshkey.pub
+    fi
 }
 
 log() {

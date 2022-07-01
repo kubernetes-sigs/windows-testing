@@ -21,3 +21,9 @@ export AZURE_SSH_PUBLIC_KEY_FILE="$HOME/.ssh/id_rsa.pub"
 | `SKIP_CREATE` | Don't create a cluster.  Must set `CLUSTER_NAME` and have current a workload cluster kubeconfig file with name `./"${CLUSTER_NAME}".kubeconfig` |
 | `SKIP_TEST`  | Only creates the cluster, will not run tests |
 | `KUBERNETES_VERSION`  | valid values are `latest` (default) and  `latest-1.x` where x is valid kubernetes minor version such as `latest-1.24` |
+
+## GMSA support
+
+Set the environment variable `GMSA=true`.  
+
+This requires additional set up in the Azure Subscriptinos. See the readme in [gmsa folder](gmsa/readme.md).
