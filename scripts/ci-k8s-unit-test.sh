@@ -211,7 +211,7 @@ echo "Install container features in VM"
 run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "powershell.exe -command { Install-WindowsFeature -Name 'Containers' -Restart }"
 wait_for_vm_restart
 
-if [ "${JOB_TEST}" == "presubmit" ]
+if [ "${JOB_TYPE}" == "presubmit" ]
 then
     echo "Running a presubmit job"
     run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_unit_windows.ps1 -repoName ${REPO_NAME} -repoOrg ${REPO_OWNER} -pullRequestNo ${PULL_NUMBER} -pullBaseRef ${PULL_BASE_REF}"
