@@ -19,6 +19,10 @@ foreach ($package in $PACKAGES.Keys) {
         $command += " --version $version"
     }
     Invoke-Expression $command
+    if ( !$? ){
+        echo "Failed installing package $package"
+        exit
+    }
 }
 
 Write-Host "Set up environment."

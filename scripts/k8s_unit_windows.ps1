@@ -10,7 +10,19 @@ $RepoPath = "c:/$repoName"
 $RepoURL = "https://github.com/$repoOrg/$repoName"
 $LocalPullBranch = "testBranch"
 $JUNIT_FILE_NAME="junit"
-$TEST_PACKAGES = @("./pkg/...", "./cmd/...")
+$EXTRA_PACKAGES = @("./cmd/...")
+$EXCLUDED_PACKAGES = @("./pkg/proxy/...")
+
+
+function Prepare-TestPackages {
+    Push-Location "$RepoPath/pkg"
+    $packages = ls -Directory  | select Name | foreach { "./pkg/" + $_.Name + "/..." }
+    $packages = $packages + $EXTRA_PACKAGES
+    $EXCLUDED_PACKAGES | foreach { $packages = $packages -ne $_ }
+    Pop-Location
+    return $packages
+
+}
 
 function Prepare-LogsDir {
     
@@ -73,4 +85,5 @@ Prepare-LogsDir
 Clone-TestRepo
 Prepare-Vendor
 Install-Tools
+$TEST_PACKAGES=Prepare-TestPackages
 Run-K8sUnitTests
