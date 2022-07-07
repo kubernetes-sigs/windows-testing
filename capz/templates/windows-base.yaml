@@ -62,7 +62,7 @@ spec:
         extraArgs:
           cloud-config: /etc/kubernetes/azure.json
           cloud-provider: azure
-          feature-gates: ${K8S_FEATURE_GATES:-""}
+          feature-gates: WindowsHostProcessContainers=true
         extraVolumes:
         - hostPath: /etc/kubernetes/azure.json
           mountPath: /etc/kubernetes/azure.json
@@ -321,7 +321,7 @@ spec:
             azure-container-registry-config: c:/k/azure.json
             cloud-config: c:/k/azure.json
             cloud-provider: azure
-            feature-gates: WindowsHostProcessContainers=true
+            feature-gates: WindowsHostProcessContainers=true,HPAContainerMetrics=true
             v: "2"
             windows-priorityclass: ABOVE_NORMAL_PRIORITY_CLASS
           name: '{{ ds.meta_data["local_hostname"] }}'
