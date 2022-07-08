@@ -45,7 +45,7 @@ cleanup() {
         export AZURE_SSH_PUBLIC_KEY_FILE="${PWD}"/.sshkey.pub
     fi
 
-    pushd ${CAPZ_DIR}
+    pushd "${CAPZ_DIR}"
 
     # there is an issue in ci with the go client conflicting with the kubectl client failing to get logs for 
     # control plane node.  This is a mitigation being tried 
@@ -67,7 +67,7 @@ create_cluster(){
     if [[ ! "$SKIP_CREATE" == "true" ]]; then
         ## create cluster
         log "starting to create cluster"
-        az extension add -y --upgrade --source $CAPI_EXTENSION_SOURCE || true
+        az extension add -y --upgrade --source "$CAPI_EXTENSION_SOURCE" || true
         az capi create -mg "${CLUSTER_NAME}" -y -w -n "${CLUSTER_NAME}" -l "$AZURE_LOCATION" --template "$SCRIPT_ROOT"/templates/windows-base.yaml --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
         
         # copy generated template to logs
@@ -97,7 +97,7 @@ run_e2e_test() {
     if [[ ! "$SKIP_TEST" == "true" ]]; then
         ## get and run e2e test 
         ## https://github.com/kubernetes/sig-release/blob/master/release-engineering/artifacts.md#content-of-kubernetes-test-system-archtargz-on-example-of-kubernetes-test-linux-amd64targz-directories-removed-from-list
-        curl -L -o /tmp/kubernetes-test-linux-amd64.tar.gz https://storage.googleapis.com/k8s-release-dev/ci/${CI_VERSION}/kubernetes-test-linux-amd64.tar.gz
+        curl -L -o /tmp/kubernetes-test-linux-amd64.tar.gz https://storage.googleapis.com/k8s-release-dev/ci/"${CI_VERSION}"/kubernetes-test-linux-amd64.tar.gz
         tar -xzvf /tmp/kubernetes-test-linux-amd64.tar.gz
 
         export GINKGO_FOCUS=${GINKGO_FOCUS:-"\[Conformance\]|\[NodeConformance\]|\[sig-windows\]|\[sig-apps\].CronJob|\[sig-api-machinery\].ResourceQuota|\[sig-scheduling\].SchedulerPreemption"}
@@ -112,7 +112,7 @@ run_e2e_test() {
             # So we are using a custom repository for the test "Container Runtime blackbox test when running a container with a new image should be able to pull from private registry with secret [NodeConformance]"
             # Must also set label preset-windows-private-registry-cred: "true" on the job
             export KUBE_TEST_REPO_LIST="$PWD"/images/image-repo-list-private-registry
-            ADDITIONAL_E2E_ARGS+="--docker-config-file=${DOCKER_CONFIG_FILE}"
+            ADDITIONAL_E2E_ARGS+=("--docker-config-file=${DOCKER_CONFIG_FILE}")
         fi
 
         log "starting to run e2e tests"
@@ -160,13 +160,14 @@ wait_for_nodes() {
 }
 
 set_azure_envs() {
-    # shellcheck source=hack/ensure-tags.sh
+
+    # shellcheck disable=SC1091
     source "${CAPZ_DIR}/hack/ensure-tags.sh"
-    # shellcheck source=hack/parse-prow-creds.sh
+    # shellcheck disable=SC1091
     source "${CAPZ_DIR}/hack/parse-prow-creds.sh"
-    # shellcheck source=hack/util.sh
+    # shellcheck disable=SC1091
     source "${CAPZ_DIR}/hack/util.sh"
-    # shellcheck source=hack/ensure-azcli.sh
+    # shellcheck disable=SC1091
     source "${CAPZ_DIR}/hack/ensure-azcli.sh"
 
     # Verify the required Environment Variables are present.
@@ -192,6 +193,7 @@ set_ci_version() {
 
         export E2E_ARGS="-kubetest.use-pr-artifacts"
         export KUBE_BUILD_CONFORMANCE="y"
+        # shellcheck disable=SC1091
         source "${CAPZ_DIR}/scripts/ci-build-kubernetes.sh"
     else
         if [[ "${KUBERNETES_VERSION:-}" =~ "latest" ]]; then
@@ -203,7 +205,7 @@ set_ci_version() {
         export KUBERNETES_VERSION="${CI_VERSION}"
 
         log "Selected Kubernetes version:"
-        log $KUBERNETES_VERSION
+        log "$KUBERNETES_VERSION"
     fi
 }
 
