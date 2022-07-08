@@ -70,6 +70,10 @@ create_cluster(){
         az extension add -y --upgrade --source $CAPI_EXTENSION_SOURCE || true
         az capi create -mg "${CLUSTER_NAME}" -y -w -n "${CLUSTER_NAME}" -l "$AZURE_LOCATION" --template "$SCRIPT_ROOT"/templates/windows-base.yaml --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
         
+        # copy generated template to logs
+        mkdir -p "${ARTIFACTS}"/clusters/bootstrap
+        cp "${CLUSTER_NAME}.yaml" "${ARTIFACTS}"/clusters/bootstrap || true
+
         # put a date on the rg to ensure it is deleted if failure to clean up
         #az group update --resource-group "${CLUSTER_NAME}" --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
         log "cluster creation complete"
