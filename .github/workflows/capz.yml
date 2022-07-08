@@ -1,0 +1,28 @@
+name: capz
+
+on:
+  pull_request:
+    branches: [ "master" ]
+    paths: 
+      - 'capz/**'
+jobs:
+  run-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          # Full git history is needed to get a proper list of changed files within `super-linter`
+          fetch-depth: 0
+      
+      # https://github.com/github/super-linter
+      - name: Lint Code Base
+        uses: github/super-linter@v4
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          VALIDATE_GO: true
+          VALIDATE_BASH: true
+          VALIDATE_YAML: true
+          VALIDATE_MARKDOWN: true
+          DEFAULT_BRANCH: "master"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
