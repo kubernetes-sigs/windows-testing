@@ -1,0 +1,10 @@
+---
+linters:
+  enable:
+    - unconvert
+    - gocyclo
+    - goconst
+    - goimports
+    - gocritic
+    - govet
+    - revive

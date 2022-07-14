@@ -1,9 +1,11 @@
-These scripts and templates are used with https://github.com/kubernetes-sigs/cluster-api-provider-azure and https://github.com/Azure/azure-capi-cli-extension.  
+# Upstream kubernetes e2e testing with CAPZ for Windows
+
+These scripts and templates are used with [cluster-api-provider-azure](https://github.com/kubernetes-sigs/cluster-api-provider-azure) and [azure cli extension](https://github.com/Azure/azure-capi-cli-extension).  
 
 ## Running the scripts
-To run these scripts locally, clone https://github.com/kubernetes-sigs/cluster-api-provider-azure and set the following environment variables (use Linux, macos, or WSL2):
+To run these scripts locally, clone [CAPZ](https://github.com/kubernetes-sigs/cluster-api-provider-azure) and set the following environment variables (use Linux, macos, or WSL2):
 
-```
+```bash
 export AZURE_SUBSCRIPTION_ID=<sub-id>
 export AZURE_CLIENT_ID=<client-id>
 export AZURE_CLIENT_SECRET=<client-secret>

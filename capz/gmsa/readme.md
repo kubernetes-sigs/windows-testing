@@ -6,20 +6,20 @@ A general overview of the required to run the gMSA:
 
 ![diagram of gmsa architecture with required vms and keyvaults](images/gmsa-design.png)
 
-# Subscrition Setup
+## Subscrition Setup
 
-The Azure subscription requires a few pre-requisits to be able run the tests.  This is becuase the Managed Identities used with the gMSA plugin need Subscription Owner Permissions to create. 
+The Azure subscription requires a few pre-requisits to be able run the tests.  This is becuase the Managed Identities used with the gMSA plugin need Subscription Owner Permissions to create.
 
 To accomidate this there is a script `setup-gmsa.sh` that does this configuration.  
 
-# Domain VM Creation
+## Domain VM Creation
 
 The domain VM is created from scratch each test. This is done by `ci-gmsa.sh` and uses cloudbase-init to bootstrap the domain. During bootstrap of the domain it creates domain users and generates the gMSA credspec.  It stores these as secrets in the keyvault used by the tests.
 
 ## gMSA template
 To generate the gMSA template run:
 
-```
+```bash
 kustomize build --load-restrictor LoadRestrictionsNone . > ../templates/gmsa.yaml
 ```
 
@@ -31,14 +31,14 @@ More details on requirements and implementation are in the [gMSA issue](https://
 
 The code to configure the cluster is in `configuration` and can be run against any management cluster passing the arguement `--name "${CLUSTER_NAME}"` as the workload cluster to configure.  It requires a the gMSA domain vm to be created and secrets to be loaded into the keyvault.
 
-```
+```bash
 go run --tags e2e configure.go --name "${CLUSTER_NAME}" --namespace default
 ```
 
-# Running the tests
+## Running the tests
 
 To run the tests, from the capz folder in this repo:
 
-```
+```bash
 GMSA=true ./run-capz-e2e.sh
 ```

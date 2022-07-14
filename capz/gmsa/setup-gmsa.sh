@@ -26,9 +26,9 @@ if [[ ! -d $CAPZ_DIR ]]; then
     log "Must have capz repo present"
 fi
 
-# shellcheck source=hack/ensure-azcli.sh
+# shellcheck disable=SC1091
 source "${CAPZ_DIR}/hack/ensure-azcli.sh"
-# shellcheck source=hack/parse-prow-creds.sh
+# shellcheck disable=SC1091
 source "${CAPZ_DIR}/hack/parse-prow-creds.sh"
 
 CI_RG="${CI_RG:-capz-ci}"

@@ -21,21 +21,17 @@ import (
 	"github.com/Azure/azure-sdk-for-go/services/keyvault/v7.0/keyvault"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega" //nolint:revive
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	capz "sigs.k8s.io/cluster-api-provider-azure/azure"
-	expv1 "sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/test/e2e"
-	clusterv1exp "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
 
@@ -75,51 +71,37 @@ func main() {
 	configureGmsa(context.Background(), bootstrapClusterProxy, *namespace, *clustername)
 }
 
-func initScheme() *runtime.Scheme {
-	scheme := runtime.NewScheme()
-	framework.TryAddDefaultSchemes(scheme)
-	infrav1.AddToScheme(scheme)
-	expv1.AddToScheme(scheme)
-	clusterv1exp.AddToScheme(scheme)
-	return scheme
-}
-
 func getKubeConfigPath() string {
 	config := os.Getenv("KUBECONFIG")
 	if config == "" {
-		d, _ := os.UserHomeDir()
+		d, err := os.UserHomeDir()
+		Expect(err).NotTo(HaveOccurred())
 		return path.Join(d, ".kube", "config")
 	}
 
 	return config
 }
 
-func getArtifactsFolder() string {
-	artifacts := os.Getenv("ARTIFACTS")
-	if artifacts == "" {
-		return "_artifacts"
-	}
-	return artifacts
-}
-
 func configureGmsa(ctx context.Context, bootstrapClusterProxy framework.ClusterProxy, namespace, clusterName string) {
 	settings, err := auth.GetSettingsFromEnvironment()
+	Expect(err).NotTo(HaveOccurred())
 	authorizer, err := settings.GetAuthorizer()
 	Expect(err).NotTo(HaveOccurred())
-	subId := settings.GetSubscriptionID()
+	subID := settings.GetSubscriptionID()
 
 	Expect(err).NotTo(HaveOccurred())
 	keyVaultClient := keyvault.New()
 
-	vmClient := compute.NewVirtualMachinesClient(subId)
+	vmClient := compute.NewVirtualMachinesClient(subID)
 	vmClient.Authorizer = authorizer
 
-	networkClient := network.NewVirtualNetworkPeeringsClient(subId)
+	networkClient := network.NewVirtualNetworkPeeringsClient(subID)
 	networkClient.Authorizer = authorizer
 
-	//override to use keyvault management endpoint
+	// override to use keyvault management endpoint
 	settings.Values[auth.Resource] = fmt.Sprintf("%s%s", "https://", azure.PublicCloud.KeyVaultDNSSuffix)
 	keyvaultAuthorizer, err := settings.GetAuthorizer()
+	Expect(err).NotTo(HaveOccurred())
 	keyVaultClient.Authorizer = keyvaultAuthorizer
 
 	workloadProxy := bootstrapClusterProxy.GetWorkloadCluster(ctx, namespace, clusterName)
@@ -185,19 +167,19 @@ func configureCoreDNS(ctx context.Context, workloadProxy framework.ClusterProxy)
 	corefile, ok := corednsConfigMap.Data["Corefile"]
 	Expect(ok).Should(BeTrue())
 
-	gmsaDns := fmt.Sprintf(`k8sgmsa.lan:53 {
+	gmsaDNS := fmt.Sprintf(`k8sgmsa.lan:53 {
 	errors
 	cache 30
 	log
 	forward . %s
 }`, os.Getenv("GMSA_DNS_IP"))
-	corefile = corefile + gmsaDns
 
+	corefile += gmsaDNS
 	corednsConfigMap.Data["Corefile"] = corefile
 	err = workloadProxy.GetClient().Update(ctx, corednsConfigMap)
 	Expect(err).NotTo(HaveOccurred())
 
-	//rollout restart to refresh the configuration
+	// rollout restart to refresh the configuration
 	patch := []byte(`{"spec": {"template":{ "metadata": { "annotations": { "restartedBy": "gmsa" } } } } }`)
 	_, err = workloadProxy.GetClientSet().AppsV1().Deployments("kube-system").Patch(ctx, "coredns", types.MergePatchType, patch, v1.PatchOptions{})
 	Expect(err).NotTo(HaveOccurred())
@@ -220,7 +202,7 @@ func labelGmsaTestNode(ctx context.Context, workloadProxy framework.ClusterProxy
 		LabelSelector: "kubernetes.io/os=windows",
 	}
 
-	var gmsaNode *corev1.Node = nil
+	var gmsaNode *corev1.Node
 	var windowsNodes *corev1.NodeList
 	var err error
 	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
