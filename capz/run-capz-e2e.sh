@@ -131,6 +131,7 @@ run_e2e_test() {
             --ginkgo.slowSpecThreshold=120.0 \
             --ginkgo.flakeAttempts=0 \
             --ginkgo.trace=true \
+            --ginkgo.timeout=24h \
             --num-nodes="$WINDOWS_WORKER_MACHINE_COUNT" \
             --ginkgo.v=true \
             --dump-logs-on-failure=true \
