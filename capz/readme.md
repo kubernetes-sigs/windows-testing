@@ -1,4 +1,5 @@
 These scripts and templates are used with https://github.com/kubernetes-sigs/cluster-api-provider-azure and https://github.com/Azure/azure-capi-cli-extension.  
+For azure-capi-cli-extension to work ensure you have installed az cli on the machine that runs the script: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli  
 
 ## Running the scripts
 To run these scripts locally, clone https://github.com/kubernetes-sigs/cluster-api-provider-azure and set the following environment variables (use Linux, macos, or WSL2):
