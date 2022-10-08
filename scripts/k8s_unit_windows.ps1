@@ -11,7 +11,7 @@ $RepoURL = "https://github.com/$repoOrg/$repoName"
 $LocalPullBranch = "testBranch"
 $JUNIT_FILE_NAME="junit"
 $EXTRA_PACKAGES = @("./cmd/...")
-$EXCLUDED_PACKAGES = @("./pkg/proxy/...")
+$EXCLUDED_PACKAGES = @("./pkg/proxy/...", "./cmd/kubeadm/test/...")
 
 
 function Prepare-TestPackages {
