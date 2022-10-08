@@ -12,7 +12,7 @@ $LocalPullBranch = "testBranch"
 $JUNIT_FILE_NAME="junit"
 $EXTRA_PACKAGES = @("./cmd/...")
 $EXCLUDED_PACKAGES = @("./pkg/proxy/...")
-
+$env:KUBEADM_PATH="./_output/dockerized/bin/windows/amd64/kubeadm.exe"
 
 function Prepare-TestPackages {
     Push-Location "$RepoPath/pkg"
