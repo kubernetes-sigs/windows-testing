@@ -1,4 +1,4 @@
-$PACKAGES= @{ git = ""; golang = "1.18.3"; make = "" }
+$PACKAGES= @{ git = ""; golang = "1.19.0"; make = "" }
 
 Write-Host "Downloading chocolatey package"
 curl.exe -L "https://packages.chocolatey.org/chocolatey.0.10.15.nupkg" -o 'c:\choco.zip'
@@ -16,7 +16,7 @@ foreach ($package in $PACKAGES.Keys) {
     $command = "choco.exe install $package --yes"
     $version = $PACKAGES[$package]
     if (-Not [string]::IsNullOrEmpty($version)) {
-        $command += " --version $version"
+        $command += " --version $version --limit-output"
     }
     Invoke-Expression $command
     if ( !$? ){
