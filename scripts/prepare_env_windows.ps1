@@ -13,10 +13,10 @@ $env:PATH+=";C:\ProgramData\chocolatey\bin"
 Write-Host "Install necessary packages"
 
 foreach ($package in $PACKAGES.Keys) {
-    $command = "choco.exe install $package --yes"
+    $command = "choco.exe install $package --yes --no-progress"
     $version = $PACKAGES[$package]
     if (-Not [string]::IsNullOrEmpty($version)) {
-        $command += " --version $version --limit-output"
+        $command += " --version $version"
     }
     Invoke-Expression $command
     if ( !$? ){
