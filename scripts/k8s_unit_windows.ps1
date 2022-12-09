@@ -67,6 +67,23 @@ function Prepare-Vendor {
 
 }
 
+function Build-Kubeadm {
+    # For the cmd/kubeadm tests, we need to build the kubeadm binary and set the KUBEADM_PATH path.
+    # Before building the binary, we need to inject a few fields into k8s.io/component-base/version/base.go,
+    # otherwise version-related unit tests for kubeadm will fail. 
+    $buildFlags = @(
+        "-X 'k8s.io/component-base/version.gitTreeState=clean'",
+        "-X 'k8s.io/component-base/version.gitMajor=1'",
+        "-X 'k8s.io/component-base/version.gitMinor=27'",
+        "-X 'k8s.io/component-base/version.gitVersion=v1.27.0'",
+        "-X 'k8s.io/component-base/version.gitCommit=6a61da26b6761d1b86844cdec194ccaa02b41f3'"
+    )
+
+    go build -ldflags "$buildFlags" -o kubeadm.exe .\cmd\kubeadm\
+    $curDir = [System.Environment]::CurrentDirectory
+    $env:KUBEADM_PATH = Join-Path $curDir "kubeadm.exe"
+}
+
 function Run-K8sUnitTests {
 
     Push-Location "$RepoPath"
@@ -84,6 +101,7 @@ function Run-K8sUnitTests {
 Prepare-LogsDir
 Clone-TestRepo
 Prepare-Vendor
+Build-Kubeadm
 Install-Tools
 $TEST_PACKAGES=Prepare-TestPackages
 Run-K8sUnitTests
