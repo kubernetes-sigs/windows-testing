@@ -55,8 +55,8 @@
       "sshEnabled": true,
       "windowsPublisher": "microsoft-aks",
       "windowsOffer": "aks-windows",
-      "windowsSku": "2019-datacenter-core-ctrd-2207",
-      "imageVersion": "17763.3232.220728",
+      "windowsSku": "2019-datacenter-core-ctrd-2212",
+      "imageVersion": "17763.3650.221213",
       "enableCSIProxy": true,
       "csiProxyURL": "https://acs-mirror.azureedge.net/csi-proxy/v1.0.2/binaries/csi-proxy-v1.0.2.tar.gz"
     },
