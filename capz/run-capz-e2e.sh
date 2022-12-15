@@ -120,7 +120,7 @@ create_cluster(){
 apply_workload_configuraiton(){
     # A patch is needed to tell kube-proxy to use CI binaries.  This could go away once we have build scripts for kubeproxy HostProcess image.
     kubectl apply -f "${CAPZ_DIR}"/templates/test/ci/patches/windows-kubeproxy-ci.yaml
-    kubectl rollout restart ds -n calico-system kube-proxy-windows
+    kubectl rollout restart ds -n kube-system kube-proxy-windows
 
     # apply additional helper manifests (logger etc)
     kubectl apply -f "${CAPZ_DIR}"/templates/addons/windows/containerd-logging/containerd-logger.yaml
