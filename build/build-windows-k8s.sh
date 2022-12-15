@@ -46,19 +46,12 @@ build_kubectl() {
 	cp ${GOPATH}/src/k8s.io/kubernetes/_output/dockerized/bin/windows/amd64/kubectl.exe ${DIST_DIR}
 }
 
-build_kubeadm() {
-	echo "building kubeadm.exe..."
-	$KUBEPATH/build/run.sh make WHAT=cmd/kubeadm KUBE_BUILD_PLATFORMS=windows/amd64 KUBE_VERBOSE=0
-	cp ${GOPATH}/src/k8s.io/kubernetes/_output/dockerized/bin/windows/amd64/kubeadm.exe ${DIST_DIR}
-}
-
 build_kube_binaries_for_upstream_e2e() {
 	$KUBEPATH/build/run.sh make WHAT=cmd/kubelet KUBE_BUILD_PLATFORMS=linux/amd64 KUBE_VERBOSE=0
 
 	build_kubelet
 	build_kubeproxy
 	build_kubectl
-	build_kubeadm
 }
 
 download_nssm() {
