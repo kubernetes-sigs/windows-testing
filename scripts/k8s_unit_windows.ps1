@@ -79,9 +79,10 @@ function Build-Kubeadm {
         "-X 'k8s.io/component-base/version.gitCommit=6a61da26b6761d1b86844cdec194ccaa02b41f3'"
     )
 
+    Push-Location "$RepoPath"
     go build -ldflags "$buildFlags" -o kubeadm.exe .\cmd\kubeadm\
-    $curDir = [System.Environment]::CurrentDirectory
-    $env:KUBEADM_PATH = Join-Path $curDir "kubeadm.exe"
+    $env:KUBEADM_PATH = Join-Path "$RepoPath" "kubeadm.exe"
+    Pop-Location
 }
 
 function Run-K8sUnitTests {
