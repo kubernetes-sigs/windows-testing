@@ -28,6 +28,7 @@ export AZURE_SSH_PUBLIC_KEY_FILE="$HOME/.ssh/id_rsa.pub"
 | `RUN_SERIAL_TESTS` | If set to `true` then serial slow tests will be run with default ginkgo settings |
 | `KUBERNETES_VERSION`  | Valid values are `latest` (default) and  `latest-1.x` where x is valid kubernetes minor version such as `latest-1.24` |
 | `AZURE_LOCATION` | The azure region to deploy resources into |
+| `WINDOWS_KPNG` | If specified, will create a cluster using an out-of-tree kube-proxy implementation from [k-sigs/windows-service-proxy](https://github.com/kubernetes-sigs/windows-service-proxy) |
 
 ## GMSA support
 
