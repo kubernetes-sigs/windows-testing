@@ -19,6 +19,7 @@ main() {
     export WINDOWS_SERVER_VERSION="${WINDOWS_SERVER_VERSION:-"windows-2019"}"
     export WINDOWS_CONTAINERD_URL="${WINDOWS_CONTAINERD_URL:-"https://github.com/containerd/containerd/releases/download/v1.6.17/containerd-1.6.17-windows-amd64.tar.gz"}"
     export GMSA="${GMSA:-""}" 
+    export KPNG="${WINDOWS_KPNG:-""}"
 
     # other config
     export ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
@@ -28,7 +29,7 @@ main() {
     
     # CI is an environment variable set by a prow job: https://github.com/kubernetes/test-infra/blob/master/prow/jobs.md#job-environment-variables
     export CI="${CI:-""}"
-    
+
     set_azure_envs
     set_ci_version
     if [[ "${GMSA}" == "true" ]]; then create_gmsa_domain; fi
@@ -118,9 +119,12 @@ create_cluster(){
 }
 
 apply_workload_configuraiton(){
-    # A patch is needed to tell kube-proxy to use CI binaries.  This could go away once we have build scripts for kubeproxy HostProcess image.
-    kubectl apply -f "${CAPZ_DIR}"/templates/test/ci/patches/windows-kubeproxy-ci.yaml
-    kubectl rollout restart ds -n kube-system kube-proxy-windows
+    # Only patch up kube-proxy if $WINDOWS_KPNG is unset
+    if [[ -z "$KPNG" ]]; then
+        # A patch is needed to tell kube-proxy to use CI binaries.  This could go away once we have build scripts for kubeproxy HostProcess image.
+        kubectl apply -f "${CAPZ_DIR}"/templates/test/ci/patches/windows-kubeproxy-ci.yaml
+        kubectl rollout restart ds -n kube-system kube-proxy-windows
+    fi
 
     # apply additional helper manifests (logger etc)
     kubectl apply -f "${CAPZ_DIR}"/templates/addons/windows/containerd-logging/containerd-logger.yaml
