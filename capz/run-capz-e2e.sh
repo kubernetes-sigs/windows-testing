@@ -184,18 +184,17 @@ run_e2e_test() {
         log "e2e tests complete"
 
         if [[ "$INCLUDE_NPM_TESTS" == "true" ]]; then
-            run_npm_tests
             # write all results to npm-tests directory
             mkdir -p npm-tests
             cd npm-tests
-            npm_e2e
+            run_all_npm_tests
             cd ..
         fi
     fi
 }
 
 
-npm_e2e () {
+run_all_npm_tests () {
     log "setting up npm e2e test"
 
     ## disable Calico NetPol
