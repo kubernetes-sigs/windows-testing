@@ -32,6 +32,15 @@ export AZURE_SSH_PUBLIC_KEY_FILE="$HOME/.ssh/id_rsa.pub"
 
 ## GMSA support
 
-Set the environment variable `GMSA=true`.  
+Set the environment variable `GMSA=true`.
 
-This requires additional set up in the Azure Subscriptinos. See the readme in [gmsa folder](gmsa/readme.md).
+This requires additional set up in the Azure Subscriptions. See the readme in [gmsa folder](gmsa/readme.md).
+
+## Hyper-V isolated containers support
+
+Requires containerd v1.7+ deployed to the Windows nodes.
+
+Set the environment variable `HYPERV=true`.
+
+See [the HyperV testing README](../helpers/hyper-v-mutating-webhook/README.md) for more information.
+
