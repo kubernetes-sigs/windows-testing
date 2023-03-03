@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: test-pod
+  name: test-pod
+spec:
+  volumes:
+  - name: results
+    emptyDir: {}
+  initContainers:
+  - name: e2e-test
+    image: ubuntu:latest
+    command: ["/bin/sh", "-c"]
+    args:
+      - set -eux;
+        apt-get update;
+        apt-get install rsync -y;
+        apt-get install ca-certificates curl git -y;
+        apt-get install jq -y;
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl";
+        curl -LO "https://dl.k8s.io/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256";
+        echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check;
+        chmod +x kubectl;
+        mkdir -p ~/.local/bin;
+        cp ./kubectl ~/.local/bin/kubectl;
+        export PATH=~/.local/bin:$PATH;
+        git clone https://github.com/bingbing8/windows-testing windows-testing;
+        git clone https://github.com/kubernetes-sigs/cluster-api-provider-azure cluster-api-provider-azure;
+        export CAPZ_DIR="$(pwd)/cluster-api-provider-azure";
+        cd $(pwd)windows-testing;
+        kubectl get secret "${CLUSTER_NAME}-kubeconfig" -o jsonpath='{.data.*}' | base64 -d > kube-config;        
+        export KUBECONFIG="$(pwd)/kube-config";
+        export ARTIFACTS="/_artifacts";
+        chmod +x ./capz/run-k8s-e2e-test.sh;
+        set +e;
+        ./capz/run-k8s-e2e-test.sh;
+        echo $? > "/_artifacts/exit-code.txt"
+    env:
+    - name: CI_VERSION
+      value: "${CI_VERSION}"
+    - name: CLUSTER_NAME
+      value: "${CLUSTER_NAME}"
+    - name: GINKGO_NODES
+      value: "${WINDOWS_WORKER_MACHINE_COUNT}"
+    - name: WINDOWS_WORKER_MACHINE_COUNT
+      value: "${WINDOWS_WORKER_MACHINE_COUNT}"
+    - name: RUN_SERIAL_TESTS
+      value: "${RUN_SERIAL_TESTS}"
+    - name: CONTROL_PLANE_MACHINE_COUNT
+      value: "${CONTROL_PLANE_MACHINE_COUNT}"
+    - name: GINKGO_FOCUS
+      value: "${GINKGO_FOCUS}"
+    - name: GINKGO_SKIP
+      value: "${GINKGO_SKIP}"
+    - name: KPNG
+      value: "${KPNG}"
+    volumeMounts:
+    - name: results
+      mountPath: /_artifacts
+  containers:
+  - image: busybox
+    name: keepalive
+    command: ["/bin/sh", "-c"]
+    args:
+      - echo "started in keep live container";
+        ls /results/;
+        echo "wait 10 mins";
+        sleep 600;
+    volumeMounts:
+    - name: results
+      mountPath: /_artifacts
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Never
+  nodeSelector:
+    kubernetes.io/os: linux
+status: {}

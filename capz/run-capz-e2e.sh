@@ -20,6 +20,7 @@ main() {
     export WINDOWS_CONTAINERD_URL="${WINDOWS_CONTAINERD_URL:-"https://github.com/containerd/containerd/releases/download/v1.6.17/containerd-1.6.17-windows-amd64.tar.gz"}"
     export GMSA="${GMSA:-""}" 
     export KPNG="${WINDOWS_KPNG:-""}"
+    export PRIVATE_TESTING="${PRIVATE_TESTING:-""}"
 
     # other config
     export ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
@@ -35,9 +36,12 @@ main() {
     if [[ "${GMSA}" == "true" ]]; then create_gmsa_domain; fi
 
     create_cluster
-    apply_workload_configuraiton
-    wait_for_nodes
-    run_e2e_test
+    if [[ ! "${PRIVATE_TESTING}" == "true" ]]; then
+        chmod +x "${SCRIPT_ROOT}/run-k8s-e2e-test.sh"
+        "${SCRIPT_ROOT}/run-k8s-e2e-test.sh"
+    else
+        run_e2e_test_in_pod
+    fi
 }
 
 create_gmsa_domain(){
@@ -103,6 +107,8 @@ create_cluster(){
         template="$SCRIPT_ROOT"/templates/windows-base.yaml
         if [[ "${GMSA}" == "true" ]]; then
             template="$SCRIPT_ROOT"/templates/gmsa.yaml
+        elif [[ "${PRIVATE_TESTING}" == "true" ]]; then
+            template="$SCRIPT_ROOT"/templates/private-test.yaml
         fi
         echo "Using $template"
         
@@ -114,105 +120,44 @@ create_cluster(){
         log "cluster creation complete"
     fi
 
-    # set the kube config to the workload cluster
-    export KUBECONFIG="$PWD"/"${CLUSTER_NAME}".kubeconfig
-}
-
-apply_workload_configuraiton(){
-    # Only patch up kube-proxy if $WINDOWS_KPNG is unset
-    if [[ -z "$KPNG" ]]; then
-        # A patch is needed to tell kube-proxy to use CI binaries.  This could go away once we have build scripts for kubeproxy HostProcess image.
-        kubectl apply -f "${CAPZ_DIR}"/templates/test/ci/patches/windows-kubeproxy-ci.yaml
-        kubectl rollout restart ds -n kube-system kube-proxy-windows
-    fi
-
-    # apply additional helper manifests (logger etc)
-    kubectl apply -f "${CAPZ_DIR}"/templates/addons/windows/containerd-logging/containerd-logger.yaml
-    kubectl apply -f "${CAPZ_DIR}"/templates/addons/windows/csi-proxy/csi-proxy.yaml
-    kubectl apply -f "${CAPZ_DIR}"/templates/addons/metrics-server/metrics-server.yaml
-}
-
-run_e2e_test() {
-    export SKIP_TEST="${SKIP_TEST:-"false"}"
-    if [[ ! "$SKIP_TEST" == "true" ]]; then
-        ## get and run e2e test 
-        ## https://github.com/kubernetes/sig-release/blob/master/release-engineering/artifacts.md#content-of-kubernetes-test-system-archtargz-on-example-of-kubernetes-test-linux-amd64targz-directories-removed-from-list
-        curl -L -o /tmp/kubernetes-test-linux-amd64.tar.gz https://storage.googleapis.com/k8s-release-dev/ci/"${CI_VERSION}"/kubernetes-test-linux-amd64.tar.gz
-        tar -xzvf /tmp/kubernetes-test-linux-amd64.tar.gz
-
-        if [[ ! "${RUN_SERIAL_TESTS:-}" == "true" ]]; then
-            export GINKGO_FOCUS=${GINKGO_FOCUS:-"\[Conformance\]|\[NodeConformance\]|\[sig-windows\]|\[sig-apps\].CronJob|\[sig-api-machinery\].ResourceQuota|\[sig-scheduling\].SchedulerPreemption"}
-            export GINKGO_SKIP=${GINKGO_SKIP:-"\[LinuxOnly\]|\[Serial\]|\[Slow\]|\[Excluded:WindowsDocker\]|Networking.Granular.Checks(.*)node-pod.communication|Guestbook.application.should.create.and.stop.a.working.application|device.plugin.for.Windows|Container.Lifecycle.Hook.when.create.a.pod.with.lifecycle.hook.should.execute(.*)http.hook.properly|\[sig-api-machinery\].Garbage.collector"}
-            export GINKGO_NODES="${GINKGO_NODES:-"4"}"
-        else
-            export GINKGO_FOCUS=${GINKGO_FOCUS:-"(\[sig-windows\]|\[sig-scheduling\].SchedulerPreemption|\[sig-autoscaling\].\[Feature:HPA\]|\[sig-apps\].CronJob).*(\[Serial\]|\[Slow\])|(\[Serial\]|\[Slow\]).*(\[Conformance\]|\[NodeConformance\])|\[sig-api-machinery\].Garbage.collector"}
-            export GINKGO_SKIP=${GINKGO_SKIP:-"\[LinuxOnly\]|\[Excluded:WindowsDocker\]|device.plugin.for.Windows"}
-            export GINKGO_NODES="${GINKGO_NODES:-"1"}"
-        fi
-
-        ADDITIONAL_E2E_ARGS=()
-        if [[ "$CI" == "true" ]]; then
-            # private image repository doesn't have a way to promote images: https://github.com/kubernetes/k8s.io/pull/1929
-            # So we are using a custom repository for the test "Container Runtime blackbox test when running a container with a new image should be able to pull from private registry with secret [NodeConformance]"
-            # Must also set label preset-windows-private-registry-cred: "true" on the job
-            export KUBE_TEST_REPO_LIST="$PWD"/images/image-repo-list-private-registry
-            ADDITIONAL_E2E_ARGS+=("--docker-config-file=${DOCKER_CONFIG_FILE}")
-        fi
-
-        log "starting to run e2e tests"
-        set -x
-        "$PWD"/kubernetes/test/bin/ginkgo --nodes="${GINKGO_NODES}" "$PWD"/kubernetes/test/bin/e2e.test -- \
-            --provider=skeleton \
-            --ginkgo.noColor \
-            --ginkgo.focus="$GINKGO_FOCUS" \
-            --ginkgo.skip="$GINKGO_SKIP" \
-            --node-os-distro="windows" \
-            --disable-log-dump \
-            --ginkgo.progress=true \
-            --ginkgo.slowSpecThreshold=120.0 \
-            --ginkgo.flakeAttempts=0 \
-            --ginkgo.trace=true \
-            --ginkgo.timeout=24h \
-            --num-nodes="$WINDOWS_WORKER_MACHINE_COUNT" \
-            --ginkgo.v=true \
-            --dump-logs-on-failure=true \
-            --report-dir="${ARTIFACTS}" \
-            --prepull-images=true \
-            --v=5 "${ADDITIONAL_E2E_ARGS[@]}"
-        set +x
-        log "e2e tests complete"
-    fi
-}
-
-wait_for_nodes() {
-    log "Waiting for ${CONTROL_PLANE_MACHINE_COUNT} control plane machine(s) and ${WINDOWS_WORKER_MACHINE_COUNT} windows machine(s) to become Ready"
-    kubectl get nodes -o wide
-    kubectl get pods -A -o wide
-    
-    # Ensure that all nodes are registered with the API server before checking for readiness
-    local total_nodes="$((CONTROL_PLANE_MACHINE_COUNT + WINDOWS_WORKER_MACHINE_COUNT))"
-    while [[ $(kubectl get nodes -ojson | jq '.items | length') -ne "${total_nodes}" ]]; do
-        sleep 10
-    done
-
-    kubectl get nodes -o wide
-    kubectl get pods -A -o wide
-
-    log "waiting for nodes to be Ready"
-    kubectl wait --for=condition=Ready node --all --timeout=20m
-    log "Nodes Ready"
-    kubectl get nodes -owide
-
-    if [[ "${GMSA}" == "true" ]]; then
-        log "Configuring workload cluster nodes for gmsa tests"
-        # require kubeconfig to be pointed at management cluster 
-        unset KUBECONFIG
-        pushd  "$SCRIPT_ROOT"/gmsa/configuration
-        go run --tags e2e configure.go --name "${CLUSTER_NAME}" --namespace default
-        popd
+    # set the kube config to the workload cluster only if tests run on local system
+    if [[ ! "${PRIVATE_TESTING}" == "true" ]]; then
         export KUBECONFIG="$PWD"/"${CLUSTER_NAME}".kubeconfig
     fi
+}
 
+run_e2e_test_in_pod(){
+    export SKIP_TEST="${SKIP_TEST:-"false"}"
+    if [[ ! "$SKIP_TEST" == "true" ]]; then
+        log "delete test-pod if exist"
+        kubectl delete pod test-pod --ignore-not-found=true
+        kubectl apply -f "$SCRIPT_ROOT"/private/run-e2e-test-sa.yaml
+        < "$SCRIPT_ROOT"/private/e2etest-pod.yaml envsubst | kubectl apply -f -
+        max_item=50
+        counter=0
+        log "wait test to completed or error ..."
+        ret=1
+        while [ $ret -ne 0 ] && [ "$counter" -lt "$max_item" ]; do
+            log "Check status again #$counter"
+            (( counter++ ))
+            current_status=$(kubectl get pod test-pod --no-headers -o=custom-columns=:.status.phase)
+            if [[ "${current_status,,}" == "failed" ]] || [[ "${current_status,,}" == "succeeded" ]]; then
+                log "error occure in test-pod, exiting ..."
+                counter=$max_item    
+            fi
+            ret=0
+            kubectl wait --timeout 3m --for=condition=Ready pod/test-pod || ret=$?
+        done
+        if [ $ret == 0 ]; then
+            echo "Tests are completed. Copying artifacts from test-pod:_artifacts to ${ARTIFACTS}"
+            kubectl cp test-pod:_artifacts/ "${ARTIFACTS}/"
+        fi
+        kubectl logs test-pod -c e2e-test
+        kubectl logs test-pod -c e2e-test > "${ARTIFACTS}/e2e-test.log"
+	    #kubectl delete pod test-pod
+        exitcode=$(< "${ARTIFACTS}/exit-code.txt")
+        return "$exitcode"
+    fi
 }
 
 set_azure_envs() {

@@ -72,4 +72,19 @@ jobs:
       run: |
         if !(git diff --quiet HEAD); then 
           git diff; echo "gmsa files are out of date, run kustomize against the template"; exit 1; \
-        fi        
+        fi
+  private-test-templates:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: download kustomize
+      run: |
+        curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
+    - name: run kustomize 
+      run: |
+        kustomize build --load-restrictor LoadRestrictionsNone capz/private/ > capz/templates/private-test.yaml
+    - name: verify-diff
+      run: |
+        if !(git diff --quiet HEAD); then 
+          git diff; echo "private test files are out of date, run kustomize against the template"; exit 1; \
+        fi

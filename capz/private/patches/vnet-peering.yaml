@@ -1,0 +1,27 @@
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: AzureCluster
+metadata:
+  name: ${CLUSTER_NAME}
+spec:  
+  networkSpec:
+    subnets:
+    - name: control-plane-subnet
+      role: control-plane
+      cidrBlocks:
+        - 10.64.0.0/24
+    - name: node-subnet
+      natGateway:
+        name: node-natgateway
+      role: node
+      cidrBlocks:
+        - 10.64.1.0/24
+    vnet:
+      name: ${AZURE_VNET_NAME:=${CLUSTER_NAME}-vnet}
+      cidrBlocks:
+        - 10.64.0.0/10
+      peerings:
+      - resourceGroup: ${AKS_INFRA_RG_NAME}
+        remoteVnetName: ${AKS_VNET_NAME}
+  resourceGroup: ${AZURE_RESOURCE_GROUP:=${CLUSTER_NAME}}
+  subscriptionID: ${AZURE_SUBSCRIPTION_ID}
