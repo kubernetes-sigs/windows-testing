@@ -1,4 +1,4 @@
-# Run capz e2e tests in a pod in aks cluster
+# Run capz e2e tests in a pod in aks cluster for Windows
 
 This folder contains the scripts required to deploy kubernetes cluster and run e2e tests in a pod with CAPZ.
 

@@ -29,9 +29,10 @@ export AZURE_SSH_PUBLIC_KEY_FILE="$HOME/.ssh/id_rsa.pub"
 | `KUBERNETES_VERSION`  | Valid values are `latest` (default) and  `latest-1.x` where x is valid kubernetes minor version such as `latest-1.24` |
 | `AZURE_LOCATION` | The azure region to deploy resources into |
 | `WINDOWS_KPNG` | If specified, will create a cluster using an out-of-tree kube-proxy implementation from [k-sigs/windows-service-proxy](https://github.com/kubernetes-sigs/windows-service-proxy) |
+| `PRIVATE_TESTING` | If set to `true`, then the workload cluster configuration step and e2e tests will be run in a pod in aks cluster. See the readme in [private folder](private/readme.md) |
 
 ## GMSA support
 
-Set the environment variable `GMSA=true`.  
+Set the environment variable `GMSA=true`.
 
 This requires additional set up in the Azure Subscriptinos. See the readme in [gmsa folder](gmsa/readme.md).
