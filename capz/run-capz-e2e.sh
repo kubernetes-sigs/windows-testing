@@ -66,16 +66,23 @@ cleanup() {
     # currently KUBECONFIG is set to the workload cluster so reset to the management cluster
     unset KUBECONFIG
 
-    pushd "${CAPZ_DIR}"
 
-    # there is an issue in ci with the go client conflicting with the kubectl client failing to get logs for 
-    # control plane node.  This is a mitigation being tried 
-    rm -rf "$HOME/.kube/cache/"
-    # don't stop on errors here, so we always cleanup
-    go run -tags e2e "${CAPZ_DIR}/test/logger.go" --name "${CLUSTER_NAME}" --namespace default --artifacts-folder "${ARTIFACTS}" || true
-    popd
-    
-    "${CAPZ_DIR}/hack/log/redact.sh" || true
+    if [[ -z "${SKIP_LOG_COLLECTION:-}" ]]; then
+        log "collecting logs"
+        pushd "${CAPZ_DIR}"
+
+        # there is an issue in ci with the go client conflicting with the kubectl client failing to get logs for 
+        # control plane node.  This is a mitigation being tried 
+        rm -rf "$HOME/.kube/cache/"
+        # don't stop on errors here, so we always cleanup
+        go run -tags e2e "${CAPZ_DIR}/test/logger.go" --name "${CLUSTER_NAME}" --namespace default --artifacts-folder "${ARTIFACTS}" || true
+        popd
+
+        "${CAPZ_DIR}/hack/log/redact.sh" || true
+    else
+        log "skipping log collection"
+    fi
+
     if [[ -z "${SKIP_CLEANUP:-}" ]]; then
         log "deleting cluster"
         az group delete --name "$CLUSTER_NAME" --no-wait -y --force-deletion-types=Microsoft.Compute/virtualMachines --force-deletion-types=Microsoft.Compute/virtualMachineScaleSets || true
