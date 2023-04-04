@@ -38,7 +38,7 @@ import (
 	"sigs.k8s.io/cluster-api/test/framework"
 )
 
-func Fail(message string, callerSkip ...int) {
+func Fail(message string, _ ...int) {
 	panic(message)
 }
 
