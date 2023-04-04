@@ -9,7 +9,7 @@ LOCAL_DIR=${BASH_SOURCE[0]}
 SSH_OPTS="-o ServerAliveInterval=20 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 PROW_BUILD_ID="${BUILD_ID:-000000000000}"
 AZURE_RESOURCE_GROUP="win-unit-test-${PROW_BUILD_ID}"
-AZURE_DEFAULT_IMG="MicrosoftWindowsServer:WindowsServer:2022-datacenter-smalldisk-g2:20348.524.220201"
+AZURE_DEFAULT_IMG="MicrosoftWindowsServer:WindowsServer:2022-datacenter-smalldisk-g2:20348.1607.230310"
 AZURE_IMG="${WIN_VM_IMG:-$AZURE_DEFAULT_IMG}"
 VM_NAME="winTestVM"
 VM_LOCATION="${VM_LOCATION:-westus2}"
@@ -48,13 +48,13 @@ ensure_azure_envs() {
 
 ensure_azure_cli() {
     if [[ -z "$(command -v az)" ]]; then
-  	echo "installing Azure CLI"
-  	apt-get update && apt-get install -y ca-certificates curl apt-transport-https lsb-release gnupg
-  	curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
-  	AZ_REPO=$(lsb_release -cs)
-  	echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ ${AZ_REPO} main" | tee /etc/apt/sources.list.d/azure-cli.list
-  	apt-get update && apt-get install -y azure-cli
-  	az login --service-principal -u "${AZURE_CLIENT_ID}" -p "${AZURE_CLIENT_SECRET}" --tenant "${AZURE_TENANT_ID}" > /dev/null
+    echo "installing Azure CLI"
+    apt-get update && apt-get install -y ca-certificates curl apt-transport-https lsb-release gnupg
+    curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
+    AZ_REPO=$(lsb_release -cs)
+    echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ ${AZ_REPO} main" | tee /etc/apt/sources.list.d/azure-cli.list
+    apt-get update && apt-get install -y azure-cli
+    az login --service-principal -u "${AZURE_CLIENT_ID}" -p "${AZURE_CLIENT_SECRET}" --tenant "${AZURE_TENANT_ID}" > /dev/null
     fi
 }
 
@@ -75,13 +75,13 @@ build_test_vm() {
         PUB_IP=$(echo $DETAILS | jq -r .publicIpAddress)
         if [ "$PUB_IP" == "null" ]
         then
-           RETRY=0
-           while [ "$PUB_IP" == "null" ] || [ $RETRY -le 5 ]
-           do
-              sleep 5
-              PUB_IP=$(az vm show -d -g ${AZURE_RESOURCE_GROUP} -n ${VM_NAME} -o json --query publicIps | jq -r)
-              RETRY=$(( $RETRY + 1 ))
-           done
+            RETRY=0
+            while [ "$PUB_IP" == "null" ] || [ $RETRY -le 5 ]
+            do
+                sleep 5
+                PUB_IP=$(az vm show -d -g ${AZURE_RESOURCE_GROUP} -n ${VM_NAME} -o json --query publicIps | jq -r)
+                RETRY=$(( $RETRY + 1 ))
+            done
         fi
 
         if [ "$PUB_IP" == "null" ]
