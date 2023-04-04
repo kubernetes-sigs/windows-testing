@@ -9,7 +9,7 @@ LOCAL_DIR=${BASH_SOURCE[0]}
 SSH_OPTS="-o ServerAliveInterval=20 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 PROW_BUILD_ID="${BUILD_ID:-000000000000}"
 AZURE_RESOURCE_GROUP="win-unit-test-${PROW_BUILD_ID}"
-AZURE_DEFAULT_IMG="MicrosoftWindowsServer:WindowsServer:2022-datacenter-smalldisk-g2:20348.524.220201"
+AZURE_DEFAULT_IMG="MicrosoftWindowsServer:WindowsServer:2022-datacenter-smalldisk-g2:latest"
 AZURE_IMG="${WIN_VM_IMG:-$AZURE_DEFAULT_IMG}"
 VM_NAME="winTestVM"
 VM_LOCATION="${VM_LOCATION:-westus2}"
