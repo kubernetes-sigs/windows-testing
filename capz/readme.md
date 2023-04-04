@@ -23,8 +23,9 @@ export AZURE_SSH_PUBLIC_KEY_FILE="$HOME/.ssh/id_rsa.pub"
 | ENV variable  | Description  |
 | ------------- | ------------ |
 | `SKIP_CREATE` | Don't create a cluster.  Must set `CLUSTER_NAME` and have current a workload cluster kubeconfig file with name `./"${CLUSTER_NAME}".kubeconfig` |
+| `SKIP_LOG_COLLECTION` | Don't collect logs from the cluster |
 | `SKIP_TEST`  | Only creates the cluster, will not run tests |
-| `SKIP_CLEANUP` | Don't delete the cluster / resource group deletion |
+| `SKIP_CLEANUP` | Don't delete the cluster / resource group after script executions |
 | `RUN_SERIAL_TESTS` | If set to `true` then serial slow tests will be run with default ginkgo settings |
 | `KUBERNETES_VERSION`  | Valid values are `latest` (default) and  `latest-1.x` where x is valid kubernetes minor version such as `latest-1.24` |
 | `AZURE_LOCATION` | The azure region to deploy resources into |
