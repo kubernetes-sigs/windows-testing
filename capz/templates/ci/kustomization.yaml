@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: default
+resources:
+  - ../windows-base.yaml
+patches:
+- target:
+    group: controlplane.cluster.x-k8s.io
+    version: v1beta1
+    kind: KubeadmControlPlane
+    name: .*-control-plane
+    namespace: default
+  path: patches/kubeadm-bootstrap-control-plane-ci.yaml
+- target:
+    group: bootstrap.cluster.x-k8s.io
+    version: v1beta1
+    kind: KubeadmConfigTemplate
+    name: .*-md-win
+    namespace: default
+  path: patches/kubeadm-bootstrap-windows-ci.yaml
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    type: generated
+  annotations:
+    note: generated
