@@ -58,16 +58,14 @@ jobs:
         pushd capz/gmsa/configuration
         go build -tags e2e .
         popd
-  gmsa-templates:
+  capz-templates:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: download kustomize
+    - name: generate templates 
       run: |
-        curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
-    - name: run kustomize 
-      run: |
-        kustomize build --load-restrictor LoadRestrictionsNone capz/gmsa/ > capz/templates/gmsa.yaml
+        cd capz
+        make generate-templates
     - name: verify-diff
       run: |
         if !(git diff --quiet HEAD); then 

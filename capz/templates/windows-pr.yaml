@@ -41,6 +41,34 @@ spec:
           containerd-shim-runhcs-v1.exe --version
         path: C:/replace-containerd.ps1
         permissions: "0744"
+      - content: |
+          $ErrorActionPreference = 'Stop'
+
+          Stop-Service kubelet -Force
+
+          $$KUBE_GIT_VERSION="${KUBE_GIT_VERSION}"
+          if($$KUBE_GIT_VERSION -ne "")
+          {
+            $$binaries=@("kubeadm", "kubectl", "kubelet", "kube-proxy")
+            $$ci_url="https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/${JOB_NAME}/${KUBE_GIT_VERSION}/bin/windows/amd64"
+            foreach ( $$binary in $$binaries )
+            {
+              echo "downloading binary: $$ci_url/$$binary.exe"
+              curl.exe --retry 10 --retry-delay 5 "$$ci_url/$$binary.exe" --output "c:/k/$$binary.exe"
+            }
+          }
+
+          # Tag it to the ci version.  The image knows how to use the copy locally with the configmap
+          # that is applied at at this stage (windows-kubeproxy-ci.yaml)
+          ctr.exe -n k8s.io images pull docker.io/sigwindowstools/kube-proxy:v1.23.1-calico-hostprocess
+          ctr.exe -n k8s.io images tag docker.io/sigwindowstools/kube-proxy:v1.23.1-calico-hostprocess "docker.io/sigwindowstools/kube-proxy:${CI_VERSION/+/_}-calico-hostprocess"
+
+          kubeadm.exe version -o=short
+          kubectl.exe version --client=true --short=true
+          kubelet.exe --version
+          kube-proxy.exe --version
+        path: C:/replace-pr-binaries.ps1
+        permissions: "0744"
       joinConfiguration:
         nodeRegistration:
           criSocket: npipe:////./pipe/containerd-containerd
@@ -58,6 +86,7 @@ spec:
       preKubeadmCommands:
       - powershell C:/create-temp-folder.ps1
       - powershell C:/replace-containerd.ps1
+      - powershell C:/replace-pr-binaries.ps1
       users:
       - groups: Administrators
         name: capi
@@ -174,6 +203,58 @@ spec:
       owner: root:root
       path: /etc/kubernetes/azure.json
       permissions: "0644"
+    - content: |
+        #!/bin/bash
+
+        set -o nounset
+        set -o pipefail
+        set -o errexit
+
+        systemctl stop kubelet
+        declare -a BINARIES=("kubeadm" "kubectl" "kubelet")
+        for BINARY in "$${BINARIES[@]}"; do
+          echo "* installing package: $${BINARY} ${KUBE_GIT_VERSION}"
+          curl --retry 10 --retry-delay 5 "https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/${JOB_NAME}/${KUBE_GIT_VERSION}/bin/linux/amd64/$${BINARY}" --output "/usr/bin/$${BINARY}"
+        done
+        systemctl restart kubelet
+
+        # prepull images from gcr.io/k8s-staging-ci-images and retag it to
+        # registry.k8s.io so kubeadm can fetch correct images no matter what
+        declare -a IMAGES=("kube-apiserver" "kube-controller-manager" "kube-proxy" "kube-scheduler")
+        [[ $(id -u) != 0 ]] && SUDO="sudo" || SUDO=""
+        IMAGE_REGISTRY_PREFIX=registry.k8s.io
+        for IMAGE in "$${IMAGES[@]}"; do
+          $${SUDO} ctr -n k8s.io images tag $$IMAGE_REGISTRY_PREFIX/$$IMAGE-amd64:"${CI_VERSION//+/_}" $$IMAGE_REGISTRY_PREFIX/$$IMAGE:"${CI_VERSION//+/_}"
+          $${SUDO} ctr -n k8s.io images tag $$IMAGE_REGISTRY_PREFIX/$$IMAGE-amd64:"${CI_VERSION//+/_}" gcr.io/k8s-staging-ci-images/$$IMAGE:"${CI_VERSION//+/_}"
+        done
+
+        echo "kubeadm version: $(kubeadm version -o=short)"
+        echo "kubectl version: $(kubectl version --client=true --short=true)"
+        echo "kubelet version: $(kubelet --version)"
+      owner: root:root
+      path: /tmp/replace-k8s-binaries.sh
+      permissions: "0744"
+    - content: |
+        #!/bin/bash
+
+        set -o nounset
+        set -o pipefail
+        set -o errexit
+
+        curl -L --retry 10 --retry-delay 5 https://github.com/mikefarah/yq/releases/download/v4.6.1/yq_linux_amd64.tar.gz --output /tmp/yq_linux_amd64.tar.gz
+        tar -xzvf /tmp/yq_linux_amd64.tar.gz -C /tmp && mv /tmp/yq_linux_amd64 /usr/bin/yq
+        rm /tmp/yq_linux_amd64.tar.gz
+
+        export KUBECONFIG=/etc/kubernetes/admin.conf
+        kubectl -n kube-system set image daemonset/kube-proxy kube-proxy="${REGISTRY}/kube-proxy:${KUBE_IMAGE_TAG}"
+        systemctl stop kubelet
+        yq e '.spec.containers[0].image = "${REGISTRY}/kube-apiserver:${KUBE_IMAGE_TAG}"' -i /etc/kubernetes/manifests/kube-apiserver.yaml
+        yq e '.spec.containers[0].image = "${REGISTRY}/kube-controller-manager:${KUBE_IMAGE_TAG}"' -i /etc/kubernetes/manifests/kube-controller-manager.yaml
+        yq e '.spec.containers[0].image = "${REGISTRY}/kube-scheduler:${KUBE_IMAGE_TAG}"' -i /etc/kubernetes/manifests/kube-scheduler.yaml
+        systemctl restart kubelet
+      owner: root:root
+      path: /tmp/replace-k8s-components.sh
+      permissions: "0744"
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
@@ -191,8 +272,10 @@ spec:
     mounts:
     - - LABEL=etcd_disk
       - /var/lib/etcddisk
-    postKubeadmCommands: []
-    preKubeadmCommands: []
+    postKubeadmCommands:
+    - bash -c /tmp/replace-k8s-components.sh
+    preKubeadmCommands:
+    - bash -c /tmp/replace-k8s-binaries.sh
     useExperimentalRetryJoin: true
   machineTemplate:
     infrastructureRef:

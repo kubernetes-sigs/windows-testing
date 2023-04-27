@@ -33,6 +33,8 @@ main() {
 
     set_azure_envs
     set_ci_version
+    IS_PRESUBMIT="$(capz::util::should_build_kubernetes)"
+    if [[ "${IS_PRESUBMIT}" == "true" ]]; then "${CAPZ_DIR}/scripts/ci-build-kubernetes.sh"; fi
     if [[ "${GMSA}" == "true" ]]; then create_gmsa_domain; fi
 
     create_cluster
@@ -109,9 +111,16 @@ create_cluster(){
         az extension add -y --upgrade --source "$CAPI_EXTENSION_SOURCE" || true
 
         # select correct template
-        template="$SCRIPT_ROOT"/templates/windows-base.yaml
+        template="$SCRIPT_ROOT"/templates/windows-ci.yaml
+        if [[ "${IS_PRESUBMIT}" == "true" ]]; then
+            template="$SCRIPT_ROOT"/templates/windows-pr.yaml;
+        fi
         if [[ "${GMSA}" == "true" ]]; then
-            template="$SCRIPT_ROOT"/templates/gmsa.yaml
+            if [[ "${IS_PRESUBMIT}" == "true" ]]; then
+                template="$SCRIPT_ROOT"/templates/gmsa-pr.yaml;
+            else
+                template="$SCRIPT_ROOT"/templates/gmsa-ci.yaml
+            fi
         fi
         echo "Using $template"
         

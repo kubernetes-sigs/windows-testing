@@ -9,6 +9,7 @@
 **/capz-conf-*.yaml
 # gmsa files
 **/gmsa/domain.init
+capz/kustomize
 capz/gmsa/configuration/configuration
 capz/gmsa/configuration/gmsa-spec-writer-output.txt
 helpers/hyper-v-mutating-webhook/bin/
