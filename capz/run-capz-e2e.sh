@@ -4,7 +4,8 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-SCRIPT_ROOT=$(dirname "${BASH_SOURCE[0]}")
+SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
+SCRIPT_ROOT=$(dirname "${SCRIPT_PATH}")
 export CAPZ_DIR="${CAPZ_DIR:-"${GOPATH}/src/sigs.k8s.io/cluster-api-provider-azure"}"
 : "${CAPZ_DIR:?Environment variable empty or not defined.}"
 if [[ ! -d $CAPZ_DIR ]]; then
