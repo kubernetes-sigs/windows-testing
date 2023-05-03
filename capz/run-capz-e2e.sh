@@ -212,7 +212,7 @@ run_e2e_test() {
             # private image repository doesn't have a way to promote images: https://github.com/kubernetes/k8s.io/pull/1929
             # So we are using a custom repository for the test "Container Runtime blackbox test when running a container with a new image should be able to pull from private registry with secret [NodeConformance]"
             # Must also set label preset-windows-private-registry-cred: "true" on the job
-            export KUBE_TEST_REPO_LIST="$PWD"/images/image-repo-list-private-registry
+            export KUBE_TEST_REPO_LIST="$SCRIPT_ROOT/../images/image-repo-list-private-registry"
             ADDITIONAL_E2E_ARGS+=("--docker-config-file=${DOCKER_CONFIG_FILE}")
         fi
 
