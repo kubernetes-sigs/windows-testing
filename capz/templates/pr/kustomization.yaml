@@ -3,6 +3,8 @@ kind: Kustomization
 namespace: default
 resources:
   - ../windows-base.yaml
+patchesStrategicMerge:
+  - ./patches/kubeadm-control-plane-pr.yaml
 patches:
 - target:
     group: controlplane.cluster.x-k8s.io
