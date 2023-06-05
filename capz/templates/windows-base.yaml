@@ -48,7 +48,7 @@ spec:
             azure-container-registry-config: c:/k/azure.json
             cloud-config: c:/k/azure.json
             cloud-provider: azure
-            feature-gates: HPAContainerMetrics=true
+            feature-gates: ${NODE_FEATURE_GATES:-"HPAContainerMetrics=true"}
             v: "2"
             windows-priorityclass: ABOVE_NORMAL_PRIORITY_CLASS
           name: '{{ ds.meta_data["local_hostname"] }}'
