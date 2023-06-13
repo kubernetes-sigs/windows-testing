@@ -12,6 +12,11 @@ export CAPZ_DIR="${CAPZ_DIR:-"${GOPATH}/src/sigs.k8s.io/cluster-api-provider-azu
 if [[ ! -d $CAPZ_DIR ]]; then
     echo "Must have capz repo present"
 fi
+export AZURE_CLOUD_PROVIDER_ROOT="${AZURE_CLOUD_PROVIDER_ROOT:-"${GOPATH}/src/sigs.k8s.io/cloud-provider-azure"}"
+: "${AZURE_CLOUD_PROVIDER_ROOT:?Environment variable empty or not defined.}"
+if [[ ! -d $AZURE_CLOUD_PROVIDER_ROOT ]]; then
+    echo "Must have azure cloud provider repo present"
+fi
 
 main() {
     # defaults
@@ -43,6 +48,7 @@ main() {
     if [[ "${GMSA}" == "true" ]]; then create_gmsa_domain; fi
 
     create_cluster
+    apply_cloud_provider_azure
     apply_workload_configuraiton
     wait_for_nodes
     if [[ "${HYPERV}" == "true" ]]; then apply_hyperv_configuration; fi
@@ -68,11 +74,17 @@ create_gmsa_domain(){
 
 run_capz_e2e_cleanup() {
     log "cleaning up"
+
+    capz::ci-build-azure-ccm::cleanup || true
+
+    if [[ "$(capz::util::should_build_kubernetes)" == "true" ]]; then
+        capz::ci-build-kubernetes::cleanup || true
+    fi
+
     kubectl get nodes -owide
 
     # currently KUBECONFIG is set to the workload cluster so reset to the management cluster
     unset KUBECONFIG
-
 
     if [[ -z "${SKIP_LOG_COLLECTION:-}" ]]; then
         log "collecting logs"
@@ -153,6 +165,29 @@ apply_workload_configuraiton(){
     kubectl apply -f "${CAPZ_DIR}"/templates/addons/windows/containerd-logging/containerd-logger.yaml
     kubectl apply -f "${CAPZ_DIR}"/templates/addons/windows/csi-proxy/csi-proxy.yaml
     kubectl apply -f "${CAPZ_DIR}"/templates/addons/metrics-server/metrics-server.yaml
+}
+
+apply_cloud_provider_azure() {
+    echo "KUBERNETES_VERSION = ${KUBERNETES_VERSION}"
+
+    echo "Building cloud provider images"
+    # shellcheck disable=SC1091
+    "${CAPZ_DIR}/hack/ensure-acr-login.sh"
+    # shellcheck disable=SC1091
+    source "${CAPZ_DIR}/scripts/ci-build-azure-ccm.sh" || false
+    trap run_capz_e2e_cleanup EXIT # reset the EXIT trap since ci-build-azure-ccm.sh also sets it.
+    echo "Will use the ${IMAGE_REGISTRY}/${CCM_IMAGE_NAME}:${IMAGE_TAG_CCM} cloud-controller-manager image for external cloud-provider-cluster"
+    echo "Will use the ${IMAGE_REGISTRY}/${CNM_IMAGE_NAME}:${IMAGE_TAG_CNM} cloud-node-manager image for external cloud-provider-azure cluster"
+
+    CCM_IMG_ARGS=(--set cloudControllerManager.imageRepository="${IMAGE_REGISTRY}"
+    --set cloudNodeManager.imageRepository="${IMAGE_REGISTRY}"
+    --set cloudControllerManager.imageName="${CCM_IMAGE_NAME}"
+    --set cloudNodeManager.imageName="${CNM_IMAGE_NAME}"
+    --set-string cloudControllerManager.imageTag="${IMAGE_TAG_CCM}"
+    --set-string cloudNodeManager.imageTag="${IMAGE_TAG_CNM}")
+
+    echo "Installing cloud-provider-azure components via helm"
+    helm upgrade cloud-provider-azure --install --repo https://raw.githubusercontent.com/kubernetes-sigs/cloud-provider-azure/master/helm/repo cloud-provider-azure "${CCM_IMG_ARGS[@]}"
 }
 
 apply_hyperv_configuration(){
@@ -277,7 +312,6 @@ wait_for_nodes() {
 }
 
 set_azure_envs() {
-
     # shellcheck disable=SC1091
     source "${CAPZ_DIR}/hack/ensure-tags.sh"
     # shellcheck disable=SC1091
