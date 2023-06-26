@@ -3,6 +3,7 @@
 set -o errexit
 set -o nounset
 set -o pipefail
+set -o functrace
 
 SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
 SCRIPT_ROOT=$(dirname "${SCRIPT_PATH}")
@@ -35,7 +36,10 @@ main() {
     set_azure_envs
     set_ci_version
     IS_PRESUBMIT="$(capz::util::should_build_kubernetes)"
-    if [[ "${IS_PRESUBMIT}" == "true" ]]; then "${CAPZ_DIR}/scripts/ci-build-kubernetes.sh"; fi
+    if [[ "${IS_PRESUBMIT}" == "true" ]]; then
+        "${CAPZ_DIR}/scripts/ci-build-kubernetes.sh";
+        trap run_capz_e2e_cleanup EXIT # reset the EXIT trap since ci-build-kubernetes.sh also sets it.
+    fi
     if [[ "${GMSA}" == "true" ]]; then create_gmsa_domain; fi
 
     create_cluster
@@ -62,7 +66,7 @@ create_gmsa_domain(){
     export GMSA_DNS_IP=$vmip
 }
 
-cleanup() {
+run_capz_e2e_cleanup() {
     log "cleaning up"
     kubectl get nodes -owide
 
@@ -330,5 +334,5 @@ set_ci_version() {
     fi
 }
 
-trap cleanup EXIT
+trap run_capz_e2e_cleanup EXIT
 main
