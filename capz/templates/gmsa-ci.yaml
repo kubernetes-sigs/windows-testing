@@ -42,6 +42,15 @@ spec:
         path: C:/replace-containerd.ps1
         permissions: "0744"
       - content: |
+          $ErrorActionPreference = "Stop"
+          # Check if NodeLogQuery feature gate was specified for the cluster and if so, also enable it via kubelet config
+          $kubeletEnvContents = Get-Content -Path "/var/lib/kubelet/kubeadm-flags.env"
+          if ($kubeletEnvContents.Contains("NodeLogQuery=true")) {
+              Add-Content -Path "$env:SYSTEMDRIVE/var/lib/kubelet/config.yaml" -Value "EnableSystemLogQuery: true" -Encoding ascii
+          }
+        path: C:/NodeLogQueryKubeletConfig.ps1
+        permissions: "0744"
+      - content: |
           $ErrorActionPreference = 'Stop'
 
           Stop-Service kubelet -Force
@@ -81,6 +90,7 @@ spec:
             windows-priorityclass: ABOVE_NORMAL_PRIORITY_CLASS
           name: '{{ ds.meta_data["local_hostname"] }}'
       postKubeadmCommands:
+      - powershell C:/NodeLogQueryKubeletConfig.ps1
       - nssm set kubelet start SERVICE_AUTO_START
       - powershell C:/defender-exclude-calico.ps1
       preKubeadmCommands:
