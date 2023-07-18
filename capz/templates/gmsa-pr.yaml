@@ -46,7 +46,8 @@ spec:
           # Check if NodeLogQuery feature gate was specified for the cluster and if so, also enable it via kubelet config
           $kubeletEnvContents = Get-Content -Path "/var/lib/kubelet/kubeadm-flags.env"
           if ($kubeletEnvContents.Contains("NodeLogQuery=true")) {
-              Add-Content -Path "$env:SYSTEMDRIVE/var/lib/kubelet/config.yaml" -Value "EnableSystemLogQuery: true" -Encoding ascii
+              Add-Content -Path "$env:SYSTEMDRIVE/var/lib/kubelet/config.yaml" -Value "enableSystemLogQuery: true" -Encoding ascii -NoNewLine
+              nssm restart kubelet
           }
         path: C:/NodeLogQueryKubeletConfig.ps1
         permissions: "0744"
