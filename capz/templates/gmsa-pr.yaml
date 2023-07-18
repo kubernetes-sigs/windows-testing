@@ -360,7 +360,7 @@ spec:
         marketplace:
           offer: capi
           publisher: cncf-upstream
-          sku: ubuntu-1804-gen1
+          sku: ubuntu-2004-gen1
           version: latest
       osDisk:
         diskSizeGB: 128
