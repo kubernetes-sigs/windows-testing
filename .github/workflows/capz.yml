@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: actions/setup-go@v3
         with:
-          go-version: 1.18
+          go-version: "1.20"
       - uses: actions/checkout@v3
       # run mod download prior to running linter to avoid timeouts while running linter
       - name: build go
@@ -52,7 +52,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.18
+        go-version: "1.20"
     - name: build-gmsa-configuration
       run: |
         pushd capz/gmsa/configuration
