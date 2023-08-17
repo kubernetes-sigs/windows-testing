@@ -220,6 +220,19 @@ run_e2e_test() {
             ADDITIONAL_E2E_ARGS+=("--docker-config-file=${DOCKER_CONFIG_FILE}")
         fi
 
+        # K8s 1.24 and below use ginkgo v1 which has slighly different args
+        ginkgo_v1="false"
+        if [[ "${KUBERNETES_VERSION}" =~ 1.24 ]]; then
+            ginkgo_v1="true"
+        fi
+
+        if [[ "${ginkgo_v1}" == "true" ]]; then
+            ADDITIONAL_E2E_ARGS+=("--ginkgo.slowSpecThreshold=120.0")
+        else
+            ADDITIONAL_E2E_ARGS+=("--ginkgo.slow-spec-threshold=120s")
+            ADDITIONAL_E2E_ARGS+=("--ginkgo.timeout=4h")
+        fi
+
         log "starting to run e2e tests"
         set -x
         "$PWD"/kubernetes/test/bin/ginkgo --nodes="${GINKGO_NODES}" "$PWD"/kubernetes/test/bin/e2e.test -- \
@@ -230,10 +243,8 @@ run_e2e_test() {
             --node-os-distro="windows" \
             --disable-log-dump \
             --ginkgo.progress=true \
-            --ginkgo.slowSpecThreshold=120.0 \
             --ginkgo.flakeAttempts=0 \
             --ginkgo.trace=true \
-            --ginkgo.timeout=24h \
             --num-nodes="$WINDOWS_WORKER_MACHINE_COUNT" \
             --ginkgo.v=true \
             --dump-logs-on-failure=true \
