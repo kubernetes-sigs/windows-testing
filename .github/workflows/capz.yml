@@ -45,7 +45,7 @@ jobs:
         with:
           version: latest
           working-directory: capz/gmsa/configuration
-          args: --build-tags=e2e --timeout=5m 
+          args: --build-tags=e2e --timeout=10m 
   build-gmsa-configuration:
     runs-on: ubuntu-latest
     steps:
