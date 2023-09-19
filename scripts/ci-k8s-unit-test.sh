@@ -1,6 +1,5 @@
 #!/bin/bash
 
-set -x
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -40,10 +39,6 @@ ensure_azure_envs() {
         AZURE_TENANT_ID="$(parse_cred TenantID < "${AZURE_CREDENTIALS}")"
         AZURE_CLIENT_ID="$(parse_cred ClientID < "${AZURE_CREDENTIALS}")"
         AZURE_CLIENT_SECRET="$(parse_cred ClientSecret < "${AZURE_CREDENTIALS}")"
-        AZURE_MULTI_TENANCY_ID="$(parse_cred MultiTenancyClientID < "${AZURE_CREDENTIALS}")"
-        AZURE_MULTI_TENANCY_SECRET="$(parse_cred MultiTenancyClientSecret < "${AZURE_CREDENTIALS}")"
-        AZURE_STORAGE_ACCOUNT="$(parse_cred StorageAccountName < "${AZURE_CREDENTIALS}")"
-        AZURE_STORAGE_KEY="$(parse_cred StorageAccountKey < "${AZURE_CREDENTIALS}")"
     fi
 } 
 
