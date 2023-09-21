@@ -24,7 +24,7 @@ main() {
     export CONTROL_PLANE_MACHINE_COUNT="${AZURE_CONTROL_PLANE_MACHINE_COUNT:-"1"}"
     export WINDOWS_WORKER_MACHINE_COUNT="${WINDOWS_WORKER_MACHINE_COUNT:-"2"}"
     export WINDOWS_SERVER_VERSION="${WINDOWS_SERVER_VERSION:-"windows-2019"}"
-    export WINDOWS_CONTAINERD_URL="${WINDOWS_CONTAINERD_URL:-"https://github.com/containerd/containerd/releases/download/v1.6.17/containerd-1.6.17-windows-amd64.tar.gz"}"
+    export WINDOWS_CONTAINERD_URL="${WINDOWS_CONTAINERD_URL:-"https://github.com/containerd/containerd/releases/download/v1.7.0/containerd-1.7.0-windows-amd64.tar.gz"}"
     export GMSA="${GMSA:-""}" 
     export HYPERV="${HYPERV:-""}"
     export KPNG="${WINDOWS_KPNG:-""}"
@@ -150,7 +150,9 @@ create_cluster(){
     fi
 
     # set the kube config to the workload cluster
-    export KUBECONFIG="$PWD"/"${CLUSTER_NAME}".kubeconfig
+    # the kubeconfig is dropped to the current folder but move it to a location that is well known to avoid issues if end up in wrong folder due to other scripts.
+    mv "$PWD"/"${CLUSTER_NAME}".kubeconfig "$SCRIPT_ROOT"/"${CLUSTER_NAME}".kubeconfig
+    export KUBECONFIG="$SCRIPT_ROOT"/"${CLUSTER_NAME}".kubeconfig
 }
 
 apply_workload_configuraiton(){
@@ -317,7 +319,7 @@ wait_for_nodes() {
         pushd  "$SCRIPT_ROOT"/gmsa/configuration
         go run --tags e2e configure.go --name "${CLUSTER_NAME}" --namespace default
         popd
-        export KUBECONFIG="$PWD"/"${CLUSTER_NAME}".kubeconfig
+        export KUBECONFIG="$SCRIPT_ROOT"/"${CLUSTER_NAME}".kubeconfig
     fi
 
 }
