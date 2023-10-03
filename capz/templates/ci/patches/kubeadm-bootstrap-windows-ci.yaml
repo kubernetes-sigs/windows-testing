@@ -23,9 +23,13 @@
       ctr.exe -n k8s.io images pull docker.io/sigwindowstools/kube-proxy:v1.23.1-calico-hostprocess
       ctr.exe -n k8s.io images tag docker.io/sigwindowstools/kube-proxy:v1.23.1-calico-hostprocess "docker.io/sigwindowstools/kube-proxy:${CI_VERSION/+/_}-calico-hostprocess"
 
+      echo "kubeadm version: "
       kubeadm.exe version -o=short
-      kubectl.exe version --client=true --short=true
+      echo "kubectl version: "
+      kubectl.exe version --client=true
+      echo "kubelet version: "
       kubelet.exe --version
+      echo "kube-proxy version: "
       kube-proxy.exe --version
     path: C:/replace-ci-binaries.ps1
     permissions: "0744"
