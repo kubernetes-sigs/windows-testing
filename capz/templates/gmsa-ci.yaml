@@ -184,7 +184,7 @@ spec:
       apiServer:
         extraArgs:
           cloud-provider: external
-          feature-gates: HPAContainerMetrics=true
+          feature-gates: ${API_SERVER_FEATURE_GATES:-"HPAContainerMetrics=true"}
         timeoutForControlPlane: 20m
       controllerManager:
         extraArgs:
@@ -199,6 +199,9 @@ spec:
           extraArgs:
             quota-backend-bytes: "8589934592"
       kubernetesVersion: ci/${CI_VERSION}
+      scheduler:
+        extraArgs:
+          feature-gates: ${SCHEDULER_FEATURE_GATES:-""}
     diskSetup:
       filesystems:
       - device: /dev/disk/azure/scsi1/lun0
