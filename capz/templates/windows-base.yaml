@@ -151,7 +151,7 @@ spec:
       apiServer:
         extraArgs:
           cloud-provider: external
-          feature-gates: HPAContainerMetrics=true
+          feature-gates: ${API_SERVER_FEATURE_GATES:-"HPAContainerMetrics=true"}
         timeoutForControlPlane: 20m
       controllerManager:
         extraArgs:
@@ -165,6 +165,9 @@ spec:
           dataDir: /var/lib/etcddisk/etcd
           extraArgs:
             quota-backend-bytes: "8589934592"
+      scheduler:
+        extraArgs:
+          feature-gates: ${SCHEDULER_FEATURE_GATES:-""}
       kubernetesVersion: ci/${CI_VERSION}
     diskSetup:
       filesystems:
