@@ -272,6 +272,8 @@ run_e2e_test() {
             ADDITIONAL_E2E_ARGS+=("--ginkgo.timeout=4h")
         fi
 
+        log "e2e.test version:"
+        "$PWD"/kubernetes/test/bin/e2e.test --version
         log "starting to run e2e tests"
         set -x
         "$PWD"/kubernetes/test/bin/ginkgo --nodes="${GINKGO_NODES}" "$PWD"/kubernetes/test/bin/e2e.test -- \
