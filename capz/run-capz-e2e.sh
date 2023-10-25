@@ -380,6 +380,9 @@ set_ci_version() {
         export KUBE_BUILD_CONFORMANCE="y"
         # shellcheck disable=SC1091
         source "${CAPZ_DIR}/scripts/ci-build-kubernetes.sh"
+        # Set this AFTER ci-build-kubernetes.sh because the script will set AZURE_BLOB_CONTAINER_NAME some time in the
+        # future - see https://github.com/kubernetes-sigs/cluster-api-provider-azure/pull/4172
+        export AZURE_BLOB_CONTAINER_NAME="${AZURE_BLOB_CONTAINER_NAME:-${JOB_NAME}}"
     else
         if [[ "${KUBERNETES_VERSION:-}" =~ "latest" ]]; then
             CI_VERSION_URL="https://dl.k8s.io/ci/${KUBERNETES_VERSION}.txt"
