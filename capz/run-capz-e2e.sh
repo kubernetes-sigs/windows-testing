@@ -41,6 +41,7 @@ main() {
     set_azure_envs
     set_ci_version
     IS_PRESUBMIT="$(capz::util::should_build_kubernetes)"
+    echo "IS_PRESUBMIT=$IS_PRESUBMIT"
     if [[ "${IS_PRESUBMIT}" == "true" ]]; then
         "${CAPZ_DIR}/scripts/ci-build-kubernetes.sh";
         trap run_capz_e2e_cleanup EXIT # reset the EXIT trap since ci-build-kubernetes.sh also sets it.
@@ -235,10 +236,18 @@ apply_hyperv_configuration(){
 run_e2e_test() {
     export SKIP_TEST="${SKIP_TEST:-"false"}"
     if [[ ! "$SKIP_TEST" == "true" ]]; then
-        ## get and run e2e test 
-        ## https://github.com/kubernetes/sig-release/blob/master/release-engineering/artifacts.md#content-of-kubernetes-test-system-archtargz-on-example-of-kubernetes-test-linux-amd64targz-directories-removed-from-list
-        curl -L -o /tmp/kubernetes-test-linux-amd64.tar.gz https://storage.googleapis.com/k8s-release-dev/ci/"${CI_VERSION}"/kubernetes-test-linux-amd64.tar.gz
-        tar -xzvf /tmp/kubernetes-test-linux-amd64.tar.gz
+
+        if [[ "$IS_PRESUBMIT" == "true" ]]; then
+            # get e2e.test from build artifacts produced by ci-build-kubernetes.sh if running a presubmit job
+            # KUBE_GIT_VERSION is set by ci-build-kubernetes.sh
+            mkdir -p "$PWD/kubernetes/test/bin"
+            curl -L -o "$PWD"/kubernetes/test/bin/e2e.test "https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/${JOB_NAME}/${KUBE_GIT_VERSION}/bin/linux/amd64/e2e.test"
+        else
+            ## get and run e2e test 
+            ## https://github.com/kubernetes/sig-release/blob/master/release-engineering/artifacts.md#content-of-kubernetes-test-system-archtargz-on-example-of-kubernetes-test-linux-amd64targz-directories-removed-from-list
+            curl -L -o /tmp/kubernetes-test-linux-amd64.tar.gz https://storage.googleapis.com/k8s-release-dev/ci/"${CI_VERSION}"/kubernetes-test-linux-amd64.tar.gz
+            tar -xzvf /tmp/kubernetes-test-linux-amd64.tar.gz
+        fi
 
         if [[ ! "${RUN_SERIAL_TESTS:-}" == "true" ]]; then
             export GINKGO_FOCUS=${GINKGO_FOCUS:-"\[Conformance\]|\[NodeConformance\]|\[sig-windows\]|\[sig-apps\].CronJob|\[sig-api-machinery\].ResourceQuota|\[sig-scheduling\].SchedulerPreemption"}
