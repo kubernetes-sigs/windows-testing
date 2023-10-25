@@ -242,6 +242,7 @@ run_e2e_test() {
             # KUBE_GIT_VERSION is set by ci-build-kubernetes.sh
             mkdir -p "$PWD/kubernetes/test/bin"
             curl -L -o "$PWD"/kubernetes/test/bin/e2e.test "https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/${JOB_NAME}/${KUBE_GIT_VERSION}/bin/linux/amd64/e2e.test"
+            chmod -x "$PWD/kubernetes/test/bin/e2e.test"
         else
             ## get and run e2e test 
             ## https://github.com/kubernetes/sig-release/blob/master/release-engineering/artifacts.md#content-of-kubernetes-test-system-archtargz-on-example-of-kubernetes-test-linux-amd64targz-directories-removed-from-list
