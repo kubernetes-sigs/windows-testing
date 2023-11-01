@@ -24,7 +24,7 @@ main() {
     export CONTROL_PLANE_MACHINE_COUNT="${AZURE_CONTROL_PLANE_MACHINE_COUNT:-"1"}"
     export WINDOWS_WORKER_MACHINE_COUNT="${WINDOWS_WORKER_MACHINE_COUNT:-"2"}"
     export WINDOWS_SERVER_VERSION="${WINDOWS_SERVER_VERSION:-"windows-2019"}"
-    export WINDOWS_CONTAINERD_URL="https://github.com/kubernetes-sigs/sig-windows-tools/releases/download/windows-containerd-nightly/windows-containerd.tar.gz"
+    export WINDOWS_CONTAINERD_URL="https://github.com/jsturtevant/containerd/releases/download/test/windows-containerd.tar.gz"
     export GMSA="${GMSA:-""}" 
     export HYPERV="${HYPERV:-""}"
     export KPNG="${WINDOWS_KPNG:-""}"
