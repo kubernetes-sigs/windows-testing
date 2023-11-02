@@ -84,6 +84,7 @@ To do so ensure your local K8s repository is:
 Additionally the following enviroment variables will need to be set:
 
 | ENV variable | Description  |
+| ------------- | ------------ |
 | `AZURE_STORAGE_ACCOUNT` | The name of the Azure storage account to use for the custom builds |
 | `AZURE_STORAGE_KEY` | A key for the Azure storage account |
 | `JOB_NAME` | A unique job name used as a subpath in the AZURE_STORAGE_ACCOUNT to store the custom builds |
