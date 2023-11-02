@@ -19,7 +19,8 @@ Clone the [cloud-provider-azure](https://github.com/kubernetes-sigs/cloud-provid
 - if testing kubernetes@master then checkout / sync to the master branch
 - if testing a released version of Kubernetes then checkout / sync the corresponding release branch in the cloud-provider-azure repo
 
-> Note: To run e2e tests with the same configurations as the upstream e2e test passes, look at the `extra_refs` section of the **ci-kubernetes-e2e-capz-master-windows** in [release-master-windows.yaml](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/release-master-windows.yaml) to see which branches the SIG-Windows e2e test passes are using during the periodic jobs.
+> Note: To run e2e tests with the same configurations as the upstream e2e test passes, look at the `extra_refs` section of the **ci-kubernetes-e2e-capz-master-windows** in
+[release-master-windows.yaml](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/release-master-windows.yaml) to see which branches the SIG-Windows e2e test passes are using during the periodic jobs.
 
 ### Set environment variables
 
