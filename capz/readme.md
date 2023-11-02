@@ -63,7 +63,6 @@ export AZURE_SSH_PUBLIC_KEY_FILE="$HOME/.ssh/id_rsa.pub"
 | `WINDOWS_KPNG` | If specified, will create a cluster using an out-of-tree kube-proxy implementation from [k-sigs/windows-service-proxy](https://github.com/kubernetes-sigs/windows-service-proxy) |
 | `WINDOWS_SERVER_VERSION` | Set to `windows-2019` (default) or `windows-2022` to test Windows Server 2019 or Windows Server 2022 |
 | `WINDOWS_WORKER_MACHINE_COUNT` | Number of **Windows** worker nodes to provision in the cluster (Defaults to 2) |
-| `WORKER_MACHINE_COUNT` | Number of **Linux** worker nodes to provision in the cluster (Defaults to 2) |
 
 ## GMSA support
 
