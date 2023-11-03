@@ -151,6 +151,10 @@ create_cluster(){
         log "cluster creation complete"
     fi
 
+    # set the SSH bastion that can be used to SSH into nodes
+    KUBE_SSH_BASTION=$(kubectl get azurecluster -o json | jq '.items[0].spec.networkSpec.apiServerLB.frontendIPs[0].publicIP.dnsName' | tr -d \"):22
+    export KUBE_SSH_BASTION
+
     # set the kube config to the workload cluster
     # the kubeconfig is dropped to the current folder but move it to a location that is well known to avoid issues if end up in wrong folder due to other scripts.
     if [[ "$PWD" != "$SCRIPT_ROOT" ]]; then
@@ -362,6 +366,7 @@ set_azure_envs() {
         # can't find it via relative paths so 
         # give it the absolute path
         export AZURE_SSH_PUBLIC_KEY_FILE="${PWD}"/.sshkey.pub
+        export AZURE_SSH_KEY="${PWD}"/.sshkey
     fi
 }
 
