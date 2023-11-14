@@ -29,7 +29,6 @@ main() {
     export HYPERV="${HYPERV:-""}"
     export KPNG="${WINDOWS_KPNG:-""}"
     export CALICO_VERSION="${CALICO_VERSION:-"v3.26.1"}"
-    export AZURE_STOAGE_ACCOUNT="${AZURE_STORAGE_ACCOUNT:-"k8sprowstorage"}"
 
     # other config
     export ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
