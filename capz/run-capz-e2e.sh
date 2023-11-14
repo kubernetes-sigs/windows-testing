@@ -29,6 +29,7 @@ main() {
     export HYPERV="${HYPERV:-""}"
     export KPNG="${WINDOWS_KPNG:-""}"
     export CALICO_VERSION="${CALICO_VERSION:-"v3.26.1"}"
+    export AZURE_STOAGE_ACCOUNT="${AZURE_STORAGE_ACCOUNT:-"k8sprowstorage"}"
 
     # other config
     export ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
@@ -250,7 +251,9 @@ run_e2e_test() {
             # get e2e.test from build artifacts produced by ci-build-kubernetes.sh if running a presubmit job
             # note: KUBE_GIT_VERSION is set by ci-build-kubernetes.sh
             mkdir -p "$PWD/kubernetes/test/bin"
-            curl -L -o "$PWD"/kubernetes/test/bin/e2e.test "https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/${JOB_NAME}/${KUBE_GIT_VERSION}/bin/linux/amd64/e2e.test"
+            export e2e_url="https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/kubernetes-ci/${KUBE_GIT_VERSION}/bin/linux/amd64/e2e.test"
+            log "Downloading e2e.test from $e2e_url"
+            curl -L -o "$PWD"/kubernetes/test/bin/e2e.test "$e2e_url"
             chmod +x "$PWD/kubernetes/test/bin/e2e.test"
         fi
 
