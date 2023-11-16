@@ -232,6 +232,20 @@ spec:
         set -o nounset
         set -o pipefail
         set -o errexit
+        if grep -q "NodeLogQuery=true" /var/lib/kubelet/kubeadm-flags.env; then
+          [[ $(id -u) != 0 ]] && SUDO="sudo" || SUDO=""
+          echo "* adding enableSystemLogQuery: true to kubelet config"
+          printf "enableSystemLogQuery: true\n" | $${SUDO} tee --append /var/lib/kubelet/config.yaml
+          $${SUDO} systemctl restart kubelet
+        fi
+      owner: root:root
+      path: /tmp/node-log-query-kubelet-config.sh
+      permissions: "0744"
+    - content: |
+        #!/bin/bash
+        set -o nounset
+        set -o pipefail
+        set -o errexit
         [[ $(id -u) != 0 ]] && SUDO="sudo" || SUDO=""
         # This test installs release packages or binaries that are a result of the CI and release builds.
         # It runs '... --version' commands to verify that the binaries are correctly installed
@@ -306,7 +320,8 @@ spec:
     mounts:
     - - LABEL=etcd_disk
       - /var/lib/etcddisk
-    postKubeadmCommands: []
+    postKubeadmCommands:
+    - bash -c /tmp/node-log-query-kubelet-config.sh
     preKubeadmCommands:
     - bash -c /tmp/kubeadm-bootstrap.sh
     useExperimentalRetryJoin: true
