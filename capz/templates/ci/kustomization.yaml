@@ -4,6 +4,7 @@ namespace: default
 resources:
   - ../windows-base.yaml
 patches:
+- path: patches/market-place.yaml
 - target:
     group: controlplane.cluster.x-k8s.io
     version: v1beta1

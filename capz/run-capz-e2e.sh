@@ -29,6 +29,7 @@ main() {
     export HYPERV="${HYPERV:-""}"
     export KPNG="${WINDOWS_KPNG:-""}"
     export CALICO_VERSION="${CALICO_VERSION:-"v3.26.1"}"
+    export TEMPLATE="${TEMPLATE:-"windows-ci.yaml"}"
 
     # other config
     export ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
@@ -130,7 +131,7 @@ create_cluster(){
         az extension add -y --upgrade --source "$CAPI_EXTENSION_SOURCE" || true
 
         # select correct template
-        template="$SCRIPT_ROOT"/templates/windows-ci.yaml
+        template="$SCRIPT_ROOT"/templates/"$TEMPLATE"
         if [[ "${IS_PRESUBMIT}" == "true" ]]; then
             template="$SCRIPT_ROOT"/templates/windows-pr.yaml;
         fi
