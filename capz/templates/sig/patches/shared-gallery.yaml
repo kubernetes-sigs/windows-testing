@@ -1,0 +1,14 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: AzureMachineTemplate
+metadata:
+  name: ${CLUSTER_NAME}-md-win
+spec:
+  template:
+    spec:
+      image:
+        sharedGallery:
+          resourceGroup: "annual-channel"
+          name: "capi-windows-annual-containerd"
+          subscriptionID: "${AZURE_SUBSCRIPTION_ID}"
+          gallery: "SigwinTestingImages"
+          version: "${IMAGE_VERSION:=0.3.1701974085}"

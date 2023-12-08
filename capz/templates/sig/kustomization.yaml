@@ -2,24 +2,23 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: default
 resources:
-  - ../windows-base.yaml
+- ../windows-base.yaml
 patches:
-- path: ../ci/patches/market-place.yaml
-- path: ./patches/kubeadm-control-plane-pr.yaml
+- path: patches/shared-gallery.yaml
 - target:
     group: controlplane.cluster.x-k8s.io
     version: v1beta1
     kind: KubeadmControlPlane
     name: .*-control-plane
     namespace: default
-  path: patches/kubeadm-bootstrap-control-plane-pr.yaml
+  path: ../ci/patches/kubeadm-bootstrap-control-plane-ci.yaml
 - target:
     group: bootstrap.cluster.x-k8s.io
     version: v1beta1
     kind: KubeadmConfigTemplate
     name: .*-md-win
     namespace: default
-  path: patches/kubeadm-bootstrap-windows-pr.yaml
+  path: ../ci/patches/kubeadm-bootstrap-windows-ci.yaml
 generatorOptions:
   disableNameSuffixHash: true
   labels:
