@@ -373,6 +373,8 @@ set_azure_envs() {
         # give it the absolute path
         export AZURE_SSH_PUBLIC_KEY_FILE="${PWD}"/.sshkey.pub
         export AZURE_SSH_KEY="${PWD}"/.sshkey
+        # This is required as the e2e.test is run with --provider=skeleton
+        export KUBE_SSH_KEY="${PWD}"/.sshkey
     fi
 }
 
