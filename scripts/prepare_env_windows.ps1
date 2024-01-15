@@ -1,4 +1,4 @@
-$PACKAGES= @{ git = ""; golang = "1.20.2"; make = "" }
+$PACKAGES= @{ git = ""; golang = "1.21.6"; make = "" }
 
 Write-Host "Downloading chocolatey package"
 curl.exe -L "https://packages.chocolatey.org/chocolatey.0.10.15.nupkg" -o 'c:\choco.zip'
