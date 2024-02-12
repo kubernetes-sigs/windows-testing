@@ -418,7 +418,7 @@ spec:
           name: capi-windows-annual-containerd
           resourceGroup: annual-channel
           subscriptionID: ${AZURE_SUBSCRIPTION_ID}
-          version: ${IMAGE_VERSION:=0.3.1701974085}
+          version: ${IMAGE_VERSION:=0.3.1707767847}
       osDisk:
         diskSizeGB: 128
         managedDisk:
