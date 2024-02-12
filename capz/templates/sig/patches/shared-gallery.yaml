@@ -11,4 +11,4 @@ spec:
           name: "capi-windows-annual-containerd"
           subscriptionID: "${AZURE_SUBSCRIPTION_ID}"
           gallery: "SigwinTestingImages"
-          version: "${IMAGE_VERSION:=0.3.1701974085}"
+          version: "${IMAGE_VERSION:=0.3.1707767847}"
