@@ -19,6 +19,13 @@ patches:
     name: .*-md-win
     namespace: default
   path: ../ci/patches/kubeadm-bootstrap-windows-ci.yaml
+- target:
+    group: bootstrap.cluster.x-k8s.io
+    version: v1beta1
+    kind: KubeadmConfigTemplate
+    name: .*-md-win
+    namespace: default
+  path: patches/kubeadm-bootstrap-ssh.yaml
 generatorOptions:
   disableNameSuffixHash: true
   labels:

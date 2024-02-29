@@ -103,6 +103,11 @@ spec:
           kube-proxy.exe --version
         path: C:/replace-ci-binaries.ps1
         permissions: "0744"
+      - content: |
+          $ErrorActionPreference = 'Stop'
+          New-NetFirewallRule -DisplayName 'SSH-old-behavior' -Profile 'Any' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 22
+        path: C:/ssh-setup.ps1
+        permissions: "0744"
       joinConfiguration:
         nodeRegistration:
           criSocket: npipe:////./pipe/containerd-containerd
@@ -120,6 +125,7 @@ spec:
       - powershell C:/create-temp-folder.ps1
       - powershell C:/replace-containerd.ps1
       - powershell C:/replace-ci-binaries.ps1
+      - powershell C:/ssh-setup.ps1
       users:
       - groups: Administrators
         name: capi
