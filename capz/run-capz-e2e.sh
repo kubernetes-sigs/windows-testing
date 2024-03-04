@@ -29,7 +29,7 @@ main() {
     export HYPERV="${HYPERV:-""}"
     export KPNG="${WINDOWS_KPNG:-""}"
     export CALICO_VERSION="${CALICO_VERSION:-"v3.26.1"}"
-    export TEMPLATE="${TEMPLATE:-"shared-image-gallery-ci.yaml"}"
+    export TEMPLATE="${TEMPLATE:-"windows-ci.yaml"}"
 
     # other config
     export ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
