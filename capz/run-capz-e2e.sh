@@ -25,7 +25,7 @@ main() {
     export WINDOWS_WORKER_MACHINE_COUNT="${WINDOWS_WORKER_MACHINE_COUNT:-"2"}"
     export WINDOWS_SERVER_VERSION="${WINDOWS_SERVER_VERSION:-"windows-2019"}"
     export WINDOWS_CONTAINERD_URL="${WINDOWS_CONTAINERD_URL:-"https://github.com/containerd/containerd/releases/download/v1.7.13/containerd-1.7.13-windows-amd64.tar.gz"}"
-    export GMSA="${GMSA:-""}" 
+    export GMSA="${GMSA:-""}"
     export HYPERV="${HYPERV:-""}"
     export KPNG="${WINDOWS_KPNG:-""}"
     export CALICO_VERSION="${CALICO_VERSION:-"v3.26.1"}"
@@ -34,9 +34,9 @@ main() {
     # other config
     export ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
     export CLUSTER_NAME="${CLUSTER_NAME:-capz-conf-$(head /dev/urandom | LC_ALL=C tr -dc a-z0-9 | head -c 6 ; echo '')}"
-    export CAPI_EXTENSION_SOURCE="${CAPI_EXTENSION_SOURCE:-"https://github.com/Azure/azure-capi-cli-extension/releases/download/v0.1.5/capi-0.1.5-py2.py3-none-any.whl"}"
+    export CAPI_EXTENSION_SOURCE="${CAPI_EXTENSION_SOURCE:-"https://github.com/Azure/azure-capi-cli-extension/releases/download/v0.1.6/capi-0.1.6-py2.py3-none-any.whl"}"
     export IMAGE_SKU="${IMAGE_SKU:-"${WINDOWS_SERVER_VERSION:=windows-2019}-containerd-gen1"}"
-    
+
     # CI is an environment variable set by a prow job: https://github.com/kubernetes/test-infra/blob/master/prow/jobs.md#job-environment-variables
     export CI="${CI:-""}"
 
@@ -93,8 +93,8 @@ run_capz_e2e_cleanup() {
         log "collecting logs"
         pushd "${CAPZ_DIR}"
 
-        # there is an issue in ci with the go client conflicting with the kubectl client failing to get logs for 
-        # control plane node.  This is a mitigation being tried 
+        # there is an issue in ci with the go client conflicting with the kubectl client failing to get logs for
+        # control plane node.  This is a mitigation being tried
         rm -rf "$HOME/.kube/cache/"
         # don't stop on errors here, so we always cleanup
         go run -tags e2e "${CAPZ_DIR}/test/logger.go" --name "${CLUSTER_NAME}" --namespace default --artifacts-folder "${ARTIFACTS}" || true
@@ -128,7 +128,7 @@ create_cluster(){
     if [[ ! "$SKIP_CREATE" == "true" ]]; then
         # create cluster
         log "starting to create cluster"
-        az extension add -y --upgrade --source "$CAPI_EXTENSION_SOURCE" || true
+        az extension add --allow-preview -y --upgrade --source "$CAPI_EXTENSION_SOURCE" || true
 
         # select correct template
         template="$SCRIPT_ROOT"/templates/"$TEMPLATE"
@@ -143,9 +143,9 @@ create_cluster(){
             fi
         fi
         echo "Using $template"
-        
+
         az capi create -mg "${CLUSTER_NAME}" -y -w -n "${CLUSTER_NAME}" -l "$AZURE_LOCATION" --template "$template" --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
-        
+
         # copy generated template to logs
         mkdir -p "${ARTIFACTS}"/clusters/bootstrap
         cp "${CLUSTER_NAME}.yaml" "${ARTIFACTS}"/clusters/bootstrap || true
@@ -321,7 +321,7 @@ wait_for_nodes() {
     log "Waiting for ${CONTROL_PLANE_MACHINE_COUNT} control plane machine(s) and ${WINDOWS_WORKER_MACHINE_COUNT} windows machine(s) to become Ready"
     kubectl get nodes -o wide
     kubectl get pods -A -o wide
-    
+
     # Ensure that all nodes are registered with the API server before checking for readiness
     local total_nodes="$((CONTROL_PLANE_MACHINE_COUNT + WINDOWS_WORKER_MACHINE_COUNT))"
     while [[ $(kubectl get nodes -ojson | jq '.items | length') -ne "${total_nodes}" ]]; do
@@ -338,7 +338,7 @@ wait_for_nodes() {
 
     if [[ "${GMSA}" == "true" ]]; then
         log "Configuring workload cluster nodes for gmsa tests"
-        # require kubeconfig to be pointed at management cluster 
+        # require kubeconfig to be pointed at management cluster
         unset KUBECONFIG
         pushd  "$SCRIPT_ROOT"/gmsa/configuration
         go run --tags e2e configure.go --name "${CLUSTER_NAME}" --namespace default
@@ -367,9 +367,9 @@ set_azure_envs() {
     export AZURE_LOCATION="${AZURE_LOCATION:-$(capz::util::get_random_region)}"
 
     if [[ "${CI:-}" == "true" ]]; then
-        # we don't provide an ssh key in ci so it is created.  
+        # we don't provide an ssh key in ci so it is created.
         # the ssh code in the logger and gmsa configuration
-        # can't find it via relative paths so 
+        # can't find it via relative paths so
         # give it the absolute path
         export AZURE_SSH_PUBLIC_KEY_FILE="${PWD}"/.sshkey.pub
         export AZURE_SSH_KEY="${PWD}"/.sshkey
