@@ -53,6 +53,11 @@ func (pu *podUpdater) Handle(ctx context.Context, req admission.Request) admissi
 	if isHostProcessPod(pod) {
 		mutatePod = false
 	}
+	
+	// Don't apply hyper-v runtime class for linux nodes, as this is a windows only supported class
+	if osLabel, ok := pod.Spec.NodeSelector["kubernetes.io/os"]; ok && osLabel == "linux" {
+		mutatePod = false
+	}
 
 	if mutatePod {
 		podName := pod.Name
