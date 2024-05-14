@@ -54,7 +54,7 @@ func (pu *podUpdater) Handle(ctx context.Context, req admission.Request) admissi
 		mutatePod = false
 	}
 	
-	// Don't apply hyper-v runtime class for linux nodes, as this is a windows only supported class
+	// Don't apply hyper-v runtime class for linux pods that are explicitly labeled, as this is a windows only supported runtimeclass
 	if osLabel, ok := pod.Spec.NodeSelector["kubernetes.io/os"]; ok && osLabel == "linux" {
 		mutatePod = false
 	}
