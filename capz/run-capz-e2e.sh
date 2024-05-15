@@ -24,7 +24,7 @@ main() {
     export CONTROL_PLANE_MACHINE_COUNT="${AZURE_CONTROL_PLANE_MACHINE_COUNT:-"1"}"
     export WINDOWS_WORKER_MACHINE_COUNT="${WINDOWS_WORKER_MACHINE_COUNT:-"2"}"
     export WINDOWS_SERVER_VERSION="${WINDOWS_SERVER_VERSION:-"windows-2019"}"
-    export WINDOWS_CONTAINERD_URL="${WINDOWS_CONTAINERD_URL:-"https://github.com/containerd/containerd/releases/download/v1.7.13/containerd-1.7.13-windows-amd64.tar.gz"}"
+    export WINDOWS_CONTAINERD_URL="${WINDOWS_CONTAINERD_URL:-"https://github.com/containerd/containerd/releases/download/v1.7.16/containerd-1.7.16-windows-amd64.tar.gz"}"
     export GMSA="${GMSA:-""}"
     export HYPERV="${HYPERV:-""}"
     export KPNG="${WINDOWS_KPNG:-""}"
@@ -34,7 +34,7 @@ main() {
     # other config
     export ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
     export CLUSTER_NAME="${CLUSTER_NAME:-capz-conf-$(head /dev/urandom | LC_ALL=C tr -dc a-z0-9 | head -c 6 ; echo '')}"
-    export CAPI_EXTENSION_SOURCE="${CAPI_EXTENSION_SOURCE:-"https://github.com/Azure/azure-capi-cli-extension/releases/download/v0.1.6/capi-0.1.6-py2.py3-none-any.whl"}"
+    export CAPI_EXTENSION_SOURCE="${CAPI_EXTENSION_SOURCE:-"https://github.com/Azure/azure-capi-cli-extension/releases/download/v0.1.7/capi-0.1.7-py2.py3-none-any.whl"}"
     export IMAGE_SKU="${IMAGE_SKU:-"${WINDOWS_SERVER_VERSION:=windows-2019}-containerd-gen1"}"
 
     # CI is an environment variable set by a prow job: https://github.com/kubernetes/test-infra/blob/master/prow/jobs.md#job-environment-variables
@@ -144,7 +144,7 @@ create_cluster(){
         fi
         echo "Using $template"
 
-        az capi create -mg "${CLUSTER_NAME}" -y -w -n "${CLUSTER_NAME}" -l "$AZURE_LOCATION" --template "$template" --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+        az capi create --debug -mg "${CLUSTER_NAME}" -y -w -n "${CLUSTER_NAME}" -l "$AZURE_LOCATION" --template "$template" --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')" --external-cloud-provider=false
 
         # copy generated template to logs
         mkdir -p "${ARTIFACTS}"/clusters/bootstrap
