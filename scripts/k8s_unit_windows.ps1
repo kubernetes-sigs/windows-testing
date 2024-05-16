@@ -11,7 +11,7 @@ $RepoURL = "https://github.com/$repoOrg/$repoName"
 $LocalPullBranch = "testBranch"
 $JUNIT_FILE_NAME="junit"
 $EXTRA_PACKAGES = @("./cmd/...")
-$EXCLUDED_PACKAGES = @()
+$EXCLUDED_PACKAGES = @("./pkg/proxy/iptables/...", "./pkg/proxy/ipvs/...", "./pkg/proxy/nftables/...")
 
 
 function Prepare-TestPackages {
