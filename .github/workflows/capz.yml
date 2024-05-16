@@ -5,18 +5,19 @@ on:
     branches: [ "master" ]
     paths: 
       - 'capz/**'
+      - '.github/workflows/capz.yml'
 jobs:
   run-lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # Full git history is needed to get a proper list of changed files within `super-linter`
           fetch-depth: 0
       # https://github.com/github/super-linter
       - name: Lint Code Base
-        uses: github/super-linter@v4
+        uses: super-linter/super-linter@v6.5.0
         env:
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_BASH: true
@@ -29,8 +30,8 @@ jobs:
     name: lint go
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: "1.20"
           cache: false # workaround for golangci-lint caching issues https://github.com/golangci/golangci-lint-action/pull/704
@@ -41,7 +42,7 @@ jobs:
           go mod tidy
           popd
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v6
         with:
           version: latest
           working-directory: capz/gmsa/configuration
@@ -49,9 +50,9 @@ jobs:
   build-gmsa-configuration:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v5
       with:
         go-version: "1.20"
     - name: build-gmsa-configuration
@@ -62,7 +63,7 @@ jobs:
   capz-templates:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: generate templates 
       run: |
         cd capz

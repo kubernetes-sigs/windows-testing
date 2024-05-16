@@ -15,17 +15,20 @@ on:
       - master
     paths:
       - helpers/hyperv-mutating-webhook/**
+      - .github/workflows/hyperv-webhook-build.yaml
   workflow_dispatch: # for testing until workfload is validated
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: helpers/hyper-v-mutating-webhook/
     steps:
       - uses: actions/checkout@v2
       - name: build image for ci
         if: ${{ github.event_name == 'pull_request' }}
         run: |
-          cd helpers/hyperv-mutating-webhook
           make docker-build
       - name: build image for release
         if: ${{ github.event_name != 'pull_request' }}
