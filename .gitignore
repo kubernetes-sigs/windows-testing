@@ -14,3 +14,4 @@ capz/gmsa/configuration/configuration
 capz/gmsa/configuration/gmsa-spec-writer-output.txt
 helpers/hyper-v-mutating-webhook/bin/
 capz/clusterctl
+capz/tools

@@ -31,6 +31,8 @@ main() {
     export CALICO_VERSION="${CALICO_VERSION:-"v3.26.1"}"
     export TEMPLATE="${TEMPLATE:-"windows-ci.yaml"}"
     export CAPI_VERSION="${CAPI_VERSION:-"v1.7.2"}"
+    export HELM_VERSION=v3.14.4
+    export TOOLS_BIN_DIR="${TOOLS_BIN_DIR:-$SCRIPT_ROOT/tools/bin}"
 
     # other config
     export ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
@@ -50,12 +52,30 @@ main() {
     fi
     if [[ "${GMSA}" == "true" ]]; then create_gmsa_domain; fi
 
+    install_tools
     create_cluster
     apply_workload_configuraiton
     apply_cloud_provider_azure
     wait_for_nodes
     if [[ "${HYPERV}" == "true" ]]; then apply_hyperv_configuration; fi
     run_e2e_test
+}
+
+install_tools(){
+    CURL_RETRIES=3
+    mkdir -p "$TOOLS_BIN_DIR"
+    if [[ -z "$(command -v "$TOOLS_BIN_DIR"/helm)" ]]; then
+        log "install helm"
+        curl --retry "$CURL_RETRIES" -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o "$TOOLS_BIN_DIR"/get_helm.sh
+        chmod +x "$TOOLS_BIN_DIR"/get_helm.sh
+        USE_SUDO=false HELM_INSTALL_DIR="$TOOLS_BIN_DIR" DESIRED_VERSION="$HELM_VERSION" BINARY_NAME=helm "$TOOLS_BIN_DIR"/get_helm.sh
+    fi
+
+    if [[ -z "$(command -v "$TOOLS_BIN_DIR"/clusterctl)" ]]; then
+        log "install clusterctl"
+        curl --retry "$CURL_RETRIES" -L https://github.com/kubernetes-sigs/cluster-api/releases/download/"$CAPI_VERSION"/clusterctl-linux-amd64 -o "$TOOLS_BIN_DIR"/clusterctl
+        chmod +x "$TOOLS_BIN_DIR"/clusterctl
+    fi
 }
 
 create_gmsa_domain(){
@@ -129,12 +149,7 @@ create_cluster(){
         # create cluster
         log "starting to create cluster"
 
-        if [[ -z "$(command -v "$SCRIPT_ROOT"/clusterctl)" ]]; then
-            log "install clusterctl"
-            curl -L https://github.com/kubernetes-sigs/cluster-api/releases/download/"$CAPI_VERSION"/clusterctl-linux-amd64 -o "$SCRIPT_ROOT"/clusterctl
-            chmod +x "$SCRIPT_ROOT"/clusterctl
-        fi
-
+       
         # select correct template
         template="$SCRIPT_ROOT"/templates/"$TEMPLATE"
         if [[ "${IS_PRESUBMIT}" == "true" ]]; then
@@ -174,7 +189,7 @@ create_cluster(){
         done
 
         log "Install cluster api azure onto management cluster"
-        "$SCRIPT_ROOT"/clusterctl init --infrastructure azure
+        "$TOOLS_BIN_DIR"/clusterctl init --infrastructure azure
         kubectl wait --for=condition=ready pod --all -n capz-system --timeout -300s
         # Wait for the core CRD resources to be "installed" onto the mgmt cluster before returning control
         log "wait for core CRDs to be installed"
@@ -184,10 +199,10 @@ create_cluster(){
         
 
         log "Provisiion workload cluster"
-        "$SCRIPT_ROOT"/clusterctl generate cluster "${CLUSTER_NAME}" --kubernetes-version "$KUBERNETES_VERSION" --from "$SCRIPT_ROOT"/templates/windows-ci.yaml | kubectl apply -f -
+        "$TOOLS_BIN_DIR"/clusterctl generate cluster "${CLUSTER_NAME}" --kubernetes-version "$KUBERNETES_VERSION" --from "$SCRIPT_ROOT"/templates/windows-ci.yaml | kubectl apply -f -
         
         log "wait for workload cluster config"
-        timeout --foreground 300 bash -c "until $SCRIPT_ROOT/clusterctl get kubeconfig ${CLUSTER_NAME} > ${CLUSTER_NAME}.kubeconfig; do sleep 3; done"
+        timeout --foreground 300 bash -c "until $TOOLS_BIN_DIR/clusterctl get kubeconfig ${CLUSTER_NAME} > ${CLUSTER_NAME}.kubeconfig; do sleep 3; done"
 
         # copy generated template to logs
         mkdir -p "${ARTIFACTS}"/clusters/bootstrap
@@ -215,9 +230,9 @@ apply_workload_configuraiton(){
     timeout --foreground 300 bash -c "until kubectl get --raw /version --request-timeout 5s > /dev/null 2>&1; do sleep 3; done"
     
     log "installing calico"
-    helm repo add projectcalico https://docs.tigera.io/calico/charts
+    "$TOOLS_BIN_DIR"/helm repo add projectcalico https://docs.tigera.io/calico/charts
     kubectl create ns calico-system
-    helm upgrade calico projectcalico/tigera-operator --version "$CALICO_VERSION" --namespace tigera-operator -f "${CAPZ_DIR}"/templates/addons/calico/values.yaml  --create-namespace  --install
+    "$TOOLS_BIN_DIR"/helm upgrade calico projectcalico/tigera-operator --version "$CALICO_VERSION" --namespace tigera-operator -f "${CAPZ_DIR}"/templates/addons/calico/values.yaml  --create-namespace  --install
     timeout --foreground 300 bash -c "until kubectl get IPAMConfig -A > /dev/null 2>&1; do sleep 3; done"
     # needed un
     kubectl get configmap kubeadm-config --namespace=kube-system -o yaml | sed 's/namespace: kube-system/namespace: calico-system/' | kubectl apply --namespace=calico-system -f - || true
@@ -229,7 +244,7 @@ apply_workload_configuraiton(){
     if [[ -z "$KPNG" ]]; then
         log "installing kube-proxy for windows"
         # apply kube-proxy for windows with a version (it doesn't matter what version it is replaced with the patch below)
-        KUBERNETES_VERSION=v1.30.1 "$SCRIPT_ROOT"/clusterctl generate yaml --from "${CAPZ_DIR}"/templates/addons/windows/calico/kube-proxy-windows.yaml | kubectl apply -f -
+        KUBERNETES_VERSION=v1.30.1 "$TOOLS_BIN_DIR"/clusterctl generate yaml --from "${CAPZ_DIR}"/templates/addons/windows/calico/kube-proxy-windows.yaml | kubectl apply -f -
 
         # A patch is needed to tell kube-proxy to use CI binaries.  This could go away once we have build scripts for kubeproxy HostProcess image.
         kubectl apply -f "${CAPZ_DIR}"/templates/test/ci/patches/windows-kubeproxy-ci.yaml
@@ -262,7 +277,7 @@ apply_cloud_provider_azure() {
     --set-string cloudNodeManager.imageTag="${IMAGE_TAG_CNM}")
 
     echo "Installing cloud-provider-azure components via helm"
-    helm upgrade cloud-provider-azure --install --repo https://raw.githubusercontent.com/kubernetes-sigs/cloud-provider-azure/master/helm/repo cloud-provider-azure "${CCM_IMG_ARGS[@]}"
+    "$TOOLS_BIN_DIR"/helm upgrade cloud-provider-azure --install --repo https://raw.githubusercontent.com/kubernetes-sigs/cloud-provider-azure/master/helm/repo cloud-provider-azure "${CCM_IMG_ARGS[@]}"
 }
 
 apply_hyperv_configuration(){
