@@ -166,7 +166,7 @@ create_cluster(){
         echo "Using $template"
         
         log "create resource group and management cluster"
-        if [[ "$(az group exists --name "${CLUSTER_NAME}")" == "false" ]]; then
+        if [[ "$(az group exists --name "${CLUSTER_NAME}" --output tsv)" == "false" ]]; then
             az group create --name "${CLUSTER_NAME}" --location "$AZURE_LOCATION" --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
             az aks create \
                 --resource-group "${CLUSTER_NAME}" \
@@ -184,7 +184,7 @@ create_cluster(){
         log "applying role assignment to management cluster identity to have permissions to create workload cluster"
         MANAGEMENT_IDENTITY=$(az aks show -n "${CLUSTER_NAME}" -g "${CLUSTER_NAME}" | jq -r '.identityProfile.kubeletidentity.clientId')
         export MANAGEMENT_IDENTITY
-        objectId=$(az aks show -n "${CLUSTER_NAME}" -g "${CLUSTER_NAME}" | jq -r '.identityProfile.kubeletidentity.objectId')
+        objectId=$(az aks show -n "${CLUSTER_NAME}" --output json -g "${CLUSTER_NAME}" | jq -r '.identityProfile.kubeletidentity.objectId')
         until az role assignment create --assignee-object-id "${objectId}" --role "Contributor" --scope "/subscriptions/${AZURE_SUBSCRIPTION_ID}" --assignee-principal-type ServicePrincipal --output none --only-show-errors; do
             sleep 5
         done
