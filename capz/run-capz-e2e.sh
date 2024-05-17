@@ -68,6 +68,7 @@ install_tools(){
         log "install helm"
         curl --retry "$CURL_RETRIES" -L https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 -o "$TOOLS_BIN_DIR"/get_helm.sh
         chmod +x "$TOOLS_BIN_DIR"/get_helm.sh
+        PATH="$PATH:$TOOLS_BIN_DIR"
         USE_SUDO=false HELM_INSTALL_DIR="$TOOLS_BIN_DIR" DESIRED_VERSION="$HELM_VERSION" BINARY_NAME=helm "$TOOLS_BIN_DIR"/get_helm.sh
     fi
 
