@@ -221,7 +221,7 @@ apply_hyperv_configuration(){
     kubectl taint nodes "${windows_nodes[@]}" os=windows:NoSchedule
 
     log "installing cer-manager"
-    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml
+    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.5/cert-manager.yaml
 
     log "wait for cert-manager pods to start"
     timeout 5m kubectl wait --for=condition=ready pod --all -n cert-manager --timeout -1s
