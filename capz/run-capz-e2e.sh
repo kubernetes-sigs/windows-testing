@@ -182,9 +182,9 @@ create_cluster(){
 
         # In a prod set up we probably would want a seperate identity for this operation but for ease of use we are re-using the one created by AKS for kubelet
         log "applying role assignment to management cluster identity to have permissions to create workload cluster"
-        MANAGEMENT_IDENTITY=$(az aks show -n "${CLUSTER_NAME}" -g "${CLUSTER_NAME}" | jq -r '.identityProfile.kubeletidentity.clientId')
+        MANAGEMENT_IDENTITY=$(az aks show -n "${CLUSTER_NAME}" -g "${CLUSTER_NAME}" --output json | jq -r '.identityProfile.kubeletidentity.clientId')
         export MANAGEMENT_IDENTITY
-        objectId=$(az aks show -n "${CLUSTER_NAME}" --output json -g "${CLUSTER_NAME}" | jq -r '.identityProfile.kubeletidentity.objectId')
+        objectId=$(az aks show -n "${CLUSTER_NAME}" -g "${CLUSTER_NAME}" --output json  | jq -r '.identityProfile.kubeletidentity.objectId')
         until az role assignment create --assignee-object-id "${objectId}" --role "Contributor" --scope "/subscriptions/${AZURE_SUBSCRIPTION_ID}" --assignee-principal-type ServicePrincipal --output none --only-show-errors; do
             sleep 5
         done
