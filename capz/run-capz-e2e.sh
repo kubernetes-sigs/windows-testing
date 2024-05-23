@@ -181,6 +181,12 @@ create_cluster(){
 
         az aks get-credentials --resource-group "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" --overwrite-existing
 
+        # some scenarios require knowing the vnet configuration of the management cluster in order to work in a restricted networking environment
+        aks_infra_rg_name=$(az aks show -g "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" --query nodeResourceGroup --output tsv)
+        ask_vnet=$(az network vnet list -g "$aks_infra_rg_name" --query "[?starts_with(name, 'aks-vnet-')].name | [0]" --output tsv)
+        export AKS_INFRA_RG_NAME="${aks_infra_rg_name}"
+        export AKS_VNET_NAME="${ask_vnet}"
+
         # In a prod set up we probably would want a seperate identity for this operation but for ease of use we are re-using the one created by AKS for kubelet
         log "applying role assignment to management cluster identity to have permissions to create workload cluster"
         MANAGEMENT_IDENTITY=$(az aks show -n "${CLUSTER_NAME}" -g "${CLUSTER_NAME}" --output json | jq -r '.identityProfile.kubeletidentity.clientId')
