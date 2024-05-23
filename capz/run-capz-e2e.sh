@@ -175,7 +175,8 @@ create_cluster(){
                 --generate-ssh-keys \
                 --vm-set-type VirtualMachineScaleSets \
                 --kubernetes-version 1.28.5 \
-                --network-plugin azure
+                --network-plugin azure \
+                --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
         fi
 
         az aks get-credentials --resource-group "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" --overwrite-existing
