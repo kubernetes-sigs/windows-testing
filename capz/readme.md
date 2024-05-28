@@ -22,6 +22,20 @@ Clone the [cloud-provider-azure](https://github.com/kubernetes-sigs/cloud-provid
 > Note: To run e2e tests with the same configurations as the upstream e2e test passes, look at the `extra_refs` section of the **ci-kubernetes-e2e-capz-master-windows** in
 [release-master-windows.yaml](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/release-master-windows.yaml) to see which branches the SIG-Windows e2e test passes are using during the periodic jobs.
 
+## Create cloud provider Managed Identity
+
+The templates uses [managed identities](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview) on the [management cluster](https://capz.sigs.k8s.io/topics/identities#user-assigned-managed-identity) and [workload clusters](https://capz.sigs.k8s.io/topics/vm-identity).
+
+Create the required `cloud-provider-identity` with
+
+```bash
+az rg create --name capz-ci -l westus2
+az identity create -n "cloud-provider-user-identity" -g "capz-ci" -l westus2
+# get the <objectid> from the output and replace below
+# replace <subid> with your subscription id
+az role assignment create --assignee-object-id "<objectid>" --role "Contributor" --scope "/subscriptions/<subid>" --assignee-principal-type ServicePrincipal
+```
+
 ### Set environment variables
 
 #### Required
@@ -64,6 +78,8 @@ export AZURE_SSH_PUBLIC_KEY_FILE="$HOME/.ssh/id_rsa.pub"
 | `WINDOWS_KPNG` | If specified, will create a cluster using an out-of-tree kube-proxy implementation from [k-sigs/windows-service-proxy](https://github.com/kubernetes-sigs/windows-service-proxy) |
 | `WINDOWS_SERVER_VERSION` | Set to `windows-2019` (default) or `windows-2022` to test Windows Server 2019 or Windows Server 2022 |
 | `WINDOWS_WORKER_MACHINE_COUNT` | Number of **Windows** worker nodes to provision in the cluster (Defaults to 2) |
+| `USER_IDENTITY` | Cloud provider managed identity name to be applied to the worker nodes (Defaults to "cloud-provider-user-identity" |
+| `CI_RG` | Resource group with pre-created resources used in CI.  Example is the cloud provider managed identity or GMSA identities that need to be created before the scripts are run (Defaults to `capz-ci`) |
 
 ## GMSA support
 
