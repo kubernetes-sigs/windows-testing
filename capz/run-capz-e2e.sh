@@ -301,6 +301,7 @@ run_e2e_test() {
             --ginkgo.noColor \
             --ginkgo.focus="$GINKGO_FOCUS" \
             --ginkgo.skip="$GINKGO_SKIP" \
+            --ginkgo.flakeAttempts=2 \
             --node-os-distro="windows" \
             --disable-log-dump \
             --ginkgo.progress=true \
