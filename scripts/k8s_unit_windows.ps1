@@ -2,7 +2,8 @@ param (
     [string]$repoName = "kubernetes", 
     [string]$repoOrg = "kubernetes",    
     [string]$pullRequestNo,
-    [string]$pullBaseRef = "master"
+    [string]$pullBaseRef = "master",
+    [string[]]$testPackages = @()
 )
 
 $LogsDirPath = "c:/Logs"
@@ -15,6 +16,10 @@ $EXCLUDED_PACKAGES = @("./pkg/proxy/iptables/...", "./pkg/proxy/ipvs/...", "./pk
 
 
 function Prepare-TestPackages {
+    if ($testPackages.Count -ne 0) {
+        return $testPackages
+    }
+
     Push-Location "$RepoPath/pkg"
     $packages = ls -Directory  | select Name | foreach { "./pkg/" + $_.Name + "/..." }
     $packages = $packages + $EXTRA_PACKAGES
