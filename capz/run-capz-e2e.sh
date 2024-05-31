@@ -216,9 +216,9 @@ create_cluster(){
 
         log "Install cluster api azure onto management cluster"
         "$TOOLS_BIN_DIR"/clusterctl init --infrastructure azure
+        log "wait for core CRDs to be installed"
         kubectl wait --for=condition=ready pod --all -n capz-system --timeout -300s
         # Wait for the core CRD resources to be "installed" onto the mgmt cluster before returning control
-        log "wait for core CRDs to be installed"
         timeout --foreground 300 bash -c "until kubectl get clusters -A > /dev/null 2>&1; do sleep 3; done"
         timeout --foreground 300 bash -c "until kubectl get azureclusters -A > /dev/null 2>&1; do sleep 3; done"
         timeout --foreground 300 bash -c "until kubectl get kubeadmcontrolplanes -A > /dev/null 2>&1; do sleep 3; done"
@@ -228,7 +228,7 @@ create_cluster(){
         "$TOOLS_BIN_DIR"/clusterctl generate cluster "${CLUSTER_NAME}" --kubernetes-version "$KUBERNETES_VERSION" --from "$SCRIPT_ROOT"/templates/windows-ci.yaml | kubectl apply -f -
         
         log "wait for workload cluster config"
-        timeout --foreground 300 bash -c "until $TOOLS_BIN_DIR/clusterctl get kubeconfig ${CLUSTER_NAME} > ${CLUSTER_NAME}.kubeconfig; do sleep 3; done"
+        timeout --foreground 300 bash -c "until $TOOLS_BIN_DIR/clusterctl get kubeconfig ${CLUSTER_NAME} > ${CLUSTER_NAME}.kubeconfig 2>/dev/null; do sleep 3; done"
 
         # copy generated template to logs
         mkdir -p "${ARTIFACTS}"/clusters/bootstrap
