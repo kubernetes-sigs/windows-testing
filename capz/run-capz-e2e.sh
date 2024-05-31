@@ -168,7 +168,7 @@ create_cluster(){
         log "create resource group and management cluster"
         if [[ "$(az group exists --name "${CLUSTER_NAME}" --output tsv)" == "false" ]]; then
             az group create --name "${CLUSTER_NAME}" --location "$AZURE_LOCATION" --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
-            az aks create \
+            output=$(az aks create \
                 --resource-group "${CLUSTER_NAME}" \
                 --name "${CLUSTER_NAME}" \
                 --node-count 1 \
@@ -176,7 +176,25 @@ create_cluster(){
                 --vm-set-type VirtualMachineScaleSets \
                 --kubernetes-version 1.28.5 \
                 --network-plugin azure \
-                --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+                --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')")
+            
+            if [[ $output == *"AKSCapacityError"* ]]; then
+                log "AKS Capacity Error, retrying"
+                az group delete --name "${CLUSTER_NAME}" --no-wait -y || true
+                # reset location and name
+                export AZURE_LOCATION="${AZURE_LOCATION:-$(capz::util::get_random_region)}"
+                export CLUSTER_NAME="${CLUSTER_NAME:-capz-conf-$(head /dev/urandom | LC_ALL=C tr -dc a-z0-9 | head -c 6 ; echo '')}"
+                az group create --name "${CLUSTER_NAME}" --location "$AZURE_LOCATION" --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+                output=$(az aks create \
+                    --resource-group "${CLUSTER_NAME}" \
+                    --name "${CLUSTER_NAME}" \
+                    --node-count 1 \
+                    --generate-ssh-keys \
+                    --vm-set-type VirtualMachineScaleSets \
+                    --kubernetes-version 1.28.5 \
+                    --network-plugin azure \
+                    --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')")
+            fi
         fi
 
         az aks get-credentials --resource-group "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" --overwrite-existing
