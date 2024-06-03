@@ -16,6 +16,9 @@ VM_LOCATION="${VM_LOCATION:-westus2}"
 VM_SIZE="${VM_SIZE:-Standard_D2s_v3}"
 ARTIFACTS="${ARTIFACTS:-/var/log/artifacts}"
 
+# Depending on the job, we may have run only a subset of unit tests.
+# If not given, we'll run all of them.
+TEST_PACKAGES="${TEST_PACKAGES:-}"
 
 function onError(){
     az group list | jq ' .[] | .name' | grep ${AZURE_RESOURCE_GROUP}
@@ -210,7 +213,13 @@ wait_for_vm_restart
 if [ "${JOB_TYPE}" == "presubmit" ]
 then
     echo "Running a presubmit job"
-    run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_unit_windows.ps1 -repoName ${REPO_NAME} -repoOrg ${REPO_OWNER} -pullRequestNo ${PULL_NUMBER} -pullBaseRef ${PULL_BASE_REF}"
+    # Include the -testPackages argument only if we have $TEST_PACKAGES to test.
+    test_packages_arg=""
+    if [[ -n "${TEST_PACKAGES}" ]]; then
+        test_packages_arg="-testPackages ${TEST_PACKAGES}"
+    fi
+
+    run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_unit_windows.ps1 -repoName ${REPO_NAME} -repoOrg ${REPO_OWNER} -pullRequestNo ${PULL_NUMBER} -pullBaseRef ${PULL_BASE_REF} ${test_packages_arg}"
 else
     echo "Running periodic job"
     run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} 'c:/k8s_unit_windows.ps1'
