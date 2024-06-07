@@ -33,6 +33,7 @@ main() {
     export CAPI_VERSION="${CAPI_VERSION:-"v1.7.2"}"
     export HELM_VERSION=v3.14.4
     export TOOLS_BIN_DIR="${TOOLS_BIN_DIR:-$SCRIPT_ROOT/tools/bin}"
+    export WORKLOAD_IDENTITY_ID="${WORKLOAD_IDENTITY_ID:-"cabf5f22-ec7e-4e84-9e35-c02e57ca555d"}"
 
     # other config
     export ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
@@ -43,6 +44,13 @@ main() {
     export CI="${CI:-""}"
 
     set_azure_envs
+    # Use Federated Token to login to Azure in prep for removing SP password
+    # check that the workload identity id is set and that the token is present
+    if [[ -n "${WORKLOAD_IDENTITY_ID}" && -f /var/run/secrets/azure-token/serviceaccount/token ]]; then
+        echo "Using Workload Identity to login to Azure"
+        az login --service-principal -u "$WORKLOAD_IDENTITY_ID" -t "$AZURE_TENANT_ID" --federated-token "$(cat /var/run/secrets/azure-token/serviceaccount/token)" --debug
+    fi
+
     set_ci_version
     IS_PRESUBMIT="$(capz::util::should_build_kubernetes)"
     echo "IS_PRESUBMIT=$IS_PRESUBMIT"
