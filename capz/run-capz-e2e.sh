@@ -48,7 +48,7 @@ main() {
     # check that the workload identity id is set and that the token is present
     if [[ -n "${WORKLOAD_IDENTITY_ID}" && -f /var/run/secrets/azure-token/serviceaccount/token ]]; then
         echo "Using Workload Identity to login to Azure"
-        az login --service-principal -u "$WORKLOAD_IDENTITY_ID" -t "$AZURE_TENANT_ID" --federated-token "$(cat /var/run/secrets/azure-token/serviceaccount/token)" --debug
+        az login --service-principal -u "$WORKLOAD_IDENTITY_ID" -t "$AZURE_TENANT_ID" --federated-token "$(cat /var/run/secrets/azure-token/serviceaccount/token)"
     fi
 
     set_ci_version
@@ -311,7 +311,7 @@ apply_cloud_provider_azure() {
     --set-string cloudNodeManager.imageTag="${IMAGE_TAG_CNM}")
 
     echo "Installing cloud-provider-azure components via helm"
-    "$TOOLS_BIN_DIR"/helm upgrade cloud-provider-azure --install --repo https://raw.githubusercontent.com/kubernetes-sigs/cloud-provider-azure/master/helm/repo cloud-provider-azure "${CCM_IMG_ARGS[@]}"
+    "$TOOLS_BIN_DIR"/helm upgrade cloud-provider-azure --install --namespace kube-system --repo https://raw.githubusercontent.com/kubernetes-sigs/cloud-provider-azure/master/helm/repo cloud-provider-azure "${CCM_IMG_ARGS[@]}"
 }
 
 apply_hyperv_configuration(){
