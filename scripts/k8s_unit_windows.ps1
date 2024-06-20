@@ -79,9 +79,9 @@ function Build-Kubeadm {
     $buildFlags = @(
         "-X 'k8s.io/component-base/version.gitTreeState=clean'",
         "-X 'k8s.io/component-base/version.gitMajor=1'",
-        "-X 'k8s.io/component-base/version.gitMinor=27'",
-        "-X 'k8s.io/component-base/version.gitVersion=v1.27.0'",
-        "-X 'k8s.io/component-base/version.gitCommit=6a61da26b6761d1b86844cdec194ccaa02b41f3'"
+        "-X 'k8s.io/component-base/version.gitMinor=30'",
+        "-X 'k8s.io/component-base/version.gitVersion=v1.30.0'",
+        "-X 'k8s.io/component-base/version.gitCommit=a06568062c41b4f0f903dcb78aa6ea348bbdecfc'"
     )
 
     Push-Location "$RepoPath"
