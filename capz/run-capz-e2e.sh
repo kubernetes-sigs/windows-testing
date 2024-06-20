@@ -304,7 +304,7 @@ apply_cloud_provider_azure() {
     --set-string cloudNodeManager.imageTag="${IMAGE_TAG_CNM}")
 
     echo "Installing cloud-provider-azure components via helm"
-    "$TOOLS_BIN_DIR"/helm upgrade cloud-provider-azure --install --repo https://raw.githubusercontent.com/kubernetes-sigs/cloud-provider-azure/master/helm/repo cloud-provider-azure "${CCM_IMG_ARGS[@]}"
+    "$TOOLS_BIN_DIR"/helm upgrade cloud-provider-azure --install --namespace kube-system --repo https://raw.githubusercontent.com/kubernetes-sigs/cloud-provider-azure/master/helm/repo cloud-provider-azure "${CCM_IMG_ARGS[@]}"
 }
 
 apply_hyperv_configuration(){
