@@ -225,14 +225,15 @@ create_cluster(){
         
 
         log "Provisiion workload cluster"
-        "$TOOLS_BIN_DIR"/clusterctl generate cluster "${CLUSTER_NAME}" --kubernetes-version "$KUBERNETES_VERSION" --from "$SCRIPT_ROOT"/templates/windows-ci.yaml | kubectl apply -f -
-        
+        "$TOOLS_BIN_DIR"/clusterctl generate cluster "${CLUSTER_NAME}" --kubernetes-version "$KUBERNETES_VERSION" --from "$template" > "$SCRIPT_ROOT"/"${CLUSTER_NAME}-template.yaml"
+        kubectl apply -f "$SCRIPT_ROOT"/"${CLUSTER_NAME}-template.yaml"
+
         log "wait for workload cluster config"
         timeout --foreground 300 bash -c "until $TOOLS_BIN_DIR/clusterctl get kubeconfig ${CLUSTER_NAME} > ${CLUSTER_NAME}.kubeconfig 2>/dev/null; do sleep 3; done"
 
         # copy generated template to logs
         mkdir -p "${ARTIFACTS}"/clusters/bootstrap
-        cp "${CLUSTER_NAME}.yaml" "${ARTIFACTS}"/clusters/bootstrap || true
+        cp "$SCRIPT_ROOT"/"${CLUSTER_NAME}-template.yaml" "${ARTIFACTS}"/clusters/bootstrap || true
         log "cluster creation complete"
     fi
 
@@ -303,7 +304,7 @@ apply_cloud_provider_azure() {
     --set-string cloudNodeManager.imageTag="${IMAGE_TAG_CNM}")
 
     echo "Installing cloud-provider-azure components via helm"
-    "$TOOLS_BIN_DIR"/helm upgrade cloud-provider-azure --install --repo https://raw.githubusercontent.com/kubernetes-sigs/cloud-provider-azure/master/helm/repo cloud-provider-azure "${CCM_IMG_ARGS[@]}"
+    "$TOOLS_BIN_DIR"/helm upgrade cloud-provider-azure --install --namespace kube-system --repo https://raw.githubusercontent.com/kubernetes-sigs/cloud-provider-azure/master/helm/repo cloud-provider-azure "${CCM_IMG_ARGS[@]}"
 }
 
 apply_hyperv_configuration(){
