@@ -407,7 +407,6 @@ run_e2e_test() {
             --node-os-distro="windows" \
             --disable-log-dump \
             --ginkgo.progress=true \
-            --ginkgo.flakeAttempts=0 \
             --ginkgo.trace=true \
             --num-nodes="$WINDOWS_WORKER_MACHINE_COUNT" \
             --ginkgo.v=true \
