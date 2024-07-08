@@ -259,7 +259,11 @@ apply_workload_configuraiton(){
     log "installing calico"
     "$TOOLS_BIN_DIR"/helm repo add projectcalico https://docs.tigera.io/calico/charts
     kubectl create ns calico-system
-    "$TOOLS_BIN_DIR"/helm upgrade calico projectcalico/tigera-operator --version "$CALICO_VERSION" --namespace tigera-operator -f "${CAPZ_DIR}"/templates/addons/calico/values.yaml  --create-namespace  --install
+
+    if [[ "${IS_PRESUBMIT}" == "true" ]]; then
+        sleep 30s
+    fi
+    "$TOOLS_BIN_DIR"/helm upgrade calico projectcalico/tigera-operator --version "$CALICO_VERSION" --namespace tigera-operator -f "${CAPZ_DIR}"/templates/addons/calico/values.yaml  --create-namespace  --install --debug
     timeout --foreground 300 bash -c "until kubectl get IPAMConfig -A > /dev/null 2>&1; do sleep 3; done"
     # needed un
     kubectl get configmap kubeadm-config --namespace=kube-system -o yaml | sed 's/namespace: kube-system/namespace: calico-system/' | kubectl apply --namespace=calico-system -f - || true
