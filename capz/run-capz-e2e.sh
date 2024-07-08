@@ -31,7 +31,7 @@ main() {
     export CALICO_VERSION="${CALICO_VERSION:-"v3.26.1"}"
     export TEMPLATE="${TEMPLATE:-"windows-ci.yaml"}"
     export CAPI_VERSION="${CAPI_VERSION:-"v1.7.2"}"
-    export HELM_VERSION=v3.14.4
+    export HELM_VERSION=v3.15.2
     export TOOLS_BIN_DIR="${TOOLS_BIN_DIR:-$SCRIPT_ROOT/tools/bin}"
 
     # other config
