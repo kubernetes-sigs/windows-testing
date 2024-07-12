@@ -43,7 +43,6 @@ az role assignment create --assignee-object-id "<objectid>" --role "Contributor"
 ```bash
 export AZURE_SUBSCRIPTION_ID=<sub-id>
 export AZURE_CLIENT_ID=<client-id>
-export AZURE_CLIENT_SECRET=<client-secret>
 export AZURE_TENANT_ID=<tenantid>
 export CAPZ_DIR="$HOME/<path-to-repo>/cluster-api-provider-azure"
 export AZURE_CLOUD_PROVIDER_ROOT="$HOME/<path-to-repo>/cloud-provider-azure"
@@ -97,15 +96,23 @@ To do so ensure your local K8s repository is:
 - cloned to **$GOPATH/src/k8s.io/kubernetes**
 - checked out to the desired branch / commit
 
-Additionally the following enviroment variables will need to be set:
+Additionally the following environment variables will need to be set:
 
 | ENV variable | Description  |
 | ------------- | ------------ |
 | `AZURE_STORAGE_ACCOUNT` | The name of the Azure storage account to use for the custom builds |
-| `AZURE_STORAGE_KEY` | A key for the Azure storage account |
 | `JOB_NAME` | A unique job name used as a subpath in the AZURE_STORAGE_ACCOUNT to store the custom builds |
 
 > Note: [ci-build-kubernetes.sh](https://github.com/kubernetes-sigs/cluster-api-provider-azure/blob/main/scripts/ci-build-kubernetes.sh) is called by run_capz_e2e.sh which will build the custom components and upload them to the Azure storage account!
+
+In order to have permissions to upload the custom components you need to have [access to the storage account](https://learn.microsoft.com/en-us/azure/storage/blobs/assign-azure-role-data-access?tabs=azure-cli):
+
+```bash
+az role assignment create \
+    --role "Storage Blob Data Contributor" \
+    --assignee <email> \
+    --scope "/subscriptions/<subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Storage/storageAccounts/<storage-account-name>"
+```
 
 ## Hyper-V isolated containers support
 
