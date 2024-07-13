@@ -459,8 +459,6 @@ set_azure_envs() {
     # shellcheck disable=SC1091
     source "${CAPZ_DIR}/hack/ensure-tags.sh"
     # shellcheck disable=SC1091
-    source "${CAPZ_DIR}/hack/parse-prow-creds.sh"
-    # shellcheck disable=SC1091
     source "${CAPZ_DIR}/hack/util.sh"
     # shellcheck disable=SC1091
     source "${CAPZ_DIR}/hack/ensure-azcli.sh"
