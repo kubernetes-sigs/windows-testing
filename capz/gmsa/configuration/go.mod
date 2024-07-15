@@ -1,6 +1,6 @@
 module github.com/kubernetes-sigs/windows-testing/capz/gmsa/configuration
 
-go 1.20
+go 1.22
 
 require (
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible
