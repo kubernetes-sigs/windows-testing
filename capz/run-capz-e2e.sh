@@ -458,16 +458,17 @@ wait_for_nodes() {
 set_azure_envs() {
     # shellcheck disable=SC1091
     source "${CAPZ_DIR}/hack/ensure-tags.sh"
-    # shellcheck disable=SC1091
-    source "${CAPZ_DIR}/hack/util.sh"
-    # shellcheck disable=SC1091
-    source "${CAPZ_DIR}/hack/ensure-azcli.sh"
-
     if [[ -z "${AZURE_FEDERATED_TOKEN_FILE:-}" && -f "${CAPZ_DIR}/hack/parse-prow-creds.sh" ]]; then
         # older versions of capz require this to authenticate properly
         # shellcheck disable=SC1091
         source "${CAPZ_DIR}/hack/parse-prow-creds.sh"
     fi
+    # shellcheck disable=SC1091
+    source "${CAPZ_DIR}/hack/util.sh"
+    # shellcheck disable=SC1091
+    source "${CAPZ_DIR}/hack/ensure-azcli.sh"
+
+    
 
     # Verify the required Environment Variables are present.
     : "${AZURE_SUBSCRIPTION_ID:?Environment variable empty or not defined.}"
