@@ -15,11 +15,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/network/mgmt/network"
-	"github.com/Azure/azure-sdk-for-go/services/keyvault/v7.0/keyvault"
-	"github.com/Azure/go-autorest/autorest/azure"
-	"github.com/Azure/go-autorest/autorest/azure/auth"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	. "github.com/onsi/gomega" //nolint:revive
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh"
@@ -82,35 +79,22 @@ func getKubeConfigPath() string {
 }
 
 func configureGmsa(ctx context.Context, bootstrapClusterProxy framework.ClusterProxy, namespace, clusterName string) {
-	settings, err := auth.GetSettingsFromEnvironment()
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	Expect(err).NotTo(HaveOccurred())
-	authorizer, err := settings.GetAuthorizer()
+
+	keyVaultClient, err := azsecrets.NewClient(os.Getenv("GMSA_KEYVAULT_URL"), cred, nil)
 	Expect(err).NotTo(HaveOccurred())
-	subID := settings.GetSubscriptionID()
-
-	Expect(err).NotTo(HaveOccurred())
-	keyVaultClient := keyvault.New()
-
-	vmClient := compute.NewVirtualMachinesClient(subID)
-	vmClient.Authorizer = authorizer
-
-	networkClient := network.NewVirtualNetworkPeeringsClient(subID)
-	networkClient.Authorizer = authorizer
-
-	// override to use keyvault management endpoint
-	settings.Values[auth.Resource] = fmt.Sprintf("%s%s", "https://", azure.PublicCloud.KeyVaultDNSSuffix)
-	keyvaultAuthorizer, err := settings.GetAuthorizer()
-	Expect(err).NotTo(HaveOccurred())
-	keyVaultClient.Authorizer = keyvaultAuthorizer
 
 	workloadProxy := bootstrapClusterProxy.GetWorkloadCluster(ctx, namespace, clusterName)
 
 	// Wait for the Domain to finish provisioning.  The existence of the spec file is the marker
 	gmsaSpecName := "gmsa-cred-spec-gmsa-e2e-" + os.Getenv("GMSA_ID")
 	fmt.Printf("INFO: Getting the gmsa gmsaSpecFile %s from %s\n", gmsaSpecName, os.Getenv("GMSA_KEYVAULT_URL"))
-	var gmsaSpecFile keyvault.SecretBundle
+	var gmsaSpecFile azsecrets.GetSecretResponse
 	Eventually(func() error {
-		gmsaSpecFile, err = keyVaultClient.GetSecret(ctx, os.Getenv("GMSA_KEYVAULT_URL"), gmsaSpecName, "")
+		// empty string for version gets the latest
+		version := ""
+		gmsaSpecFile, err = keyVaultClient.GetSecret(ctx, gmsaSpecName, version, nil)
 		if capz.ResourceNotFound(err) {
 			fmt.Printf("INFO: Waiting for gmsaSpecFile %s to be created by Domain controller\n", os.Getenv("GMSA_KEYVAULT_URL"))
 			return err
@@ -129,7 +113,7 @@ func configureGmsa(ctx context.Context, bootstrapClusterProxy framework.ClusterP
 	clusterHostName := workloadCluster.Spec.ControlPlaneEndpoint.Host
 
 	gmsaNode, windowsNodes := labelGmsaTestNode(ctx, workloadProxy)
-	dropGmsaSpecOnTestNode(gmsaNode, clusterHostName, gmsaSpecFile)
+	dropGmsaSpecOnTestNode(gmsaNode, clusterHostName, *gmsaSpecFile.Value)
 	configureCoreDNS(ctx, workloadProxy)
 
 	for _, n := range windowsNodes.Items {
@@ -184,14 +168,14 @@ func configureCoreDNS(ctx context.Context, workloadProxy framework.ClusterProxy)
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func dropGmsaSpecOnTestNode(gmsaNode *corev1.Node, clusterHostName string, secret keyvault.SecretBundle) {
+func dropGmsaSpecOnTestNode(gmsaNode *corev1.Node, clusterHostName string, value string) {
 	fmt.Printf("INFO: Writing gmsa spec to disk\n")
 	f, err := fileOnHost(filepath.Join("", "gmsa-spec-writer-output.txt"))
 	Expect(err).NotTo(HaveOccurred())
 	defer f.Close()
 	hostname := getHostName(gmsaNode)
 
-	cmd := fmt.Sprintf("mkdir -force /gmsa; rm -force c:/gmsa/gmsa-cred-spec-gmsa-e2e.yml; $input='%s'; [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($input)) >> c:/gmsa/gmsa-cred-spec-gmsa-e2e.yml", *secret.Value)
+	cmd := fmt.Sprintf("mkdir -force /gmsa; rm -force c:/gmsa/gmsa-cred-spec-gmsa-e2e.yml; $input='%s'; [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($input)) >> c:/gmsa/gmsa-cred-spec-gmsa-e2e.yml", value)
 	err = execOnHost(clusterHostName, hostname, "22", f, cmd)
 	Expect(err).NotTo(HaveOccurred())
 }
