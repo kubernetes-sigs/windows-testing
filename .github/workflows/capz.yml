@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.20"
+          go-version: "1.22"
           cache: false # workaround for golangci-lint caching issues https://github.com/golangci/golangci-lint-action/pull/704
       # run mod download prior to running linter to avoid timeouts while running linter
       - name: build go
@@ -54,7 +54,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: "1.20"
+        go-version: "1.22"
     - name: build-gmsa-configuration
       run: |
         pushd capz/gmsa/configuration
