@@ -477,8 +477,8 @@ set_azure_envs() {
     # Generate SSH key.
     capz::util::generate_ssh_key
 
-    export AZURE_LOCATION="${AZURE_LOCATION:-$(capz::util::get_random_region)}"
-
+    AZURE_LOCATION=$(get_random_region)
+    export AZURE_LOCATION
     if [[ "${CI:-}" == "true" ]]; then
         # we don't provide an ssh key in ci so it is created.  
         # the ssh code in the logger and gmsa configuration
@@ -494,6 +494,12 @@ set_azure_envs() {
 log() {
 	local msg=$1
 	echo "$(date -R): $msg"
+}
+
+# all test regions must support AvailabilityZones
+get_random_region() {
+    local REGIONS=("canadacentral" "eastus" "eastus2" "northeurope" "uksouth" "westus2" "westus3")
+    echo "${REGIONS[${RANDOM} % ${#REGIONS[@]}]}"
 }
 
 set_ci_version() {
