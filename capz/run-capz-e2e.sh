@@ -524,5 +524,6 @@ set_ci_version() {
     fi
 }
 
+
 trap run_capz_e2e_cleanup EXIT
 main
