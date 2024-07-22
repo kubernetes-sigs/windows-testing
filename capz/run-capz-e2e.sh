@@ -503,7 +503,7 @@ log() {
 
 # all test regions must support AvailabilityZones
 get_random_region() {
-    local REGIONS=("canadacentral" "eastus" "eastus2" "northeurope" "uksouth" "westus2" "westus3")
+    local REGIONS=("australiaeast" "canadacentral" "eastus" "eastus2" "northeurope" "uksouth" "westus2" "northcentralus")
     echo "${REGIONS[${RANDOM} % ${#REGIONS[@]}]}"
 }
 
