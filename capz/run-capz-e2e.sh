@@ -86,7 +86,7 @@ create_gmsa_domain(){
     export CI_RG="${CI_RG:-capz-ci}"
     export GMSA_ID="${RANDOM}"
     export GMSA_NODE_RG="gmsa-dc-${GMSA_ID}"
-    export GMSA_KEYVAULT_URL="https://${GMSA_KEYVAULT:-$CI_RG-gmsa}.vault.azure.net"
+    export GMSA_KEYVAULT_URL="https://${GMSA_KEYVAULT:-$CI_RG-gmsa-community}.vault.azure.net"
 
     log "setting up domain vm in $GMSA_NODE_RG with keyvault $CI_RG-gmsa"
     "${SCRIPT_ROOT}/gmsa/ci-gmsa.sh"

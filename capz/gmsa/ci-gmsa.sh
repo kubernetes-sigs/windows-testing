@@ -34,7 +34,7 @@ SCRIPT_ROOT=$(dirname "${BASH_SOURCE[0]}")
 CI_RG="${CI_RG:-capz-ci}"
 GMSA_NODE_RG="${GMSA_NODE_RG:-gmsa-dc}"
 AZURE_LOCATION="${AZURE_LOCATION:-westus2}"
-GMSA_KEYVAULT="${GMSA_KEYVAULT:-$CI_RG-gmsa}"
+GMSA_KEYVAULT="${GMSA_KEYVAULT:-$CI_RG-gmsa-community}"
 
 # The VM requires setup that needs Role Assignment permissions
 # This script checks that all that has been configured properly before creating the Azure VM

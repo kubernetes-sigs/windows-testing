@@ -8,9 +8,9 @@ A general overview of the required to run the gMSA:
 
 ## Subscrition Setup
 
-The Azure subscription requires a few pre-requisits to be able run the tests.  This is becuase the Managed Identities used with the gMSA plugin need Subscription Owner Permissions to create.
+The Azure subscription requires a few pre-requisites to be able run the tests.  This is because the Managed Identities used with the gMSA plugin need Subscription Owner Permissions to create.
 
-To accomidate this there is a script `setup-gmsa.sh` that does this configuration.  
+To accommodate this there is a script `setup-gmsa.sh` that does this configuration.  The script has been converted to terraform and can be found at https://github.com/kubernetes/k8s.io/tree/main/infra/azure/terraform/capz.
 
 ## Domain VM Creation
 
