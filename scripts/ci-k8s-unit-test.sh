@@ -29,31 +29,28 @@ function onError(){
 
 trap onError ERR 
 
-parse_cred() {
-    grep -E -o "\b$1[[:blank:]]*=[[:blank:]]*\"[^[:space:]\"]+\"" | cut -d '"' -f 2
-}
-
-ensure_azure_envs() {
-
-# for Prow we use the provided AZURE_CREDENTIALS file.
-# the file is expected to be in toml format.
-    if [[ -n "${AZURE_CREDENTIALS:-}" ]]; then
-        AZURE_SUBSCRIPTION_ID="$(parse_cred SubscriptionID < "${AZURE_CREDENTIALS}")"
-        AZURE_TENANT_ID="$(parse_cred TenantID < "${AZURE_CREDENTIALS}")"
-        AZURE_CLIENT_ID="$(parse_cred ClientID < "${AZURE_CREDENTIALS}")"
-        AZURE_CLIENT_SECRET="$(parse_cred ClientSecret < "${AZURE_CREDENTIALS}")"
-    fi
-} 
 
 ensure_azure_cli() {
     if [[ -z "$(command -v az)" ]]; then
-  	echo "installing Azure CLI"
-  	apt-get update && apt-get install -y ca-certificates curl apt-transport-https lsb-release gnupg
-  	curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
-  	AZ_REPO=$(lsb_release -cs)
-  	echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ ${AZ_REPO} main" | tee /etc/apt/sources.list.d/azure-cli.list
-  	apt-get update && apt-get install -y azure-cli
-  	az login --service-principal -u "${AZURE_CLIENT_ID}" -p "${AZURE_CLIENT_SECRET}" --tenant "${AZURE_TENANT_ID}" > /dev/null
+        echo "installing Azure CLI"
+        apt-get update && apt-get install -y ca-certificates curl apt-transport-https lsb-release gnupg
+        curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
+        AZ_REPO=$(lsb_release -cs)
+        echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ ${AZ_REPO} main" | tee /etc/apt/sources.list.d/azure-cli.list
+        apt-get update && apt-get install -y azure-cli
+  	
+        if [[ -n "${AZURE_FEDERATED_TOKEN_FILE:-}" ]]; then
+            echo "Logging in with federated token"
+            # AZURE_CLIENT_ID has been overloaded with Azure Workload ID in the preset-azure-cred-wi.
+            # This is done to avoid exporting Azure Workload ID as AZURE_CLIENT_ID in the test scenarios.
+            az login --service-principal -u "${AZURE_CLIENT_ID}" -t "${AZURE_TENANT_ID}" --federated-token "$(cat "${AZURE_FEDERATED_TOKEN_FILE}")" > /dev/null
+
+            # Use --auth-mode "login" in az storage commands to use RBAC permissions of login identity. This is a well known ENV variable the Azure cli
+            export AZURE_STORAGE_AUTH_MODE="login"
+        else
+            echo "AZURE_FEDERATED_TOKEN_FILE environment variable must be set to path location of token file"
+            exit 1
+        fi
     fi
 }
 
@@ -194,7 +191,6 @@ wait_for_vm_restart() {
     echo "Connection reestablished. VM restarted succesfully."
 }
 
-ensure_azure_envs
 ensure_azure_cli
 build_resource_group
 build_test_vm
