@@ -25,7 +25,7 @@ main() {
     export WINDOWS_WORKER_MACHINE_COUNT="${WINDOWS_WORKER_MACHINE_COUNT:-"2"}"
     export WINDOWS_SERVER_VERSION="${WINDOWS_SERVER_VERSION:-"windows-2019"}"
     export WINDOWS_CONTAINERD_URL="${WINDOWS_CONTAINERD_URL:-"https://github.com/containerd/containerd/releases/download/v1.7.16/containerd-1.7.16-windows-amd64.tar.gz"}"
-    export GMSA="${GMSA:-""}" 
+    export GMSA="${GMSA:-""}"
     export HYPERV="${HYPERV:-""}"
     export KPNG="${WINDOWS_KPNG:-""}"
     export CALICO_VERSION="${CALICO_VERSION:-"v3.26.1"}"
@@ -38,19 +38,27 @@ main() {
     export ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
     export CLUSTER_NAME="${CLUSTER_NAME:-capz-conf-$(head /dev/urandom | LC_ALL=C tr -dc a-z0-9 | head -c 6 ; echo '')}"
     export IMAGE_SKU="${IMAGE_SKU:-"${WINDOWS_SERVER_VERSION:=windows-2019}-containerd-gen1"}"
-    
+
     # CI is an environment variable set by a prow job: https://github.com/kubernetes/test-infra/blob/master/prow/jobs.md#job-environment-variables
     export CI="${CI:-""}"
 
     set_azure_envs
+    echo "az account login status in main after calling CAPZ"
+    az account show || true
 
     set_ci_version
+    echo "az account login status after calling set_ci_version"
+    az account show || true
     IS_PRESUBMIT="$(capz::util::should_build_kubernetes)"
     echo "IS_PRESUBMIT=$IS_PRESUBMIT"
+    echo "az account login status after calling capz::util::should_build_kubernetes again"
+    az account show || true
     if [[ "${IS_PRESUBMIT}" == "true" ]]; then
         "${CAPZ_DIR}/scripts/ci-build-kubernetes.sh";
         trap run_capz_e2e_cleanup EXIT # reset the EXIT trap since ci-build-kubernetes.sh also sets it.
     fi
+    echo "az account login status after calling ci-build-kubernetes.sh"
+    az account show || true
     if [[ "${GMSA}" == "true" ]]; then create_gmsa_domain; fi
 
     install_tools
@@ -115,8 +123,8 @@ run_capz_e2e_cleanup() {
         log "collecting logs"
         pushd "${CAPZ_DIR}"
 
-        # there is an issue in ci with the go client conflicting with the kubectl client failing to get logs for 
-        # control plane node.  This is a mitigation being tried 
+        # there is an issue in ci with the go client conflicting with the kubectl client failing to get logs for
+        # control plane node.  This is a mitigation being tried
         rm -rf "$HOME/.kube/cache/"
         # don't stop on errors here, so we always cleanup
         go run -tags e2e "${CAPZ_DIR}/test/logger.go" --name "${CLUSTER_NAME}" --namespace default --artifacts-folder "${ARTIFACTS}" || true
@@ -151,7 +159,7 @@ create_cluster(){
         # create cluster
         log "starting to create cluster"
 
-       
+
         # select correct template
         template="$SCRIPT_ROOT"/templates/"$TEMPLATE"
         if [[ "${IS_PRESUBMIT}" == "true" ]]; then
@@ -165,7 +173,7 @@ create_cluster(){
             fi
         fi
         echo "Using $template"
-        
+
         log "create resource group and management cluster"
         if [[ "$(az group exists --name "${CLUSTER_NAME}" --output tsv)" == "false" ]]; then
             az group create --name "${CLUSTER_NAME}" --location "$AZURE_LOCATION" --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
@@ -178,7 +186,7 @@ create_cluster(){
                 --kubernetes-version 1.28.5 \
                 --network-plugin azure \
                 --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')")
-            
+
             if [[ $output == *"AKSCapacityError"* ]]; then
                 log "AKS Capacity Error, retrying"
                 az group delete --name "${CLUSTER_NAME}" --no-wait -y || true
@@ -223,7 +231,7 @@ create_cluster(){
         timeout --foreground 300 bash -c "until kubectl get clusters -A > /dev/null 2>&1; do sleep 3; done"
         timeout --foreground 300 bash -c "until kubectl get azureclusters -A > /dev/null 2>&1; do sleep 3; done"
         timeout --foreground 300 bash -c "until kubectl get kubeadmcontrolplanes -A > /dev/null 2>&1; do sleep 3; done"
-        
+
 
         log "Provisiion workload cluster"
         "$TOOLS_BIN_DIR"/clusterctl generate cluster "${CLUSTER_NAME}" --kubernetes-version "$KUBERNETES_VERSION" --from "$template" > "$SCRIPT_ROOT"/"${CLUSTER_NAME}-template.yaml"
@@ -256,7 +264,7 @@ create_cluster(){
 apply_workload_configuraiton(){
     log "wait for cluster to stabilize"
     timeout --foreground 300 bash -c "until kubectl get --raw /version --request-timeout 5s > /dev/null 2>&1; do sleep 3; done"
-    
+
     log "installing calico"
     "$TOOLS_BIN_DIR"/helm repo add projectcalico https://docs.tigera.io/calico/charts
     kubectl create ns calico-system
@@ -383,7 +391,7 @@ run_e2e_test() {
             # private image repository doesn't have a way to promote images: https://github.com/kubernetes/k8s.io/pull/1929
             # So we are using a custom repository for the test "Container Runtime blackbox test when running a container with a new image should be able to pull from private registry with secret [NodeConformance]"
             # Must also set label preset-windows-private-registry-cred: "true" on the job
-            
+
             # This will not work in community cluster as this secret is not present (hence we only do it if ENV is set)
             # On the community cluster we will use credential providers to a private registry in azure see:
             # https://github.com/kubernetes-sigs/windows-testing/issues/446
@@ -433,7 +441,7 @@ wait_for_nodes() {
     log "Waiting for ${CONTROL_PLANE_MACHINE_COUNT} control plane machine(s) and ${WINDOWS_WORKER_MACHINE_COUNT} windows machine(s) to become Ready"
     kubectl get nodes -o wide
     kubectl get pods -A -o wide
-    
+
     # Ensure that all nodes are registered with the API server before checking for readiness
     local total_nodes="$((CONTROL_PLANE_MACHINE_COUNT + WINDOWS_WORKER_MACHINE_COUNT))"
     while [[ $(kubectl get nodes -ojson | jq '.items | length') -ne "${total_nodes}" ]]; do
@@ -450,7 +458,7 @@ wait_for_nodes() {
 
     if [[ "${GMSA}" == "true" ]]; then
         log "Configuring workload cluster nodes for gmsa tests"
-        # require kubeconfig to be pointed at management cluster 
+        # require kubeconfig to be pointed at management cluster
         unset KUBECONFIG
         pushd  "$SCRIPT_ROOT"/gmsa/configuration
         go run --tags e2e configure.go --name "${CLUSTER_NAME}" --namespace default
@@ -470,10 +478,14 @@ set_azure_envs() {
     fi
     # shellcheck disable=SC1091
     source "${CAPZ_DIR}/hack/util.sh"
+    echo "az account login status prior to calling CAPZ"
+    az account show || true
     # shellcheck disable=SC1091
     source "${CAPZ_DIR}/hack/ensure-azcli.sh"
+    echo "az account login status after calling CAPZ"
+    az account show || true
 
-    
+
 
     # Verify the required Environment Variables are present.
     : "${AZURE_SUBSCRIPTION_ID:?Environment variable empty or not defined.}"
@@ -485,9 +497,9 @@ set_azure_envs() {
     AZURE_LOCATION=$(get_random_region)
     export AZURE_LOCATION
     if [[ "${CI:-}" == "true" ]]; then
-        # we don't provide an ssh key in ci so it is created.  
+        # we don't provide an ssh key in ci so it is created.
         # the ssh code in the logger and gmsa configuration
-        # can't find it via relative paths so 
+        # can't find it via relative paths so
         # give it the absolute path
         export AZURE_SSH_PUBLIC_KEY_FILE="${PWD}"/.sshkey.pub
         export AZURE_SSH_KEY="${PWD}"/.sshkey
