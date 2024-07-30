@@ -301,10 +301,16 @@ apply_cloud_provider_azure() {
     echo "KUBERNETES_VERSION = ${KUBERNETES_VERSION}"
 
     echo "Building cloud provider images"
+    echo "az account login status before calling ensure-acr-login"
+    az account show || true
     # shellcheck disable=SC1091
     "${CAPZ_DIR}/hack/ensure-acr-login.sh"
+    echo "az account login status after calling ensure-acr-login"
+    az account show || true
     # shellcheck disable=SC1091
     source "${CAPZ_DIR}/scripts/ci-build-azure-ccm.sh" || false
+    echo "az account login status after calling ci-build-azure-ccm"
+    az account show || true
     trap run_capz_e2e_cleanup EXIT # reset the EXIT trap since ci-build-azure-ccm.sh also sets it.
     echo "Will use the ${IMAGE_REGISTRY}/${CCM_IMAGE_NAME}:${IMAGE_TAG_CCM} cloud-controller-manager image for external cloud-provider-cluster"
     echo "Will use the ${IMAGE_REGISTRY}/${CNM_IMAGE_NAME}:${IMAGE_TAG_CNM} cloud-node-manager image for external cloud-provider-azure cluster"
