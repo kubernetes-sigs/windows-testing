@@ -88,7 +88,7 @@ create_gmsa_domain(){
     export GMSA_NODE_RG="gmsa-dc-${GMSA_ID}"
     export GMSA_KEYVAULT_URL="https://${GMSA_KEYVAULT:-$CI_RG-gmsa-community}.vault.azure.net"
 
-    log "setting up domain vm in $GMSA_NODE_RG with keyvault $CI_RG-gmsa"
+    log "setting up domain vm in $GMSA_NODE_RG with keyvault $CI_RG-gmsa-community"
     "${SCRIPT_ROOT}/gmsa/ci-gmsa.sh"
 
     # export the ip Address so it can be used in e2e test
@@ -134,8 +134,8 @@ run_capz_e2e_cleanup() {
         # clean up GMSA NODE RG
         if [[ -n ${GMSA:-} ]]; then
             echo "Cleaning up gMSA resources $GMSA_NODE_RG with keyvault $GMSA_KEYVAULT_URL"
-            az keyvault secret list --vault-name "${GMSA_KEYVAULT:-$CI_RG-gmsa}" --query "[? contains(name, '${GMSA_ID}')].name" -o tsv | while read -r secret ; do
-                az keyvault secret delete -n "$secret" --vault-name "${GMSA_KEYVAULT:-$CI_RG-gmsa}"
+            az keyvault secret list --vault-name "${GMSA_KEYVAULT:-$CI_RG-gmsa-community}" --query "[? contains(name, '${GMSA_ID}')].name" -o tsv | while read -r secret ; do
+                az keyvault secret delete -n "$secret" --vault-name "${GMSA_KEYVAULT:-$CI_RG-gmsa-community}"
             done
 
             az group delete --name "$GMSA_NODE_RG" --no-wait -y --force-deletion-types=Microsoft.Compute/virtualMachines --force-deletion-types=Microsoft.Compute/virtualMachineScaleSets || true
