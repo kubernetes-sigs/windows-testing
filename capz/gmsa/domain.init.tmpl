@@ -16,7 +16,7 @@ write_files:
             exit
         }
 
-        $keyvaultName="${GMSA_KEYVAULT:-${CI_RG}-gmsa}"
+        $keyvaultName="${GMSA_KEYVAULT:-${CI_RG}-gmsa-community}"
         $gmsaAdminName="gmsa-admin-${GMSA_ID}"
         $gmsaUserName="gmsa-e2e-user-${GMSA_ID}"
         $resourcegroup="${CI_RG}"
