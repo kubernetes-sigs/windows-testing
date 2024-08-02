@@ -370,7 +370,7 @@ run_e2e_test() {
 
         if [[ ! "${RUN_SERIAL_TESTS:-}" == "true" ]]; then
             export GINKGO_FOCUS=${GINKGO_FOCUS:-"\[Conformance\]|\[NodeConformance\]|\[sig-windows\]|\[sig-apps\].CronJob|\[sig-api-machinery\].ResourceQuota|\[sig-scheduling\].SchedulerPreemption"}
-            export GINKGO_SKIP=${GINKGO_SKIP:-"\[LinuxOnly\]|\[Serial\]|\[Slow\]|\[Excluded:WindowsDocker\]|\[Feature:DynamicResourceAllocation\]|Networking.Granular.Checks(.*)node-pod.communication|Guestbook.application.should.create.and.stop.a.working.application|device.plugin.for.Windows|Container.Lifecycle.Hook.when.create.a.pod.with.lifecycle.hook.should.execute(.*)http.hook.properly|\[sig-api-machinery\].Garbage.collector"}
+            export GINKGO_SKIP=${GINKGO_SKIP:-"\[LinuxOnly\]|\[Serial\]|\[Slow\]|\[Excluded:WindowsDocker\]|\[Feature:DynamicResourceAllocation\]|Networking.Granular.Checks(.*)node-pod.communication|Guestbook.application.should.create.and.stop.a.working.application|device.plugin.for.Windows|Container.Lifecycle.Hook.when.create.a.pod.with.lifecycle.hook.should.execute(.*)http.hook.properly|\[sig-api-machinery\].Garbage.collector|pull.from.private.registry.with.secret"}
             export GINKGO_NODES="${GINKGO_NODES:-"4"}"
         else
             export GINKGO_FOCUS=${GINKGO_FOCUS:-"(\[sig-windows\]|\[sig-scheduling\].SchedulerPreemption|\[sig-autoscaling\].\[Feature:HPA\]|\[sig-apps\].CronJob).*(\[Serial\]|\[Slow\])|(\[Serial\]|\[Slow\]).*(\[Conformance\]|\[NodeConformance\])|\[sig-api-machinery\].Garbage.collector"}
@@ -379,7 +379,7 @@ run_e2e_test() {
         fi
 
         ADDITIONAL_E2E_ARGS=()
-        if [[ "$CI" == "true" ]]; then
+        if [[ "$CI" == "true" && -n "${DOCKER_CONFIG_FILE:-""}" ]]; then
             # private image repository doesn't have a way to promote images: https://github.com/kubernetes/k8s.io/pull/1929
             # So we are using a custom repository for the test "Container Runtime blackbox test when running a container with a new image should be able to pull from private registry with secret [NodeConformance]"
             # Must also set label preset-windows-private-registry-cred: "true" on the job
@@ -387,7 +387,8 @@ run_e2e_test() {
             # This will not work in community cluster as this secret is not present (hence we only do it if ENV is set)
             # On the community cluster we will use credential providers to a private registry in azure see:
             # https://github.com/kubernetes-sigs/windows-testing/issues/446
-            export KUBE_TEST_REPO_LIST="$SCRIPT_ROOT/../images/image-repo-list-private-registry-community"
+            export KUBE_TEST_REPO_LIST="$SCRIPT_ROOT/../images/image-repo-list-private-registry"
+            ADDITIONAL_E2E_ARGS+=("--docker-config-file=${DOCKER_CONFIG_FILE}")
         fi
 
         # K8s 1.24 and below use ginkgo v1 which has slighly different args
