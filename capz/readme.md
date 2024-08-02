@@ -29,7 +29,7 @@ The templates uses [managed identities](https://learn.microsoft.com/en-us/entra/
 Create the required `cloud-provider-identity` with
 
 ```bash
-az group create --name capz-ci -l westus2
+az rg create --name capz-ci -l westus2
 az identity create -n "cloud-provider-user-identity" -g "capz-ci" -l westus2
 # get the <objectid> from the output and replace below
 # replace <subid> with your subscription id
