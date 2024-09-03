@@ -65,7 +65,7 @@ export AZURE_SSH_PUBLIC_KEY_FILE="$HOME/.ssh/id_rsa.pub"
 | `API_SERVER_FEATURE_GATES` | Comma-separated list of feature-gates and their values to pass to the kube-apiserver (Defaults to "") |
 | `AZURE_LOCATION` | The azure region to deploy resources into. If not specified a random region will be selected) |
 | `KUBERNETES_VERSION`  | Valid values are `latest` (default) and  `latest-1.xx` where x is valid kubernetes minor version such as `latest-1.24` |
-| `NODE_FEATURE_GATES` | Comma-seperated list of feature-gates and their values to pass to the kubelet (Defaults to "HPAContainerMetrics=true") |
+| `NODE_FEATURE_GATES` | Comma-seperated list of feature-gates and their values to pass to the kubelet (Defaults to "") |
 | `NODE_MACHINE_TYPE` | The [Azure vm size](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes) to use for the nodes  |
 | `RUN_SERIAL_TESTS` | If set to `true` then serial slow tests will be run with default ginkgo settings |
 | `SKIP_CREATE` | Don't create a cluster.  Must set `CLUSTER_NAME` and have current a workload cluster kubeconfig file with name `./"${CLUSTER_NAME}".kubeconfig` |
