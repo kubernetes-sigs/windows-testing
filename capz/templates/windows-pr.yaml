@@ -89,6 +89,9 @@ spec:
           Stop-Service kubelet -Force
 
           $$KUBE_GIT_VERSION="${KUBE_GIT_VERSION}"
+
+          az login --identity --username 68a949eb-070b-4845-98c1-4cc34c28dc25
+
           if($$KUBE_GIT_VERSION -ne "")
           {
             $$binaries=@("kubeadm", "kubectl", "kubelet", "kube-proxy")
@@ -105,8 +108,8 @@ spec:
           ctr.exe -n k8s.io images pull docker.io/sigwindowstools/kube-proxy:v1.23.1-calico-hostprocess
           ctr.exe -n k8s.io images tag docker.io/sigwindowstools/kube-proxy:v1.23.1-calico-hostprocess "docker.io/sigwindowstools/kube-proxy:${CI_VERSION/+/_}-calico-hostprocess"
 
-          kubeadm.exe version -o=short
-          kubectl.exe version --client=true --short=true
+          kubeadm.exe version
+          kubectl.exe version --client=true
           kubelet.exe --version
           kube-proxy.exe --version
         path: C:/replace-pr-binaries.ps1
@@ -426,4 +429,6 @@ spec:
           storageAccountType: Premium_LRS
         osType: Windows
       sshPublicKey: ${AZURE_SSH_PUBLIC_KEY_B64:=""}
+      userAssignedIdentities:
+      - providerID: /subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${CI_RG:=capz-ci}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${USER_IDENTITY:=domain-vm-identity}
       vmSize: ${AZURE_NODE_MACHINE_TYPE:-"Standard_D4s_v3"}
