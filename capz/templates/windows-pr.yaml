@@ -96,7 +96,7 @@ spec:
             foreach ( $$binary in $$binaries )
             {
               echo "downloading binary: $$ci_url/$$binary.exe"
-              curl.exe --retry 10 --retry-delay 5 "$$ci_url/$$binary.exe" --output "c:/k/$$binary.exe"
+              az storage blob download --blob-url "https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/${AZURE_BLOB_CONTAINER_NAME}/${KUBE_GIT_VERSION}/bin/linux/amd64/$${BINARY}" -f "c:/k/$$binary.exe" --auth-mode login
             }
           }
 
@@ -262,7 +262,7 @@ spec:
         declare -a BINARIES=("kubeadm" "kubectl" "kubelet")
         for BINARY in "$${BINARIES[@]}"; do
           echo "* installing package: $${BINARY} ${KUBE_GIT_VERSION}"
-          curl --retry 10 --retry-delay 5 "https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/${AZURE_BLOB_CONTAINER_NAME}/${KUBE_GIT_VERSION}/bin/linux/amd64/$${BINARY}" --output "/usr/bin/$${BINARY}"
+          az storage blob download --blob-url "https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/${AZURE_BLOB_CONTAINER_NAME}/${KUBE_GIT_VERSION}/bin/linux/amd64/$${BINARY}" -f "/usr/bin/$${BINARY}" --auth-mode login
         done
         systemctl restart kubelet
 
@@ -270,10 +270,8 @@ spec:
         # registry.k8s.io so kubeadm can fetch correct images no matter what
         declare -a IMAGES=("kube-apiserver" "kube-controller-manager" "kube-proxy" "kube-scheduler")
         [[ $(id -u) != 0 ]] && SUDO="sudo" || SUDO=""
-        IMAGE_REGISTRY_PREFIX=registry.k8s.io
         for IMAGE in "$${IMAGES[@]}"; do
-          $${SUDO} ctr -n k8s.io images tag $$IMAGE_REGISTRY_PREFIX/$$IMAGE-amd64:"${CI_VERSION//+/_}" $$IMAGE_REGISTRY_PREFIX/$$IMAGE:"${CI_VERSION//+/_}"
-          $${SUDO} ctr -n k8s.io images tag $$IMAGE_REGISTRY_PREFIX/$$IMAGE-amd64:"${CI_VERSION//+/_}" gcr.io/k8s-staging-ci-images/$$IMAGE:"${CI_VERSION//+/_}"
+          $${SUDO} ctr -n k8s.io images pull ${REGISTRY}/$$IMAGE-amd64:"${CI_VERSION//+/_}"
         done
 
         echo "kubeadm version: $(kubeadm version -o=short)"
