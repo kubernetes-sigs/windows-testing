@@ -271,7 +271,7 @@ spec:
         declare -a IMAGES=("kube-apiserver" "kube-controller-manager" "kube-proxy" "kube-scheduler")
         [[ $(id -u) != 0 ]] && SUDO="sudo" || SUDO=""
         for IMAGE in "$${IMAGES[@]}"; do
-          $${SUDO} ctr -n k8s.io images pull ${REGISTRY}/$$IMAGEs:"${KUBE_IMAGE_TAG}"
+          $${SUDO} ctr -n k8s.io images pull ${REGISTRY}/$$IMAGE:"${KUBE_IMAGE_TAG}"
         done
 
         echo "kubeadm version: $(kubeadm version -o=short)"
