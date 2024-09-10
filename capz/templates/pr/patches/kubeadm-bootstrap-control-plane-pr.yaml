@@ -22,7 +22,7 @@
         [[ $(id -u) != 0 ]] && SUDO="sudo" || SUDO=""
         IMAGE_REGISTRY_PREFIX=registry.k8s.io
         for IMAGE in "$${IMAGES[@]}"; do
-          $${SUDO} ctr -n k8s.io images pull ${REGISTRY}/$$IMAGE-amd64:"${CI_VERSION//+/_}"
+          $${SUDO} ctr -n k8s.io images pull ${REGISTRY}/$$IMAGE-amd64:"${KUBE_IMAGE_TAG}"
         done
 
         echo "kubeadm version: $(kubeadm version -o=short)"
