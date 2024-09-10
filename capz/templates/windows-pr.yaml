@@ -258,6 +258,8 @@ spec:
         set -o pipefail
         set -o errexit
 
+        az login --identity --username 71748cfb-9720-4b5a-8181-f3deeb671877
+
         systemctl stop kubelet
         declare -a BINARIES=("kubeadm" "kubectl" "kubelet")
         for BINARY in "$${BINARIES[@]}"; do
