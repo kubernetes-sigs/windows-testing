@@ -88,6 +88,8 @@ spec:
 
           Stop-Service kubelet -Force
 
+          Invoke-Expression "az login --identity --username 68a949eb-070b-4845-98c1-4cc34c28dc25"
+
           $$CI_VERSION="${CI_VERSION}"
           if($$CI_VERSION -ne "")
           {
@@ -96,7 +98,7 @@ spec:
             foreach ( $$binary in $$binaries )
             {
               echo "downloading binary: $$ci_url/$$binary.exe"
-              curl.exe --retry 10 --retry-delay 5 "$$ci_url/$$binary.exe" --output "c:/k/$$binary.exe"
+              az storage blob download --blob-url "https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/${AZURE_BLOB_CONTAINER_NAME}/${KUBE_GIT_VERSION}/bin/linux/amd64/$$binary" -f "c:/k/$$binary.exe" --auth-mode login
             }
           }
 
@@ -438,4 +440,6 @@ spec:
           storageAccountType: Premium_LRS
         osType: Windows
       sshPublicKey: ${AZURE_SSH_PUBLIC_KEY_B64:=""}
+      userAssignedIdentities:
+      - providerID: /subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${CI_RG:=capz-ci}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/domain-vm-identity
       vmSize: ${AZURE_NODE_MACHINE_TYPE:-"Standard_D4s_v3"}
