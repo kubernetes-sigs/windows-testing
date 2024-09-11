@@ -98,7 +98,7 @@ spec:
             foreach ( $$binary in $$binaries )
             {
               echo "downloading binary: $$ci_url/$$binary.exe"
-              az storage blob download --blob-url "https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/${AZURE_BLOB_CONTAINER_NAME}/${KUBE_GIT_VERSION}/bin/linux/amd64/$$binary" -f "c:/k/$$binary.exe" --auth-mode login
+              az storage blob download --blob-url "https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/${AZURE_BLOB_CONTAINER_NAME}/${KUBE_GIT_VERSION}/bin/windows/amd64/$$binary.exe" -f "c:/k/$$binary.exe" --auth-mode login
             }
           }
 
