@@ -90,7 +90,7 @@ spec:
 
           $$KUBE_GIT_VERSION="${KUBE_GIT_VERSION}"
 
-          Invoke-Expression "az login --identity --username 68a949eb-070b-4845-98c1-4cc34c28dc25"
+          Invoke-Expression "az login --identity --username 71748cfb-9720-4b5a-8181-f3deeb671877"
 
           if($$KUBE_GIT_VERSION -ne "")
           {
@@ -429,5 +429,5 @@ spec:
         osType: Windows
       sshPublicKey: ${AZURE_SSH_PUBLIC_KEY_B64:=""}
       userAssignedIdentities:
-      - providerID: /subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${CI_RG:=capz-ci}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/domain-vm-identity
+      - providerID: /subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${CI_RG:=capz-ci}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${USER_IDENTITY:=cloud-provider-user-identity}
       vmSize: ${AZURE_NODE_MACHINE_TYPE:-"Standard_D4s_v3"}
