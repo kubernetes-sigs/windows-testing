@@ -364,7 +364,7 @@ run_e2e_test() {
             mkdir -p "$PWD/kubernetes/test/bin"
             export e2e_url="https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/kubernetes-ci/${KUBE_GIT_VERSION}/bin/linux/amd64/e2e.test"
             log "Downloading e2e.test from $e2e_url"
-            curl -L -o "$PWD"/kubernetes/test/bin/e2e.test "$e2e_url"
+            az storage blob download --blob-url $e2e_url -f "$PWD"/kubernetes/test/bin/e2e.test --auth-mode login
             chmod +x "$PWD/kubernetes/test/bin/e2e.test"
         fi
 
