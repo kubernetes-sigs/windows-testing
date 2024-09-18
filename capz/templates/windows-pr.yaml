@@ -90,7 +90,7 @@ spec:
 
           $$KUBE_GIT_VERSION="${KUBE_GIT_VERSION}"
 
-          Invoke-Expression "az login --identity --username 71748cfb-9720-4b5a-8181-f3deeb671877"
+          Invoke-Expression "az login --identity"
 
           if($$KUBE_GIT_VERSION -ne "")
           {
@@ -260,7 +260,7 @@ spec:
         set -o pipefail
         set -o errexit
 
-        az login --identity --username 71748cfb-9720-4b5a-8181-f3deeb671877
+        az login --identity
 
         systemctl stop kubelet
         declare -a BINARIES=("kubeadm" "kubectl" "kubelet")

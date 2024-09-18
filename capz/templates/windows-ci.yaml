@@ -88,7 +88,7 @@ spec:
 
           Stop-Service kubelet -Force
 
-          Invoke-Expression "az login --identity --username 68a949eb-070b-4845-98c1-4cc34c28dc25"
+          Invoke-Expression "az login --identity"
 
           $$CI_VERSION="${CI_VERSION}"
           if($$CI_VERSION -ne "")
