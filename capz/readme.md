@@ -6,6 +6,8 @@ These scripts and templates are used with [cluster-api-provider-azure](https://g
 
 To run these scripts some setup is required.
 
+Note: CAPZ is only supported in Linux systems as Kubernetes was built to be compatible with Linux. To proceed with the steps listed, you must use either WSL or a Linux VM to execute the commands and run the CAPZ script.
+
 First clone and configure the following repositories
 
 ### CAPZ repo setup
