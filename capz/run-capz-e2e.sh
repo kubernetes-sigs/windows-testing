@@ -34,6 +34,9 @@ main() {
     export HELM_VERSION=v3.15.2
     export TOOLS_BIN_DIR="${TOOLS_BIN_DIR:-$SCRIPT_ROOT/tools/bin}"
 
+    #temp for testing
+    export IMAGE_VERSION="latest"
+
     # other config
     export ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
     export CLUSTER_NAME="${CLUSTER_NAME:-capz-conf-$(head /dev/urandom | LC_ALL=C tr -dc a-z0-9 | head -c 6 ; echo '')}"

@@ -71,6 +71,13 @@ spec:
         path: C:/NodeLogQueryKubeletConfig.ps1
         permissions: "0744"
       - content: |
+          $ErrorActionPreference = "Stop"
+          # this will fix https://github.com/microsoft/Windows-Containers/issues/516
+          # since 2019 doesn't read this value, it will be ignored
+          Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\hns\State" -Name "FwPerfImprovementChange" -Type DWord -Value 0
+        path: C:/apply-ws2022-networking-fixes.ps1
+        permissions: "0744"
+      - content: |
           mkdir -Force c:/localdumps
           reg.exe add "HKLM\Software\Microsoft\Windows\Windows Error Reporting\LocalDumps" /V DumpCount /t REG_DWORD /d 50 /f
           reg.exe add "HKLM\Software\Microsoft\Windows\Windows Error Reporting\LocalDumps" /V DumpType /t REG_DWORD /d 2 /f
@@ -133,6 +140,7 @@ spec:
       - powershell C:/create-temp-folder.ps1
       - powershell C:/replace-containerd.ps1
       - powershell C:/collect-hns-crashes.ps1
+      - powershell C:/apply-ws2022-networking-fixes.ps1
       - powershell C:/replace-ci-binaries.ps1
       users:
       - groups: Administrators
