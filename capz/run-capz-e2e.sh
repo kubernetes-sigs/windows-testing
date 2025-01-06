@@ -33,6 +33,11 @@ main() {
     export CAPI_VERSION="${CAPI_VERSION:-"v1.7.2"}"
     export HELM_VERSION=v3.15.2
     export TOOLS_BIN_DIR="${TOOLS_BIN_DIR:-$SCRIPT_ROOT/tools/bin}"
+    
+    # TODO After community gallery changes merge 
+    # remove the pinned version in https://github.com/kubernetes/test-infra/blob/5c4c374569f9fb8148bf8bf09144c242202d33fc/config/jobs/kubernetes-sigs/sig-windows/release-master-windows.yaml#L29-L30
+    # Then remove this reference
+    export IMAGE_VERSION="latest"
 
     # other config
     export ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
