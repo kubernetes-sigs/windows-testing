@@ -407,8 +407,8 @@ spec:
       identity: UserAssigned
       image:
         computeGallery:
-          gallery: capi-ubun2-2404
-          name: ClusterAPI-f72ceb4f-5159-4c26-a0fe-2ea738f0d019
+          gallery: ClusterAPI-f72ceb4f-5159-4c26-a0fe-2ea738f0d019
+          name: capi-ubun2-2404
           version: ${IMAGE_VERSION:=latest}
       osDisk:
         diskSizeGB: 128

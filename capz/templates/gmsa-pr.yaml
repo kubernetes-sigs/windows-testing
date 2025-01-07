@@ -392,8 +392,8 @@ spec:
       identity: UserAssigned
       image:
         computeGallery:
-          gallery: capi-ubun2-2404
-          name: ClusterAPI-f72ceb4f-5159-4c26-a0fe-2ea738f0d019
+          gallery: ClusterAPI-f72ceb4f-5159-4c26-a0fe-2ea738f0d019
+          name: capi-ubun2-2404
           version: ${IMAGE_VERSION:=latest}
       osDisk:
         diskSizeGB: 128
@@ -419,9 +419,9 @@ spec:
       identity: UserAssigned
       image:
         computeGallery:
-          gallery: ${IMAGE_GALLERY:=capi-win-2022-containerd}
-          name: ClusterAPI-f72ceb4f-5159-4c26-a0fe-2ea738f0d019
-          version: ${IMAGE_VERSION:=1.32.0}
+          gallery: ClusterAPI-f72ceb4f-5159-4c26-a0fe-2ea738f0d019
+          name: ${GALLERY_IMAGE_NAME:=capi-win-2022-containerd}
+          version: ${IMAGE_VERSION:=latest}
       osDisk:
         diskSizeGB: 128
         managedDisk:
