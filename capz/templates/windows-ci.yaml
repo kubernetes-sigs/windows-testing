@@ -400,11 +400,10 @@ spec:
         nameSuffix: etcddisk
       identity: UserAssigned
       image:
-        marketplace:
-          offer: capi
-          publisher: cncf-upstream
-          sku: ubuntu-2204-gen1
-          version: latest
+        computeGallery:
+          gallery: ClusterAPI-f72ceb4f-5159-4c26-a0fe-2ea738f0d019
+          name: capi-ubun2-2404
+          version: ${IMAGE_VERSION:=latest}
       osDisk:
         diskSizeGB: 128
         osType: Linux
@@ -427,11 +426,10 @@ spec:
         runtime: containerd
     spec:
       image:
-        marketplace:
-          offer: capi-windows
-          publisher: cncf-upstream
-          sku: ${IMAGE_SKU:=windows-2019-containerd-gen1}
-          version: ${IMAGE_VERSION:="latest"}
+        computeGallery:
+          gallery: ClusterAPI-f72ceb4f-5159-4c26-a0fe-2ea738f0d019
+          name: ${GALLERY_IMAGE_NAME:=capi-win-2022-containerd}
+          version: ${IMAGE_VERSION:=latest}
       osDisk:
         diskSizeGB: 128
         managedDisk:

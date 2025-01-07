@@ -4,7 +4,7 @@ namespace: default
 resources:
   - ../windows-base.yaml
 patches:
-- path: ../ci/patches/market-place.yaml
+- path: ../ci/patches/compute-gallery.yaml
 - path: ./patches/kubeadm-control-plane-pr.yaml
 - target:
     group: controlplane.cluster.x-k8s.io
