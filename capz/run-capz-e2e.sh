@@ -37,7 +37,7 @@ main() {
     # TODO After community gallery changes merge 
     # remove the pinned version in https://github.com/kubernetes/test-infra/blob/5c4c374569f9fb8148bf8bf09144c242202d33fc/config/jobs/kubernetes-sigs/sig-windows/release-master-windows.yaml#L29-L30
     # Then remove this reference
-    export IMAGE_VERSION="latest"
+    export IMAGE_VERSION="1.32.0"
 
     # other config
     export ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
