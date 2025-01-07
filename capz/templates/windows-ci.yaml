@@ -429,7 +429,7 @@ spec:
         computeGallery:
           gallery: ${IMAGE_GALLERY:=capi-win-2022-containerd}
           name: ClusterAPI-f72ceb4f-5159-4c26-a0fe-2ea738f0d019
-          version: ${IMAGE_VERSION:=latest}
+          version: ${IMAGE_VERSION:=1.32.0}
       osDisk:
         diskSizeGB: 128
         managedDisk:
