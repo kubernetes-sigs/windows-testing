@@ -84,6 +84,11 @@ spec:
         path: C:/collect-hns-crashes.ps1
         permissions: "0744"
       - content: |
+          ${AZURE_SSH_PUBLIC_KEY:=""}
+        owner: root:root
+        path: C:/ProgramData/ssh/administrators_authorized_keys
+        permissions: "0640"
+      - content: |
           $ErrorActionPreference = 'Stop'
 
           Stop-Service kubelet -Force
