@@ -19,6 +19,13 @@ patches:
     name: .*-md-win
     namespace: default
   path: patches/kubeadm-bootstrap-windows-ci.yaml
+- target:
+    group: bootstrap.cluster.x-k8s.io
+    version: v1beta1
+    kind: KubeadmConfigTemplate
+    name: .*-md-win
+    namespace: default
+  path: ../sig/patches/kubeadm-bootstrap-ssh.yaml # testing to see if this resolved the ws2025 missing ssh
 generatorOptions:
   disableNameSuffixHash: true
   labels:
