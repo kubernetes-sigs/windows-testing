@@ -74,7 +74,7 @@ install_tools(){
     fi
 
     if [[ -z "$(command -v "$TOOLS_BIN_DIR"/clusterctl)" ]]; then
-        log "install clusterctl"
+        log "install clusterctl $CAPI_VERSION"
         curl --retry "$CURL_RETRIES" -L https://github.com/kubernetes-sigs/cluster-api/releases/download/"$CAPI_VERSION"/clusterctl-linux-amd64 -o "$TOOLS_BIN_DIR"/clusterctl
         chmod +x "$TOOLS_BIN_DIR"/clusterctl
     fi
