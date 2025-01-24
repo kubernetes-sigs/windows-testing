@@ -20,7 +20,9 @@ fi
 
 main() {
     # defaults
+    echo "1 KUBERNETES_VERSION=$KUBERNETES_VERSION"
     export KUBERNETES_VERSION="${KUBERNETES_VERSION:-"latest"}"
+    echo "2 KUBERNETES_VERSION=$KUBERNETES_VERSION"
     export CONTROL_PLANE_MACHINE_COUNT="${AZURE_CONTROL_PLANE_MACHINE_COUNT:-"1"}"
     export WINDOWS_WORKER_MACHINE_COUNT="${WINDOWS_WORKER_MACHINE_COUNT:-"2"}"
     export WINDOWS_SERVER_VERSION="${WINDOWS_SERVER_VERSION:-"windows-2019"}"
@@ -43,8 +45,9 @@ main() {
     export CI="${CI:-""}"
 
     set_azure_envs
-
+    echo "3 KUBERNETES_VERSION=$KUBERNETES_VERSION"
     set_ci_version
+    echo "4 KUBERNETES_VERSION=$KUBERNETES_VERSION"
     IS_PRESUBMIT="$(capz::util::should_build_kubernetes)"
     echo "IS_PRESUBMIT=$IS_PRESUBMIT"
     if [[ "${IS_PRESUBMIT}" == "true" ]]; then
