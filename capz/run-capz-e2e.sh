@@ -216,7 +216,7 @@ create_cluster(){
         done
 
         log "Install cluster api azure onto management cluster"
-        "$TOOLS_BIN_DIR"/clusterctl init --infrastructure azure
+        "$TOOLS_BIN_DIR"/clusterctl init --infrastructure azure --core cluster-api:$CAPI_VERSION --bootstrap kubeadm:$CAPI_VERSION --control-plane kubeadm:$CAPI_VERSION 
         log "wait for core CRDs to be installed"
         kubectl wait --for=condition=ready pod --all -n capz-system --timeout -300s
         # Wait for the core CRD resources to be "installed" onto the mgmt cluster before returning control
