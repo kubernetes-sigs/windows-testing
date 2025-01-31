@@ -111,7 +111,8 @@ run_capz_e2e_cleanup() {
     # currently KUBECONFIG is set to the workload cluster so reset to the management cluster
     unset KUBECONFIG
 
-    if [[ -z "${SKIP_LOG_COLLECTION:-}" ]]; then
+    SKIP_LOG_COLLECTION="${SKIP_LOG_COLLECTION:-"false"}"
+    if [[ ! "$SKIP_LOG_COLLECTION" == "true" ]]; then
         log "collecting logs"
         pushd "${CAPZ_DIR}"
 
@@ -127,7 +128,11 @@ run_capz_e2e_cleanup() {
         log "skipping log collection"
     fi
 
-    if [[ -z "${SKIP_CLEANUP:-}" ]]; then
+    SKIP_CLEANUP="${SKIP_CLEANUP:-"false"}"
+    if [[ ! "$SKIP_CLEANUP" == "true" ]]; then
+        log "removing role assignment"
+        az role assignment delete --ids "$assignmentId" || true
+
         log "deleting cluster"
         az group delete --name "$CLUSTER_NAME" --no-wait -y --force-deletion-types=Microsoft.Compute/virtualMachines --force-deletion-types=Microsoft.Compute/virtualMachineScaleSets || true
 
@@ -196,6 +201,11 @@ create_cluster(){
                     --network-plugin azure \
                     --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')")
             fi
+        else
+            log "resource group ${CLUSTER_NAME} already exists, use the location of the existing resource group"
+            # Use the location same as the existing resource group
+            AZURE_LOCATION=$(az group show --name "${CLUSTER_NAME}" --query location -o tsv)
+            export AZURE_LOCATION
         fi
 
         az aks get-credentials --resource-group "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" --overwrite-existing
@@ -211,9 +221,10 @@ create_cluster(){
         MANAGEMENT_IDENTITY=$(az aks show -n "${CLUSTER_NAME}" -g "${CLUSTER_NAME}" --output json | jq -r '.identityProfile.kubeletidentity.clientId')
         export MANAGEMENT_IDENTITY
         objectId=$(az aks show -n "${CLUSTER_NAME}" -g "${CLUSTER_NAME}" --output json  | jq -r '.identityProfile.kubeletidentity.objectId')
-        until az role assignment create --assignee-object-id "${objectId}" --role "Contributor" --scope "/subscriptions/${AZURE_SUBSCRIPTION_ID}" --assignee-principal-type ServicePrincipal --output none --only-show-errors; do
+        until assignmentId=$(az role assignment create --assignee-object-id "${objectId}" --role "Contributor" --scope "/subscriptions/${AZURE_SUBSCRIPTION_ID}" --assignee-principal-type ServicePrincipal --output json |jq -r .id); do
             sleep 5
         done
+        export assignmentId # used in cleanup
 
         log "Install cluster api azure onto management cluster"
         "$TOOLS_BIN_DIR"/clusterctl init --infrastructure azure
@@ -482,7 +493,8 @@ set_azure_envs() {
     # Generate SSH key.
     capz::util::generate_ssh_key
 
-    AZURE_LOCATION=$(get_random_region)
+    # Set the Azure Location, preferred locationc can be set through the AZURE_LOCATION environment variable.
+    AZURE_LOCATION="${AZURE_LOCATION:-$(get_random_region)}"
     export AZURE_LOCATION
     if [[ "${CI:-}" == "true" ]]; then
         # we don't provide an ssh key in ci so it is created.  
