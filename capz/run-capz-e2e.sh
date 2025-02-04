@@ -180,7 +180,7 @@ create_cluster(){
                 --node-count 1 \
                 --generate-ssh-keys \
                 --vm-set-type VirtualMachineScaleSets \
-                --kubernetes-version 1.28.5 \
+                --kubernetes-version 1.31.3 \
                 --network-plugin azure \
                 --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')")
             
@@ -197,7 +197,7 @@ create_cluster(){
                     --node-count 1 \
                     --generate-ssh-keys \
                     --vm-set-type VirtualMachineScaleSets \
-                    --kubernetes-version 1.28.5 \
+                    --kubernetes-version 1.31.3 \
                     --network-plugin azure \
                     --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')")
             fi
