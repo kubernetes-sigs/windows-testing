@@ -92,16 +92,24 @@ function Build-Kubeadm {
 
 function Run-K8sUnitTests {
 
-    Push-Location "$RepoPath"
-    for ( $index = 0; $index -lt $TEST_PACKAGES.count; $index++ ) {
-        
-        echo "Running unit tests for packages" $TEST_PACKAGES[$index]
-        $junit_output_file=Join-Path -Path $LogsDirPath -ChildPath "${JUNIT_FILE_NAME}_${index}.xml"
-        
-        gotestsum.exe --junitfile $junit_output_file --packages $TEST_PACKAGES[$index]
-    }
-    Pop-Location
+    $jobs = @()
 
+    for ($index = 0; $index -lt $TEST_PACKAGES.Count; $index++) {
+        # Capture the current package and create the output file name.
+        $package = $TEST_PACKAGES[$index]
+        $junit_output_file = Join-Path -Path $LogsDirPath -ChildPath ("{0}_{1}.xml" -f $JUNIT_FILE_NAME, $index)
+        
+        # Start a background job for each package.
+        $jobs += Start-Job -ScriptBlock {
+            param($pkg, $outputFile, $RepoPath)
+        Push-Location "$RepoPath"
+            Write-Output "Running unit tests for package: $pkg"
+            gotestsum.exe --junitfile $outputFile --packages $pkg
+        } -ArgumentList $package, $junit_output_file, $RepoPath
+    }
+
+    # Wait for all jobs to complete and output their results.
+    $jobs | Wait-Job | ForEach-Object { Receive-Job $_ }
 }
 
 Prepare-LogsDir
