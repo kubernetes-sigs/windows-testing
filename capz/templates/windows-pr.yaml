@@ -122,6 +122,8 @@ spec:
           kubeletExtraArgs:
             cloud-provider: external
             feature-gates: ${NODE_FEATURE_GATES:-""}
+            image-credential-provider-bin-dir: /var/lib/kubelet/credential-provider
+            image-credential-provider-config: /var/lib/kubelet/credential-provider-config.yaml
             v: "2"
             windows-priorityclass: ABOVE_NORMAL_PRIORITY_CLASS
           name: '{{ ds.meta_data["local_hostname"] }}'
@@ -402,7 +404,7 @@ spec:
         osType: Linux
       sshPublicKey: ${AZURE_SSH_PUBLIC_KEY_B64:=""}
       userAssignedIdentities:
-      - providerID: /subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${CI_RG:=capz-ci}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${USER_IDENTITY:=cloud-provider-user-identity}
+      - providerID: ${USER_IDENTITY}
       vmSize: Standard_D2s_v3
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -418,6 +420,7 @@ spec:
       annotations:
         runtime: containerd
     spec:
+      identity: UserAssigned
       image:
         computeGallery:
           gallery: ClusterAPI-f72ceb4f-5159-4c26-a0fe-2ea738f0d019
@@ -429,4 +432,6 @@ spec:
           storageAccountType: Premium_LRS
         osType: Windows
       sshPublicKey: ${AZURE_SSH_PUBLIC_KEY_B64:=""}
+      userAssignedIdentities:
+      - providerID:${USER_IDENTITY}
       vmSize: ${AZURE_NODE_MACHINE_TYPE:-"Standard_D4s_v3"}
