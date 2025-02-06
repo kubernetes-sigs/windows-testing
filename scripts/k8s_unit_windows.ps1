@@ -95,21 +95,54 @@ function Run-K8sUnitTests {
     $jobs = @()
 
     for ($index = 0; $index -lt $TEST_PACKAGES.Count; $index++) {
-        # Capture the current package and create the output file name.
         $package = $TEST_PACKAGES[$index]
         $junit_output_file = Join-Path -Path $LogsDirPath -ChildPath ("{0}_{1}.xml" -f $JUNIT_FILE_NAME, $index)
         
-        # Start a background job for each package.
+        Write-Output "Starting job to run tests for package: $package"
         $jobs += Start-Job -ScriptBlock {
             param($pkg, $outputFile, $RepoPath)
-        Push-Location "$RepoPath"
+
+            Push-Location "$RepoPath"
             Write-Output "Running unit tests for package: $pkg"
-            gotestsum.exe --junitfile $outputFile --packages $pkg
+                    # Collect output in an array.
+            $outputLines = @()
+            $outputLines += "Running unit tests for package: $pkg"
+            $cmdOutput = & gotestsum.exe --junitfile $outputFile --packages $pkg 2>&1
+            $outputLines += $cmdOutput
+            $exitCode = $LASTEXITCODE
+            $combinedOutput = $outputLines -join "`n"
+
+            [PSCustomObject]@{
+                Package = $pkg
+                ExitCode = $exitCode
+                Output = $combinedOutput
+            }
         } -ArgumentList $package, $junit_output_file, $RepoPath
     }
 
-    # Wait for all jobs to complete and output their results.
-    $jobs | Wait-Job | ForEach-Object { Receive-Job $_ }
+    while ($jobs.Count -gt 0) {
+        $finishedJob = Wait-Job -Job $jobs -Any
+    
+        $result = Receive-Job -Job $finishedJob
+    
+        Write-Output "Output for package: $($result.Package)"
+        Write-Output $result.Output
+        Write-Output "Exit code: $($result.ExitCode)"
+        Write-Output ("-" * 40)
+    
+        $jobs = $jobs | Where-Object { $_.Id -ne $finishedJob.Id }
+        Write-Output "Waiting for $($jobs.Count) more jobs to complete"
+        Write-Output ("-" * 40)
+    }
+
+    $results = $jobs | ForEach-Object { Receive-Job $_ }
+
+    $failedJobs = $results | Where-Object { $_.ExitCode -ne 0 }
+    if ($failedJobs) {
+        exit 1
+    } else {
+        exit 0
+    }
 }
 
 Prepare-LogsDir
