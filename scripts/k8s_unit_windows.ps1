@@ -120,10 +120,14 @@ function Run-K8sUnitTests {
         } -ArgumentList $package, $junit_output_file, $RepoPath
     }
 
+    $failedJobCount = 0 
     while ($jobs.Count -gt 0) {
         $finishedJob = Wait-Job -Job $jobs -Any
-    
         $result = Receive-Job -Job $finishedJob
+        
+        if ($result.ExitCode -ne 0) {
+            $failedJobCount++
+        }
     
         Write-Output "Output for package: $($result.Package)"
         Write-Output $result.Output
@@ -135,10 +139,7 @@ function Run-K8sUnitTests {
         Write-Output ("-" * 40)
     }
 
-    $results = $jobs | ForEach-Object { Receive-Job $_ }
-
-    $failedJobs = $results | Where-Object { $_.ExitCode -ne 0 }
-    if ($failedJobs) {
+    if ($failedJobCount) {
         exit 1
     } else {
         exit 0
