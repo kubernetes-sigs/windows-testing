@@ -206,7 +206,9 @@ echo "Install container features in VM"
 run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "powershell.exe -command { Install-WindowsFeature -Name 'Containers' -Restart }"
 wait_for_vm_restart
 
-if [ "${JOB_TYPE}" == "presubmit" ]
+# if repo name is windows-testing, the intention is to test updates to the scripts
+# as if they were running as a periodic job against kubernetes/kubernete.
+if [ "${JOB_TYPE}" == "presubmit" ] && [ "${REPO_NAME}" != "windows-testing" ]
 then
     echo "Running a presubmit job"
     # Include the -testPackages argument only if we have $TEST_PACKAGES to test.
