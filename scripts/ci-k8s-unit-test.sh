@@ -217,10 +217,15 @@ then
         test_packages_arg="-testPackages ${TEST_PACKAGES}"
     fi
 
-    run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_unit_windows.ps1 -repoName ${REPO_NAME} -repoOrg ${REPO_OWNER} -pullRequestNo ${PULL_NUMBER} -pullBaseRef ${PULL_BASE_REF} ${test_packages_arg}"
+    run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_unit_windows.ps1 -repoName ${REPO_NAME} -repoOrg ${REPO_OWNER} -pullRequestNo ${PULL_NUMBER} -pullBaseRef ${PULL_BASE_REF} ${test_packages_arg}" || true
+    exit_code=$?
 else
     echo "Running periodic job"
-    run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} 'c:/k8s_unit_windows.ps1'
+    run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} 'c:/k8s_unit_windows.ps1' || true
+    exit_code=$?
 fi
+
 copy_from 'c:/Logs/*.xml' ${ARTIFACTS} ${VM_PUB_IP}
 destroy_resource_group
+
+exit $exit_code
