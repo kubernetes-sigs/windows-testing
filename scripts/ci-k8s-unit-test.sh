@@ -161,6 +161,7 @@ run_remote_cmd() {
     local CMD=$3
 
     ssh -i ${SSH_KEY_FILE} ${SSH_OPTS} azureuser@${SSH_HOST} "${CMD}"
+    return $?
 
 }
 
