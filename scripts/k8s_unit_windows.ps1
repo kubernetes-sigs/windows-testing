@@ -92,16 +92,58 @@ function Build-Kubeadm {
 
 function Run-K8sUnitTests {
 
-    Push-Location "$RepoPath"
-    for ( $index = 0; $index -lt $TEST_PACKAGES.count; $index++ ) {
-        
-        echo "Running unit tests for packages" $TEST_PACKAGES[$index]
-        $junit_output_file=Join-Path -Path $LogsDirPath -ChildPath "${JUNIT_FILE_NAME}_${index}.xml"
-        
-        gotestsum.exe --junitfile $junit_output_file --packages $TEST_PACKAGES[$index]
-    }
-    Pop-Location
+    $jobs = @()
 
+    for ($index = 0; $index -lt $TEST_PACKAGES.Count; $index++) {
+        $package = $TEST_PACKAGES[$index]
+        $junit_output_file = Join-Path -Path $LogsDirPath -ChildPath ("{0}_{1}.xml" -f $JUNIT_FILE_NAME, $index)
+        
+        Write-Output "Starting job to run tests for package: $package"
+        $jobs += Start-Job -ScriptBlock {
+            param($pkg, $outputFile, $RepoPath)
+
+            Push-Location "$RepoPath"
+            Write-Output "Running unit tests for package: $pkg"
+                    # Collect output in an array.
+            $outputLines = @()
+            $outputLines += "Running unit tests for package: $pkg"
+            $cmdOutput = & gotestsum.exe --junitfile $outputFile --packages $pkg 2>&1
+            $outputLines += $cmdOutput
+            $exitCode = $LASTEXITCODE
+            $combinedOutput = $outputLines -join "`n"
+
+            [PSCustomObject]@{
+                Package = $pkg
+                ExitCode = $exitCode
+                Output = $combinedOutput
+            }
+        } -ArgumentList $package, $junit_output_file, $RepoPath
+    }
+
+    $failedJobCount = 0 
+    while ($jobs.Count -gt 0) {
+        $finishedJob = Wait-Job -Job $jobs -Any
+        $result = Receive-Job -Job $finishedJob
+        
+        if ($result.ExitCode -ne 0) {
+            $failedJobCount++
+        }
+    
+        Write-Output "Output for package: $($result.Package)"
+        Write-Output $result.Output
+        Write-Output "Exit code: $($result.ExitCode)"
+        Write-Output ("-" * 40)
+    
+        $jobs = $jobs | Where-Object { $_.Id -ne $finishedJob.Id }
+        Write-Output "Waiting for $($jobs.Count) more jobs to complete"
+        Write-Output ("-" * 40)
+    }
+
+    if ($failedJobCount) {
+        exit 1
+    } else {
+        exit 0
+    }
 }
 
 Prepare-LogsDir

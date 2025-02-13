@@ -27,7 +27,12 @@ foreach ($package in $PACKAGES.Keys) {
 
 Write-Host "Set up environment."
 
-$userGoBin = "${env:HOME}\go\bin"
+if (${Env:HOME} -ne $null) {
+    $userGoBin = "${Env:HOME}\go\bin"
+} else {
+    $userGoBin = "${Env:HOMEPATH}\go\bin"
+}
+
 $path = ";c:\Program Files\Git\bin;c:\Program Files\Go\bin;${userGoBin};"
 $env:PATH+=$path
 
