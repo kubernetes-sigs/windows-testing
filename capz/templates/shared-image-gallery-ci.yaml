@@ -453,5 +453,5 @@ spec:
         osType: Windows
       sshPublicKey: ${AZURE_SSH_PUBLIC_KEY_B64:=""}
       userAssignedIdentities:
-      - providerID:${USER_IDENTITY}
+      - providerID: ${USER_IDENTITY}
       vmSize: ${AZURE_NODE_MACHINE_TYPE:-"Standard_D4s_v3"}
