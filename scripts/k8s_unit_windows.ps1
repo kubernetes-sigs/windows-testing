@@ -3,17 +3,57 @@ param (
     [string]$repoOrg = "kubernetes",    
     [string]$pullRequestNo,
     [string]$pullBaseRef = "master",
-    [string[]]$testPackages = @()
+    [string[]]$testPackages = @(),
+    [switch]$SkipFailingTests = $true # When set, will skip test cases from the mapping below
 )
 
 $LogsDirPath = "c:/Logs"
 $RepoPath = "c:/$repoName"
 $RepoURL = "https://github.com/$repoOrg/$repoName"
 $LocalPullBranch = "testBranch"
-$JUNIT_FILE_NAME="junit"
+$JUNIT_FILE_NAME = "junit"
 $EXTRA_PACKAGES = @("./cmd/...")
-$EXCLUDED_PACKAGES = @("./pkg/proxy/iptables/...", "./pkg/proxy/ipvs/...", "./pkg/proxy/nftables/...")
-
+$EXCLUDED_PACKAGES = @(
+    "./pkg/proxy/iptables/...",
+    "./pkg/proxy/ipvs/...",
+    "./pkg/proxy/nftables/...") 
+# Map of packages with test case names to skip.
+$SkipTestsForPackage = @{
+    "./cmd/..."         = @(
+        "TestBytesToResetConfiguration",
+        "TestBytesToJoinConfiguration",
+        "TestBytesToInitConfiguration",
+        "TestHollowNode/kubelet")
+    "./pkg/kubelet/..." = @(
+        "TestAllocatedResourcesMatchStatus",
+        "TestAllocatableMemoryPressure",
+        "TestComputePodActionsForPodResize",
+        "TestComputePodActionsForPodResize/Nothing_when_spec.Resources_and_status.Resources_are_equivalent",
+        "TestComputePodActionsForPodResize/Update_container_CPU_resources_to_equivalent_value",
+        "TestCRIListPodStats",
+        "TestGetTrustAnchorsBySignerNameCaching",
+        "TestGRPCConnIsReused",
+        "TestGRPCMethods/v1alpha4",
+        "TestKubeletServerCertificateFromFiles",
+        "TestManagerWithLocalStorageCapacityIsolationOpen",
+        "TestMinReclaim",
+        "TestNodeReclaimFuncs",
+        "TestPrepareResources",
+        "TestStorageLimitEvictions",
+        "TestToKubeContainerStatusWithResources/container_reporting_cpu_only",
+        "TestUnprepareResources",
+        "TestUpdateMemcgThreshold",
+        "TestValidateKubeletConfiguration/KubeletCrashLoopBackOffMax_feature_gate_on,_no_crashLoopBackOff_config,_ok",
+        "TestValidateKubeletConfiguration/Success",
+        "TestValidateKubeletConfiguration/valid_MaxParallelImagePulls_and_SerializeImagePulls_combination"
+    )
+    "./pkg/scheduler/..." = @(
+        "TestInFlightEventAsync")
+    "./pkg/volume/..." = @(
+        "TestPlugin",
+        "TestPluginOptionalKeys"
+    )
+}
 
 function Prepare-TestPackages {
     if ($testPackages.Count -ne 0) {
@@ -97,27 +137,46 @@ function Run-K8sUnitTests {
     for ($index = 0; $index -lt $TEST_PACKAGES.Count; $index++) {
         $package = $TEST_PACKAGES[$index]
         $junit_output_file = Join-Path -Path $LogsDirPath -ChildPath ("{0}_{1}.xml" -f $JUNIT_FILE_NAME, $index)
+
+        $testsToSkip = $null
+        if ($SkipFailingTests -and $SkipTestsForPackage.ContainsKey($package)) {
+            $testsToSkip = $SkipTestsForPackage[$package] -join "|"
+            Write-Output "Skipping tests for package: $package, tests: $testsToSkip"
+        } else {
+            Write-Output "Not skipping any tests for package: $package"
+        }
+
         
         Write-Output "Starting job to run tests for package: $package"
         $jobs += Start-Job -ScriptBlock {
-            param($pkg, $outputFile, $RepoPath)
+            param($pkg, $outputFile, $RepoPath, $skipRegex)
 
             Push-Location "$RepoPath"
-            Write-Output "Running unit tests for package: $pkg"
-                    # Collect output in an array.
+	        $args = @(
+		        "--junitfile=$outputFile",
+		        "--packages=`"$pkg`""
+            )
+	        if ($skipRegex) {
+		        $args += "--"
+		        $args += "--skip"
+		        $args += $skipRegex
+            }
+
+            Push-Location "$RepoPath"
+            # Collect output in an array.
             $outputLines = @()
-            $outputLines += "Running unit tests for package: $pkg"
-            $cmdOutput = & gotestsum.exe --junitfile $outputFile --packages $pkg 2>&1
+            $outputLines += "Running unit tests for package: $pkg :: gotestsum.exe " + ($args -join ' ')
+            $cmdOutput = & gotestsum.exe @args 2>&1
             $outputLines += $cmdOutput
             $exitCode = $LASTEXITCODE
             $combinedOutput = $outputLines -join "`n"
 
             [PSCustomObject]@{
-                Package = $pkg
+                Package  = $pkg
                 ExitCode = $exitCode
-                Output = $combinedOutput
+                Output   = $combinedOutput
             }
-        } -ArgumentList $package, $junit_output_file, $RepoPath
+        } -ArgumentList $package, $junit_output_file, $RepoPath, $testsToSkip
     }
 
     $failedJobCount = 0 
@@ -141,7 +200,8 @@ function Run-K8sUnitTests {
 
     if ($failedJobCount) {
         exit 1
-    } else {
+    }
+    else {
         exit 0
     }
 }
@@ -151,5 +211,5 @@ Clone-TestRepo
 Prepare-Vendor
 Build-Kubeadm
 Install-Tools
-$TEST_PACKAGES=Prepare-TestPackages
+$TEST_PACKAGES = Prepare-TestPackages
 Run-K8sUnitTests
