@@ -1,0 +1,444 @@
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: ${CLUSTER_NAME}-md-win
+  namespace: default
+spec:
+  template:
+    spec:
+      files:
+      - contentFrom:
+          secret:
+            key: worker-node-azure.json
+            name: ${CLUSTER_NAME}-md-win-azure-json
+        owner: root:root
+        path: c:/k/azure.json
+        permissions: "0644"
+      - content: |-
+          Add-MpPreference -ExclusionProcess C:/opt/cni/bin/calico.exe
+          Add-MpPreference -ExclusionProcess C:/opt/cni/bin/calico-ipam.exe
+        path: C:/defender-exclude-calico.ps1
+        permissions: "0744"
+      - content: |
+          # /tmp is assumed created and required for upstream e2e tests to pass
+          New-Item -ItemType Directory -Force -Path C:\tmp\
+        path: C:/create-temp-folder.ps1
+        permissions: "0744"
+      - content: |
+          $ErrorActionPreference = 'Stop'
+          $$CONTAINERD_URL="${WINDOWS_CONTAINERD_URL}"
+          if($$CONTAINERD_URL -ne ""){
+            # Kubelet service depends on contianerd service so make a best effort attempt to stop it
+            Stop-Service kubelet -Force -ErrorAction SilentlyContinue
+            Stop-Service containerd -Force
+            echo "downloading containerd: $$CONTAINERD_URL"
+            curl.exe --retry 10 --retry-delay 5 -L "$$CONTAINERD_URL" --output "c:/k/containerd.tar.gz"
+            # Log service state and if any files under containerd director are locked
+            Get-Service -Name containerd, kubelet
+            $dir = "c:/Program Files/containerd"
+            $files = Get-ChildItem $dir -Recurse
+            Write-Output "Checking if any files under $dir are locked"
+            foreach ($file in $files) {
+                $f = $file.FullName
+                Write-output "$f"
+                $fi = New-Object System.IO.FileInfo $f
+                try {
+                    $fStream = $fi.Open([System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+                    if ($fStream) {
+                        $fStream.Close()
+                    }
+                } catch {
+                    Write-Output "Unable to open file: $f"
+                }
+            }
+            Write-Output "Extracting new containerd binaries"
+            tar.exe -zxvf c:/k/containerd.tar.gz -C "c:/Program Files/containerd" --strip-components 1
+
+            Start-Service containerd
+          }
+          containerd.exe --version
+          containerd-shim-runhcs-v1.exe --version
+        path: C:/replace-containerd.ps1
+        permissions: "0744"
+      - content: |
+          $ErrorActionPreference = "Stop"
+          # Check if NodeLogQuery feature gate was specified for the cluster and if so, also enable it via kubelet config
+          $kubeletEnvContents = Get-Content -Path "/var/lib/kubelet/kubeadm-flags.env"
+          if ($kubeletEnvContents.Contains("NodeLogQuery=true")) {
+              Add-Content -Path "$env:SYSTEMDRIVE/var/lib/kubelet/config.yaml" -Value "enableSystemLogQuery: true" -Encoding ascii -NoNewLine
+              nssm restart kubelet
+          }
+        path: C:/NodeLogQueryKubeletConfig.ps1
+        permissions: "0744"
+      - content: |
+          mkdir -Force c:/localdumps
+          reg.exe add "HKLM\Software\Microsoft\Windows\Windows Error Reporting\LocalDumps" /V DumpCount /t REG_DWORD /d 50 /f
+          reg.exe add "HKLM\Software\Microsoft\Windows\Windows Error Reporting\LocalDumps" /V DumpType /t REG_DWORD /d 2 /f
+          reg.exe add "HKLM\Software\Microsoft\Windows\Windows Error Reporting\LocalDumps" /V DumpFolder /t REG_EXPAND_SZ /d "c:/LocalDumps" /f
+          # Enable sftp so we can copy crash dump files during log collection of stfp
+          $sshd_config = "$env:ProgramData\ssh\sshd_config"
+          if (-not (Test-Path $sshd_config)) { mkdir -Force $sshd_config }
+          Add-Content -Path $sshd_config "Subsystem sftp              sftp-server.exe"
+          sc.exe stop sshd
+          sc.exe start sshd
+        path: C:/collect-hns-crashes.ps1
+        permissions: "0744"
+      - content: |
+          ${AZURE_SSH_PUBLIC_KEY:=""}
+        owner: root:root
+        path: C:/ProgramData/ssh/administrators_authorized_keys
+        permissions: "0640"
+      - content: |
+          $ErrorActionPreference = 'Stop'
+
+          Stop-Service kubelet -Force
+
+          $$CI_VERSION="${CI_VERSION}"
+          if($$CI_VERSION -ne "")
+          {
+            $$binaries=@("kubeadm", "kubectl", "kubelet", "kube-proxy")
+            $$ci_url="https://storage.googleapis.com/k8s-release-dev/ci/$$CI_VERSION/bin/windows/amd64"
+            foreach ( $$binary in $$binaries )
+            {
+              echo "downloading binary: $$ci_url/$$binary.exe"
+              curl.exe --retry 10 --retry-delay 5 "$$ci_url/$$binary.exe" --output "c:/k/$$binary.exe"
+            }
+          }
+
+          # Tag it to the ci version.  The image knows how to use the copy locally with the configmap
+          # that is applied at at this stage (windows-kubeproxy-ci.yaml)
+          # use containerd local service vs transfer service until transfer service stabalizes in containerd 2.0
+          ctr.exe -n k8s.io images pull --local docker.io/sigwindowstools/kube-proxy:v1.23.1-calico-hostprocess
+          ctr.exe -n k8s.io images tag docker.io/sigwindowstools/kube-proxy:v1.23.1-calico-hostprocess "docker.io/sigwindowstools/kube-proxy:${CI_VERSION/+/_}-calico-hostprocess"
+
+          echo "kubeadm version: "
+          kubeadm.exe version -o=short
+          echo "kubectl version: "
+          kubectl.exe version --client=true
+          echo "kubelet version: "
+          kubelet.exe --version
+          echo "kube-proxy version: "
+          kube-proxy.exe --version
+        path: C:/replace-ci-binaries.ps1
+        permissions: "0744"
+      joinConfiguration:
+        nodeRegistration:
+          criSocket: npipe:////./pipe/containerd-containerd
+          kubeletExtraArgs:
+            cloud-provider: external
+            feature-gates: ${NODE_FEATURE_GATES:-""}
+            v: "2"
+            windows-priorityclass: ABOVE_NORMAL_PRIORITY_CLASS
+          name: '{{ ds.meta_data["local_hostname"] }}'
+      postKubeadmCommands:
+      - powershell C:/NodeLogQueryKubeletConfig.ps1
+      - nssm set kubelet start SERVICE_AUTO_START
+      - powershell C:/defender-exclude-calico.ps1
+      preKubeadmCommands:
+      - powershell C:/create-temp-folder.ps1
+      - powershell C:/replace-containerd.ps1
+      - powershell C:/collect-hns-crashes.ps1
+      - powershell C:/replace-ci-binaries.ps1
+      users:
+      - groups: Administrators
+        name: capi
+        sshAuthorizedKeys:
+        - ${AZURE_SSH_PUBLIC_KEY:=""}
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  labels:
+    cni: ${CLUSTER_NAME}-calico
+    containerd-logger: enabled
+    csi-proxy: enabled
+    metrics-server: enabled
+  name: ${CLUSTER_NAME}
+  namespace: default
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: KubeadmControlPlane
+    name: ${CLUSTER_NAME}-control-plane
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: AzureCluster
+    name: ${CLUSTER_NAME}
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: ${CLUSTER_NAME}-md-win
+  namespace: default
+spec:
+  clusterName: ${CLUSTER_NAME}
+  replicas: ${WINDOWS_WORKER_MACHINE_COUNT:-2}
+  selector: {}
+  template:
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: ${CLUSTER_NAME}-md-win
+      clusterName: ${CLUSTER_NAME}
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: AzureMachineTemplate
+        name: ${CLUSTER_NAME}-md-win
+      version: ${KUBERNETES_VERSION}
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  name: ${CLUSTER_NAME}-control-plane
+  namespace: default
+spec:
+  kubeadmConfigSpec:
+    clusterConfiguration:
+      apiServer:
+        extraArgs:
+          cloud-provider: external
+          feature-gates: ${API_SERVER_FEATURE_GATES:-""}
+        timeoutForControlPlane: 20m
+      controllerManager:
+        extraArgs:
+          allocate-node-cidrs: "false"
+          cloud-provider: external
+          cluster-name: ${CLUSTER_NAME}
+          v: "4"
+      etcd:
+        local:
+          dataDir: /var/lib/etcddisk/etcd
+          extraArgs:
+            quota-backend-bytes: "8589934592"
+      kubernetesVersion: ci/${CI_VERSION}
+      scheduler:
+        extraArgs:
+          feature-gates: ${SCHEDULER_FEATURE_GATES:-""}
+    diskSetup:
+      filesystems:
+      - device: /dev/disk/azure/scsi1/lun0
+        extraOpts:
+        - -E
+        - lazy_itable_init=1,lazy_journal_init=1
+        filesystem: ext4
+        label: etcd_disk
+      - device: ephemeral0.1
+        filesystem: ext4
+        label: ephemeral0
+        replaceFS: ntfs
+      partitions:
+      - device: /dev/disk/azure/scsi1/lun0
+        layout: true
+        overwrite: false
+        tableType: gpt
+    files:
+    - contentFrom:
+        secret:
+          key: control-plane-azure.json
+          name: ${CLUSTER_NAME}-control-plane-azure-json
+      owner: root:root
+      path: /etc/kubernetes/azure.json
+      permissions: "0644"
+    - content: |
+        #!/bin/bash
+        set -o nounset
+        set -o pipefail
+        set -o errexit
+        if grep -q "NodeLogQuery=true" /var/lib/kubelet/kubeadm-flags.env; then
+          [[ $(id -u) != 0 ]] && SUDO="sudo" || SUDO=""
+          echo "* adding enableSystemLogQuery: true to kubelet config"
+          printf "enableSystemLogQuery: true\n" | $${SUDO} tee --append /var/lib/kubelet/config.yaml
+          $${SUDO} systemctl restart kubelet
+        fi
+      owner: root:root
+      path: /tmp/node-log-query-kubelet-config.sh
+      permissions: "0744"
+    - content: |
+        #!/bin/bash
+        set -o nounset
+        set -o pipefail
+        set -o errexit
+        [[ $(id -u) != 0 ]] && SUDO="sudo" || SUDO=""
+        # This test installs release packages or binaries that are a result of the CI and release builds.
+        # It runs '... --version' commands to verify that the binaries are correctly installed
+        # and finally uninstalls the packages.
+        # For the release packages it tests all versions in the support skew.
+        LINE_SEPARATOR="*************************************************"
+        echo "$$LINE_SEPARATOR"
+        CI_VERSION=${CI_VERSION}
+        if [[ "$${CI_VERSION}" != "" ]]; then
+          CI_DIR=/tmp/k8s-ci
+          mkdir -p $$CI_DIR
+          declare -a PACKAGES_TO_TEST=("kubectl" "kubelet" "kubeadm")
+          declare -a CONTAINERS_TO_TEST=("kube-apiserver" "kube-controller-manager" "kube-proxy" "kube-scheduler")
+          CONTAINER_EXT="tar"
+          echo "* testing CI version $$CI_VERSION"
+          # Check for semver
+          if [[ "$${CI_VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            VERSION_WITHOUT_PREFIX="${CI_VERSION#v}"
+            DEBIAN_FRONTEND=noninteractive apt-get install -y apt-transport-https curl
+            curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+            echo 'deb https://apt.kubernetes.io/ kubernetes-xenial main' > /etc/apt/sources.list.d/kubernetes.list
+            apt-get update
+            # replace . with \.
+            VERSION_REGEX="${VERSION_WITHOUT_PREFIX//./\\.}"
+            PACKAGE_VERSION="$(apt-cache madison kubelet|grep $${VERSION_REGEX}- | head -n1 | cut -d '|' -f 2 | tr -d '[:space:]')"
+            for CI_PACKAGE in "$${PACKAGES_TO_TEST[@]}"; do
+              echo "* installing package: $$CI_PACKAGE $${PACKAGE_VERSION}"
+              DEBIAN_FRONTEND=noninteractive apt-get install -y $$CI_PACKAGE=$$PACKAGE_VERSION
+            done
+          else
+            CI_URL="https://storage.googleapis.com/k8s-release-dev/ci/$${CI_VERSION}/bin/linux/amd64"
+            for CI_PACKAGE in "$${PACKAGES_TO_TEST[@]}"; do
+              echo "* downloading binary: $$CI_URL/$$CI_PACKAGE"
+              wget "$$CI_URL/$$CI_PACKAGE" -nv -O "$$CI_DIR/$$CI_PACKAGE"
+              chmod +x "$$CI_DIR/$$CI_PACKAGE"
+              mv "$$CI_DIR/$$CI_PACKAGE" "/usr/bin/$$CI_PACKAGE"
+            done
+            IMAGE_REGISTRY_PREFIX=registry.k8s.io
+            for CI_CONTAINER in "$${CONTAINERS_TO_TEST[@]}"; do
+              echo "* downloading package: $$CI_URL/$$CI_CONTAINER.$$CONTAINER_EXT"
+              wget "$$CI_URL/$$CI_CONTAINER.$$CONTAINER_EXT" -nv -O "$$CI_DIR/$$CI_CONTAINER.$$CONTAINER_EXT"
+              $${SUDO} ctr -n k8s.io images import "$$CI_DIR/$$CI_CONTAINER.$$CONTAINER_EXT" || echo "* ignoring expected 'ctr images import' result"
+              $${SUDO} ctr -n k8s.io images tag $$IMAGE_REGISTRY_PREFIX/$$CI_CONTAINER-amd64:"$${CI_VERSION//+/_}" $$IMAGE_REGISTRY_PREFIX/$$CI_CONTAINER:"$${CI_VERSION//+/_}"
+              $${SUDO} ctr -n k8s.io images tag $$IMAGE_REGISTRY_PREFIX/$$CI_CONTAINER-amd64:"$${CI_VERSION//+/_}" gcr.io/k8s-staging-ci-images/$$CI_CONTAINER:"$${CI_VERSION//+/_}"
+            done
+          fi
+          systemctl restart kubelet
+        fi
+        echo "* checking binary versions"
+        echo "ctr version: " $(ctr version)
+        echo "kubeadm version: " $(kubeadm version -o=short)
+        echo "kubectl version: " $(kubectl version --client=true)
+        echo "kubelet version: " $(kubelet --version)
+        echo "$$LINE_SEPARATOR"
+      owner: root:root
+      path: /tmp/kubeadm-bootstrap.sh
+      permissions: "0744"
+    initConfiguration:
+      nodeRegistration:
+        kubeletExtraArgs:
+          cloud-provider: external
+          feature-gates: ${NODE_FEATURE_GATES:-""}
+        name: '{{ ds.meta_data["local_hostname"] }}'
+    joinConfiguration:
+      nodeRegistration:
+        kubeletExtraArgs:
+          cloud-provider: external
+          feature-gates: ${NODE_FEATURE_GATES:-""}
+        name: '{{ ds.meta_data["local_hostname"] }}'
+    mounts:
+    - - LABEL=etcd_disk
+      - /var/lib/etcddisk
+    postKubeadmCommands:
+    - bash -c /tmp/node-log-query-kubelet-config.sh
+    preKubeadmCommands:
+    - bash -c /tmp/kubeadm-bootstrap.sh
+    useExperimentalRetryJoin: true
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: AzureMachineTemplate
+      name: ${CLUSTER_NAME}-control-plane
+  replicas: ${CONTROL_PLANE_MACHINE_COUNT:-1}
+  version: ${KUBERNETES_VERSION}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: AzureCluster
+metadata:
+  name: ${CLUSTER_NAME}
+  namespace: default
+spec:
+  additionalTags:
+    buildProvenance: ${BUILD_PROVENANCE}
+    creationTimestamp: ${TIMESTAMP}
+    jobName: ${JOB_NAME}
+  identityRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: AzureClusterIdentity
+    name: cluster-identity
+  location: ${AZURE_LOCATION}
+  networkSpec:
+    subnets:
+    - name: control-plane-subnet
+      role: control-plane
+    - name: node-subnet
+      natGateway:
+        name: node-natgateway
+      role: node
+    vnet:
+      name: ${AZURE_VNET_NAME:=${CLUSTER_NAME}-vnet}
+  resourceGroup: ${AZURE_RESOURCE_GROUP:=${CLUSTER_NAME}}
+  subscriptionID: ${AZURE_SUBSCRIPTION_ID}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: AzureClusterIdentity
+metadata:
+  labels:
+    clusterctl.cluster.x-k8s.io/move-hierarchy: "true"
+  name: cluster-identity
+  namespace: default
+spec:
+  allowedNamespaces: {}
+  clientID: ${MANAGEMENT_IDENTITY}
+  resourceID: test-this-doesnt-matter
+  tenantID: ${AZURE_TENANT_ID}
+  type: UserAssignedMSI
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: AzureMachineTemplate
+metadata:
+  name: ${CLUSTER_NAME}-control-plane
+  namespace: default
+spec:
+  template:
+    spec:
+      dataDisks:
+      - diskSizeGB: 256
+        lun: 0
+        nameSuffix: etcddisk
+      identity: UserAssigned
+      image:
+        computeGallery:
+          gallery: ClusterAPI-f72ceb4f-5159-4c26-a0fe-2ea738f0d019
+          name: capi-ubun2-2404
+          version: ${IMAGE_VERSION:=latest}
+      osDisk:
+        diskSizeGB: 128
+        osType: Linux
+      sshPublicKey: ${AZURE_SSH_PUBLIC_KEY_B64:=""}
+      userAssignedIdentities:
+      - providerID: /subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${CI_RG:=capz-ci}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${USER_IDENTITY:=cloud-provider-user-identity}
+      vmSize: Standard_D2s_v3
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: AzureMachineTemplate
+metadata:
+  annotations:
+    runtime: containerd
+  name: ${CLUSTER_NAME}-md-win
+  namespace: default
+spec:
+  template:
+    metadata:
+      annotations:
+        runtime: containerd
+    spec:
+      image:
+        computeGallery:
+          gallery: ClusterAPI-f72ceb4f-5159-4c26-a0fe-2ea738f0d019
+          name: ${GALLERY_IMAGE_NAME:=capi-win-2022-containerd}
+          version: ${IMAGE_VERSION:=latest}
+      osDisk:
+        diskSizeGB: 128
+        managedDisk:
+          storageAccountType: Premium_LRS
+        osType: Windows
+      sshPublicKey: ${AZURE_SSH_PUBLIC_KEY_B64:=""}
+      vmSize: ${AZURE_NODE_MACHINE_TYPE:-"Standard_D4s_v3"}
