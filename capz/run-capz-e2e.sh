@@ -157,11 +157,17 @@ create_cluster(){
         # create cluster
         log "starting to create cluster"
 
+        # TODO remove once 1.29 is EOL
+        if [[ "${KUBERNETES_VERSION}" =~ ^v1\.29 ]]; then
+            template_root="$SCRIPT_ROOT"/templates/1.29/
+        else
+            template_root="$SCRIPT_ROOT"/templates/
+        fi
        
         # select correct template
-        template="$SCRIPT_ROOT"/templates/"$TEMPLATE"
+        template="$template_root"/"$TEMPLATE"
         if [[ "${IS_PRESUBMIT}" == "true" ]]; then
-            template="$SCRIPT_ROOT"/templates/windows-pr.yaml;
+            template="$template_root"/windows-pr.yaml;
         fi
         if [[ "${GMSA}" == "true" ]]; then
             if [[ "${IS_PRESUBMIT}" == "true" ]]; then
