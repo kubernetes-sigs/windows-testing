@@ -159,9 +159,9 @@ create_cluster(){
 
         # TODO remove once 1.29 is EOL
         if [[ "${KUBERNETES_VERSION}" =~ ^v1\.29 ]]; then
-            template_root="$SCRIPT_ROOT"/templates/1.29/
+            template_root="$SCRIPT_ROOT"/templates/1.29
         else
-            template_root="$SCRIPT_ROOT"/templates/
+            template_root="$SCRIPT_ROOT"/templates
         fi
        
         # select correct template
