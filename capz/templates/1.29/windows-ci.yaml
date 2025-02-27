@@ -414,7 +414,7 @@ spec:
         osType: Linux
       sshPublicKey: ${AZURE_SSH_PUBLIC_KEY_B64:=""}
       userAssignedIdentities:
-      - providerID: /subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${CI_RG:=capz-ci}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${USER_IDENTITY:=cloud-provider-user-identity}
+      - providerID: ${USER_IDENTITY}
       vmSize: Standard_D2s_v3
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
