@@ -16,7 +16,7 @@ ARTIFACTS="${ARTIFACTS:-/var/log/artifacts}"
 
 function onError(){
     az group list | jq ' .[] | .name' | grep ${AZURE_RESOURCE_GROUP}
-    if [ $? -eq 0 ]; then
+    if [ $? -ne 0 ]; then
         az group delete -n ${AZURE_RESOURCE_GROUP} --yes --no-wait
     fi
 }
