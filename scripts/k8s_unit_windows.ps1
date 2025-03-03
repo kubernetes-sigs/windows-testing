@@ -154,6 +154,7 @@ function Run-K8sUnitTests {
             )
 	        if ($skipRegex) {
 		        $args += "--"
+                $args += "--failFast=false"
 		        $args += "--skip"
 		        $args += $skipRegex
             }
