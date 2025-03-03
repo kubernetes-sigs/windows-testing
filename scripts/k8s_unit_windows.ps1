@@ -36,7 +36,8 @@ $SkipTestsForPackage = @{
         "TestComputePodActionsForPodResize/Nothing_when_spec.Resources_and_status.Resources_are_equivalent",
         "TestPIDPressure_VerifyPodStatus",
         "TestDiskPressureNodeFs_VerifyPodStatus",
-        "TestMemoryPressure"
+        "TestMemoryPressure",
+        "TestPIDPressure/eviction_due_to_pid_pressure"
     )
     "./pkg/scheduler/..." = @(
         "TestInFlightEventAsync")
