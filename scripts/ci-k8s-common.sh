@@ -1,19 +1,5 @@
 #!/bin/bash
 
-# AZURE_RESOURCE_GROUP will be set by the calling module
-set -o errexit
-set -o nounset
-set -o pipefail
-set -o errtrace
-
-LOCAL_DIR=${BASH_SOURCE[0]}
-SSH_OPTS="-o ServerAliveInterval=20 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-AZURE_IMG="${WIN_VM_IMG:-$AZURE_DEFAULT_IMG}"
-VM_NAME="winTestVM"
-VM_LOCATION="${VM_LOCATION:-westus2}"
-VM_SIZE="${VM_SIZE:-Standard_D2s_v3}"
-ARTIFACTS="${ARTIFACTS:-/var/log/artifacts}"
-
 function onError(){
     az group list | jq ' .[] | .name' | grep ${AZURE_RESOURCE_GROUP}
     if [ $? -ne 0 ]; then
@@ -32,19 +18,19 @@ ensure_azure_cli() {
         AZ_REPO=$(lsb_release -cs)
         echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ ${AZ_REPO} main" | tee /etc/apt/sources.list.d/azure-cli.list
         apt-get update && apt-get install -y azure-cli
-  	
-        if [[ -n "${AZURE_FEDERATED_TOKEN_FILE:-}" ]]; then
-            echo "Logging in with federated token"
-            # AZURE_CLIENT_ID has been overloaded with Azure Workload ID in the preset-azure-cred-wi.
-            # This is done to avoid exporting Azure Workload ID as AZURE_CLIENT_ID in the test scenarios.
-            az login --service-principal -u "${AZURE_CLIENT_ID}" -t "${AZURE_TENANT_ID}" --federated-token "$(cat "${AZURE_FEDERATED_TOKEN_FILE}")" > /dev/null
+    fi
 
-            # Use --auth-mode "login" in az storage commands to use RBAC permissions of login identity. This is a well known ENV variable the Azure cli
-            export AZURE_STORAGE_AUTH_MODE="login"
-        else
-            echo "AZURE_FEDERATED_TOKEN_FILE environment variable must be set to path location of token file"
-            exit 1
-        fi
+    if [[ -n "${AZURE_FEDERATED_TOKEN_FILE:-}" ]]; then
+        echo "Logging in with federated token"
+        # AZURE_CLIENT_ID has been overloaded with Azure Workload ID in the preset-azure-cred-wi.
+        # This is done to avoid exporting Azure Workload ID as AZURE_CLIENT_ID in the test scenarios.
+        az login --service-principal -u "${AZURE_CLIENT_ID}" -t "${AZURE_TENANT_ID}" --federated-token "$(cat "${AZURE_FEDERATED_TOKEN_FILE}")" > /dev/null
+
+        # Use --auth-mode "login" in az storage commands to use RBAC permissions of login identity. This is a well known ENV variable the Azure cli
+        export AZURE_STORAGE_AUTH_MODE="login"
+    else
+        echo "AZURE_FEDERATED_TOKEN_FILE environment variable must be set to path location of token file"
+        exit 1
     fi
 }
 

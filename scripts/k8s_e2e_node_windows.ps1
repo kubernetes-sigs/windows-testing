@@ -11,9 +11,11 @@ $RepoURL = "https://github.com/$repoOrg/$repoName"
 $LocalPullBranch = "testBranch"
 
 function Prepare-LogsDir {
-    
+    if (Test-Path $LogsDirPath) {
+        Write-Host "Logs directory already exists. Deleting it."
+        Remove-Item -Recurse -Force $LogsDirPath
+    }
     mkdir $LogsDirPath
-
 }
 
 function Clone-TestRepo {

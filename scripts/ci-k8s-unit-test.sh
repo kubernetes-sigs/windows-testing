@@ -1,8 +1,18 @@
 #!/bin/bash
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o errtrace
 
 PROW_BUILD_ID="${BUILD_ID:-000000000000}"
 AZURE_RESOURCE_GROUP="win-unit-test-${PROW_BUILD_ID}"
 AZURE_DEFAULT_IMG="MicrosoftWindowsServer:WindowsServer:2022-datacenter-smalldisk-g2:latest"
+SSH_OPTS="-o ServerAliveInterval=20 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+AZURE_IMG="${WIN_VM_IMG:-$AZURE_DEFAULT_IMG}"
+VM_NAME="winTestVM"
+VM_LOCATION="${VM_LOCATION:-westus2}"
+VM_SIZE="${VM_SIZE:-Standard_D2s_v3}"
+ARTIFACTS="${ARTIFACTS:-/var/log/artifacts}"
 
 SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
 SCRIPT_ROOT=$(dirname "${SCRIPT_PATH}")

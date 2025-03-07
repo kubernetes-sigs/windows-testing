@@ -1,14 +1,18 @@
-# Install containerd, based on: https://github.com/containerd/containerd/blob/main/docs/getting-started.md#installing-containerd-on-windows
+param (
+    [Parameter(Mandatory=$true)]
+    [string]$ContainerdVersion
+)
 
+$ErrorActionPreference = "Stop"
+
+# Install containerd, based on: https://github.com/containerd/containerd/blob/main/docs/getting-started.md#installing-containerd-on-windows
 # If containerd previously installed run:
 Stop-Service containerd -ErrorAction Continue
 sc.exe delete containerd -ErrorAction Continue
 
 # Download and extract desired containerd Windows binaries
-$Version="1.7.13"	# update to your preferred version
-$Arch = "amd64"	# arm64 also available
-curl.exe -LO https://github.com/containerd/containerd/releases/download/v$Version/containerd-$Version-windows-$Arch.tar.gz
-tar.exe xvf .\containerd-$Version-windows-amd64.tar.gz
+curl.exe -LO https://github.com/containerd/containerd/releases/download/v$ContainerdVersion/containerd-$ContainerdVersion-windows-amd64.tar.gz
+tar.exe xvf .\containerd-$ContainerdVersion-windows-amd64.tar.gz
 
 # Copy
 Copy-Item -Path .\bin -Destination $Env:ProgramFiles\containerd -Recurse -Force
