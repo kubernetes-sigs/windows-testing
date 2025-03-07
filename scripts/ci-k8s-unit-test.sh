@@ -13,7 +13,7 @@ AZURE_DEFAULT_IMG="MicrosoftWindowsServer:WindowsServer:2022-datacenter-smalldis
 AZURE_IMG="${WIN_VM_IMG:-$AZURE_DEFAULT_IMG}"
 VM_NAME="winTestVM"
 VM_LOCATION="${VM_LOCATION:-westus2}"
-VM_SIZE="${VM_SIZE:-Standard_D2s_v3}"
+VM_SIZE="Standard_D4as_v5"
 ARTIFACTS="${ARTIFACTS:-/var/log/artifacts}"
 
 # Depending on the job, we may have run only a subset of unit tests.
