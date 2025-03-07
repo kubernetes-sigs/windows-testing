@@ -33,7 +33,7 @@ $SkipTestsForPackage = @{
         "TestCRIListPodStats",
         "TestGetTrustAnchorsBySignerNameCaching",
         "TestGRPCConnIsReused",
-        "TestGRPCMethods/v1alpha4",
+        "TestGRPCMethods",
         "TestKubeletServerCertificateFromFiles",
         "TestManagerWithLocalStorageCapacityIsolationOpen",
         "TestMinReclaim",
