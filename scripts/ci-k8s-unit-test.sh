@@ -15,6 +15,7 @@ VM_NAME="winTestVM"
 VM_LOCATION="${VM_LOCATION:-westus2}"
 VM_SIZE="${VM_SIZE:-Standard_D2s_v3}"
 ARTIFACTS="${ARTIFACTS:-/var/log/artifacts}"
+SKIP_FAILING_TESTS="${SKIP_FAILING_TESTS:-true}"
 
 # Depending on the job, we may have run only a subset of unit tests.
 # If not given, we'll run all of them.
@@ -206,6 +207,13 @@ echo "Install container features in VM"
 run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "powershell.exe -command { Install-WindowsFeature -Name 'Containers' -Restart }"
 wait_for_vm_restart
 
+# Skip failing tests by default
+# Note it must be set to False (not false) for powershell to honor it
+skip_arg="-SkipFailingTests"
+if [ "${SKIP_FAILING_TESTS,,}" = "false" ]; then
+    skip_arg="-SkipFailingTests:False"
+fi
+
 set +e  # Temporarily disable errexit
 # if repo name is windows-testing, the intention is to test updates to the scripts
 # as if they were running as a periodic job against kubernetes/kubernete.
@@ -218,11 +226,11 @@ then
         test_packages_arg="-testPackages ${TEST_PACKAGES}"
     fi
 
-    run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_unit_windows.ps1 -repoName ${REPO_NAME} -repoOrg ${REPO_OWNER} -pullRequestNo ${PULL_NUMBER} -pullBaseRef ${PULL_BASE_REF} ${test_packages_arg}"
+    run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_unit_windows.ps1 ${skip_arg} -repoName ${REPO_NAME} -repoOrg ${REPO_OWNER} -pullRequestNo ${PULL_NUMBER} -pullBaseRef ${PULL_BASE_REF} ${test_packages_arg}"
     exit_code=$?
 else
     echo "Running periodic job"
-    run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} 'c:/k8s_unit_windows.ps1'
+    run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_unit_windows.ps1 ${skip_arg}"
     exit_code=$?
 fi
 set -e  # Re-enable errexit
