@@ -170,6 +170,7 @@ function Run-K8sUnitTests {
             $outputLines += $cmdOutput
             $exitCode = $LASTEXITCODE
             $combinedOutput = $outputLines -join "`n"
+            & prune-junit-xml.exe $outputFile
 
             [PSCustomObject]@{
                 Package  = $pkg
