@@ -210,7 +210,7 @@ spec:
     clusterConfiguration:
       apiServer:
         extraArgs:
-          feature-gates: ${API_SERVER_FEATURE_GATES:-""}
+          feature-gates: VolumeAttributesClass=true
         timeoutForControlPlane: 20m
       controllerManager:
         extraArgs:
