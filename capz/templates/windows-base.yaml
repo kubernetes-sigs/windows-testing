@@ -170,7 +170,7 @@ spec:
     clusterConfiguration:
       apiServer:
         extraArgs:
-          feature-gates: ${API_SERVER_FEATURE_GATES:-""}
+          feature-gates: "VolumeAttributesClass=true"
         timeoutForControlPlane: 20m
       controllerManager:
         extraArgs:
@@ -178,6 +178,7 @@ spec:
           cloud-provider: external
           cluster-name: ${CLUSTER_NAME}
           v: "4"
+          feature-gates: "VolumeAttributesClass=true"
       etcd:
         local:
           dataDir: /var/lib/etcddisk/etcd

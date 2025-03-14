@@ -204,13 +204,14 @@ spec:
     clusterConfiguration:
       apiServer:
         extraArgs:
-          feature-gates: ${API_SERVER_FEATURE_GATES:-""}
+          feature-gates: VolumeAttributesClass=true
         timeoutForControlPlane: 20m
       controllerManager:
         extraArgs:
           allocate-node-cidrs: "false"
           cloud-provider: external
           cluster-name: ${CLUSTER_NAME}
+          feature-gates: VolumeAttributesClass=true
           v: "4"
       etcd:
         local:
