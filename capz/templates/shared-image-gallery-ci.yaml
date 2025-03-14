@@ -217,7 +217,6 @@ spec:
           allocate-node-cidrs: "false"
           cloud-provider: external
           cluster-name: ${CLUSTER_NAME}
-          feature-gates: VolumeAttributesClass=true
           v: "4"
       etcd:
         local:

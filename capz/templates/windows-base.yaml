@@ -178,7 +178,6 @@ spec:
           cloud-provider: external
           cluster-name: ${CLUSTER_NAME}
           v: "4"
-          feature-gates: "VolumeAttributesClass=true"
       etcd:
         local:
           dataDir: /var/lib/etcddisk/etcd
