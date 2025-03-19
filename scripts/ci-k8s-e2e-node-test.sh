@@ -15,7 +15,7 @@ VM_LOCATION="${VM_LOCATION:-westus2}"
 VM_SIZE="${VM_SIZE:-Standard_D2s_v3}"
 ARTIFACTS="${ARTIFACTS:-/var/log/artifacts}"
 CONTAINERD_VERSION="${CONTAINERD_VERSION:-1.7.16}"
-GINKGO_FOCUS="${GINKGO_FOCUS:\[sig-windows\]|\[Feature:Windows\]}"
+GINKGO_FOCUS="${GINKGO_FOCUS:-\[sig-windows\]|\[Feature:Windows\]}"
 
 SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
 SCRIPT_ROOT=$(dirname "${SCRIPT_PATH}")
