@@ -55,6 +55,8 @@ function Run-K8se2enodeWindowsTests {
     
     if ($dryRun -eq "true") {
         Write-Host "Running tests in dry run mode. Skipping test execution."
+        # Create a dummy file to indicate dry ru
+        New-Item -ItemType File -Path (Join-Path -Path $LogsDirPath -ChildPath "dryrun.xml") -Force
         return
     }
 
