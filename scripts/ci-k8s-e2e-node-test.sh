@@ -44,10 +44,10 @@ if [ "${JOB_TYPE}" == "presubmit" ]; then
     if [ "${REPO_NAME}" == "kubernetes" ]; then
         echo "Running a presubmit job against kubernetes/kubernetes"
         run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_e2e_node_windows.ps1 -repoName ${REPO_NAME} -repoOrg ${REPO_OWNER} \
-            -pullRequestNo ${PULL_NUMBER} -pullBaseRef ${PULL_BASE_REF} ${test_packages_arg}"
+            -pullRequestNo ${PULL_NUMBER} -pullBaseRef ${PULL_BASE_REF}"
     else
         echo "Dry-Running a presubmit job against ${REPO_NAME}"
-        run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_e2e_node_windows.ps1 -dryRun true"
+        run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_e2e_node_windows.ps1 -dryRun 'true'"
     fi
     exit_code=$?
 else
