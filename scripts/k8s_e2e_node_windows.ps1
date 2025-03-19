@@ -3,7 +3,6 @@ param (
     [string]$repoOrg = "kubernetes",
     [string]$pullRequestNo,
     [string]$pullBaseRef = "master",
-    [string]$ginkgoFocus,
     [string]$dryRun = "false"
 )
 
@@ -66,7 +65,7 @@ function Run-K8se2enodeWindowsTests {
         --test.paniconexit0 `
         --container-runtime-endpoint "npipe://./pipe/containerd-containerd" `
         --prepull-images=false `
-        --ginkgo.focus "$GINKGO_FOCUS" `
+        --ginkgo.focus "$env:GINKGO_FOCUS" `
         --k8s-bin-dir $env:KUBELET_PATH `
         --report-dir $LogsDirPath `
         --report-complete-junit
