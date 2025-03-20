@@ -21,6 +21,8 @@ SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
 SCRIPT_ROOT=$(dirname "${SCRIPT_PATH}")
 source ${SCRIPT_ROOT}/ci-k8s-common.sh
 
+trap onError ERR 
+
 ensure_azure_cli
 build_resource_group
 build_test_vm
@@ -40,6 +42,8 @@ copy_to ./scripts/k8s_e2e_node_windows.ps1 '/k8s_e2e_node_windows.ps1' ${VM_PUB_
 run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/prepare_env_windows.ps1"
 run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/prepare_e2e_node_windows.ps1 -ContainerdVersion ${CONTAINERD_VERSION}"
 
+set +e  # Temporarily disable errexit
+trap - ERR   # Temporarily disable the ERR trap
 if [ "${JOB_TYPE}" == "presubmit" ]; then
     if [ "${REPO_NAME}" == "kubernetes" ]; then
         echo "Running a presubmit job against kubernetes/kubernetes"
@@ -55,6 +59,9 @@ else
     run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_e2e_node_windows.ps1"
     exit_code=$?
 fi
+set -e  # Re-enable errexit
+trap onError ERR  # Re-enable the ERR trap
+
 copy_from 'c:/Logs/*.xml' ${ARTIFACTS} ${VM_PUB_IP}
 destroy_resource_group
 exit $exit_code

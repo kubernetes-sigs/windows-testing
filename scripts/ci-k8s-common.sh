@@ -1,19 +1,13 @@
 #!/bin/bash
 
-set -o errexit
-set -o nounset
-set -o pipefail
-set -o errtrace
-
-
 function onError(){
     az group list | jq ' .[] | .name' | grep ${AZURE_RESOURCE_GROUP}
-    if [ $? -ne 0 ]; then
+    if [ $? -eq 0 ]; then
         az group delete -n ${AZURE_RESOURCE_GROUP} --yes --no-wait
     fi
 }
 
-trap onError ERR 
+
 
 ensure_azure_cli() {
     if [[ -z "$(command -v az)" ]]; then
