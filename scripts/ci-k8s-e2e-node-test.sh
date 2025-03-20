@@ -12,7 +12,7 @@ SSH_OPTS="-o ServerAliveInterval=20 -o StrictHostKeyChecking=no -o UserKnownHost
 AZURE_IMG="${WIN_VM_IMG:-$AZURE_DEFAULT_IMG}"
 VM_NAME="winTestVM"
 VM_LOCATION="${VM_LOCATION:-westus2}"
-VM_SIZE="${VM_SIZE:-Standard_D2s_v3}"
+VM_SIZE="${VM_SIZE:-Standard_D8s_v5}"
 ARTIFACTS="${ARTIFACTS:-/var/log/artifacts}"
 CONTAINERD_VERSION="${CONTAINERD_VERSION:-1.7.16}"
 export GINKGO_FOCUS="${GINKGO_FOCUS:-\[sig-windows\]|\[Feature:Windows\]}"
