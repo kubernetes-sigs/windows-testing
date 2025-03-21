@@ -1,4 +1,8 @@
-$PACKAGES= @{ git = ""; golang = "1.23.6"; make = "" }
+param (
+    [string]$goVersion = "1.23.6"
+)
+
+$PACKAGES= @{ git = ""; golang = $goVersion; make = "" }
 
 Write-Host "Downloading chocolatey package"
 curl.exe -L "https://packages.chocolatey.org/chocolatey.0.10.15.nupkg" -o 'c:\choco.zip'
