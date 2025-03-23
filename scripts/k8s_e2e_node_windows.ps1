@@ -11,6 +11,8 @@ $RepoPath = "c:/$repoName"
 $RepoURL = "https://github.com/$repoOrg/$repoName"
 $LocalPullBranch = "testBranch"
 
+$ErrorActionPreference = "Stop"
+
 function Prepare-LogsDir {
     if (Test-Path $LogsDirPath) {
         Write-Host "Logs directory already exists. Deleting it."

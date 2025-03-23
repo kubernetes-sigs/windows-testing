@@ -39,6 +39,11 @@ copy_to ./scripts/prepare_env_windows.ps1 '/prepare_env_windows.ps1' ${VM_PUB_IP
 copy_to ./scripts/prepare_e2e_node_windows.ps1 '/prepare_e2e_node_windows.ps1' ${VM_PUB_IP}
 copy_to ./scripts/k8s_e2e_node_windows.ps1 '/k8s_e2e_node_windows.ps1' ${VM_PUB_IP}
 
+# Get the Go version from the kubekins image that runs this script and pass that to prepare_env_windows.ps1
+GO_VERSION_RAW=$(go version | awk '{print $3}')
+GO_VERSION=${GO_VERSION_RAW#go}
+echo "Using Go version: ${GO_VERSION}"
+run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/prepare_env_windows.ps1 -goVersion ${GO_VERSION}"
 run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/prepare_env_windows.ps1"
 run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/prepare_e2e_node_windows.ps1 -ContainerdVersion ${CONTAINERD_VERSION}"
 
