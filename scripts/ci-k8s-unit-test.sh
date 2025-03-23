@@ -35,7 +35,11 @@ test_ssh_connection
 echo "Test VM created. SSH connection working"
 copy_to ./scripts/prepare_env_windows.ps1 '/prepare_env_windows.ps1' ${VM_PUB_IP}
 copy_to ./scripts/k8s_unit_windows.ps1 '/k8s_unit_windows.ps1' ${VM_PUB_IP}
-run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} 'c:/prepare_env_windows.ps1'
+# Get the Go version from the kubekins image that runs this script and pass that to prepare_env_windows.ps1
+GO_VERSION_RAW=$(go version | awk '{print $3}')
+GO_VERSION=${GO_VERSION_RAW#go}
+echo "Using Go version: ${GO_VERSION}"
+run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/prepare_env_windows.ps1 -goVersion ${GO_VERSION}"
 
 echo "Install container features in VM"
 run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "powershell.exe -command { Install-WindowsFeature -Name 'Containers' -Restart }"
