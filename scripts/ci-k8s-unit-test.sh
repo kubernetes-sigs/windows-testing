@@ -24,6 +24,8 @@ SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
 SCRIPT_ROOT=$(dirname "${SCRIPT_PATH}")
 source ${SCRIPT_ROOT}/ci-k8s-common.sh
 
+trap onError ERR 
+
 ensure_azure_cli
 build_resource_group
 build_test_vm
@@ -51,6 +53,7 @@ if [ "${SKIP_FAILING_TESTS,,}" = "false" ]; then
 fi
 
 set +e  # Temporarily disable errexit
+trap - ERR   # Temporarily disable the ERR trap
 # if repo name is windows-testing, the intention is to test updates to the scripts
 # as if they were running as a periodic job against kubernetes/kubernete.
 if [ "${JOB_TYPE}" == "presubmit" ] && [ "${REPO_NAME}" != "windows-testing" ]
@@ -70,6 +73,7 @@ else
     exit_code=$?
 fi
 set -e  # Re-enable errexit
+trap onError ERR  # Re-enable the ERR trap
 
 copy_from 'c:/Logs/*.xml' ${ARTIFACTS} ${VM_PUB_IP}
 destroy_resource_group
