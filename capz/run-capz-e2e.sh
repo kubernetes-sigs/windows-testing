@@ -286,13 +286,26 @@ apply_workload_configuraiton(){
     if [[ "${IS_PRESUBMIT}" == "true" ]]; then
         sleep 30s
     fi
-    "$TOOLS_BIN_DIR"/helm upgrade calico projectcalico/tigera-operator --version "$CALICO_VERSION" --namespace tigera-operator -f "${CAPZ_DIR}"/templates/addons/calico/values.yaml  --create-namespace  --install --debug
-    timeout --foreground 300 bash -c "until kubectl get IPAMConfig -A > /dev/null 2>&1; do sleep 3; done"
-    # needed un
-    kubectl get configmap kubeadm-config --namespace=kube-system -o yaml | sed 's/namespace: kube-system/namespace: calico-system/' | kubectl apply --namespace=calico-system -f - || true
+    "$TOOLS_BIN_DIR"/helm upgrade calico projectcalico/tigera-operator --version "$CALICO_VERSION" --namespace tigera-operator -f "$SCRIPT_ROOT"/templates/calico/values.yaml  --create-namespace  --install --debug
+    timeout --foreground 300 bash -c "until kubectl get ipamconfigs default -n default > /dev/null 2>&1; do sleep 3; done"
 
-    log "installing windows calico"
-    kubectl apply -f "${CAPZ_DIR}"/templates/addons/windows/calico/calico.yaml
+    #required for windows no way to do it via operator https://github.com/tigera/operator/issues/3113
+    kubectl patch ipamconfigs default --type merge --patch='{"spec": {"strictAffinity": true}}'
+
+    # get the info for the API server
+    servername=$(kubectl config view -o json | jq -r '.clusters[0].cluster.server | sub("https://"; "") | split(":") | .[0]')
+    port=$(kubectl config view -o json | jq -r '.clusters[0].cluster.server | sub("https://"; "") | split(":") | .[1]')
+
+    kubectl apply -f - << EOF
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: kubernetes-services-endpoint
+  namespace: tigera-operator
+data:
+  KUBERNETES_SERVICE_HOST: "${servername}"
+  KUBERNETES_SERVICE_PORT: "${port}"
+EOF
 
     # Only patch up kube-proxy if $WINDOWS_KPNG is unset
     if [[ -z "$KPNG" ]]; then
