@@ -259,6 +259,10 @@ create_cluster(){
         cp "$SCRIPT_ROOT"/"${CLUSTER_NAME}-template.yaml" "${ARTIFACTS}"/clusters/bootstrap || true
 
         log "wait for azuremachines to report ready"
+        while [[ $(kubectl get azuremachines -ojson | jq '.items | length') -ne "3" ]]; do
+            sleep 5
+        done
+        kubectl get azuremachines -A
         kubectl wait --for=condition=Ready azuremachines --all -A --timeout=15m
 
         log "cluster creation complete"
