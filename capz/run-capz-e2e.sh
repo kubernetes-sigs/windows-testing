@@ -259,7 +259,7 @@ create_cluster(){
         cp "$SCRIPT_ROOT"/"${CLUSTER_NAME}-template.yaml" "${ARTIFACTS}"/clusters/bootstrap || true
 
         log "wait for azuremachines to report ready"
-        kubectl wait --for=condition=Ready azuremachines --all --timeout=15m
+        kubectl wait --for=condition=Ready azuremachines --all -A --timeout=15m
 
         log "cluster creation complete"
     fi
