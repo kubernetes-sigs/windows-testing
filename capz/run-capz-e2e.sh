@@ -257,6 +257,13 @@ create_cluster(){
         # copy generated template to logs
         mkdir -p "${ARTIFACTS}"/clusters/bootstrap
         cp "$SCRIPT_ROOT"/"${CLUSTER_NAME}-template.yaml" "${ARTIFACTS}"/clusters/bootstrap || true
+
+        log "wait for azuremachines to show up"    
+        timeout --foreground 300 bash -c "wait_for_azuremachines_ready"
+
+        log "wait for azuremachines to report ready"
+        kubectl wait --for=condition=Ready azuremachines --all -A --timeout=15m
+
         log "cluster creation complete"
     fi
 
@@ -571,5 +578,19 @@ set_ci_version() {
     fi
 }
 
+wait_for_azuremachines_ready() {
+    while true; do
+        count=$(kubectl get azuremachines -A -ojson | jq '.items | length' 2>/dev/null || echo 0)
+        if [[ "$count" -eq 3 ]]; then
+            break
+        fi
+        log "Waiting for azuremachines to be be created. Current count: $count"
+        kubectl get azuremachines -A || log "Failed to fetch azuremachines"
+        sleep 5
+    done
+}
+
+export -f log
+export -f wait_for_azuremachines_ready
 trap run_capz_e2e_cleanup EXIT
 main
