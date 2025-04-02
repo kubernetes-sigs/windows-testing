@@ -259,17 +259,8 @@ create_cluster(){
         cp "$SCRIPT_ROOT"/"${CLUSTER_NAME}-template.yaml" "${ARTIFACTS}"/clusters/bootstrap || true
 
         log "wait for azuremachines to show up"    
-        timeout --foreground 300 bash -c '
-    while true; do
-        count=$(kubectl get azuremachines -ojson | jq ".items | length" 2>/dev/null || echo 0)
-        if [[ "$count" -eq 3 ]]; then
-            break
-        fi
-        echo "Waiting for azuremachines to be ready. Current count: $count"
-        kubectl get azuremachines -A || echo "Failed to fetch azuremachines"
-        sleep 5
-    done
-'
+        timeout --foreground 300 bash -c "wait_for_azuremachines_ready"
+        
         log "wait for azuremachines to report ready"
         kubectl wait --for=condition=Ready azuremachines --all -A --timeout=15m
 
@@ -290,6 +281,19 @@ create_cluster(){
     fi
     export KUBECONFIG="$SCRIPT_ROOT"/"${CLUSTER_NAME}".kubeconfig
 }
+
+wait_for_azuremachines_ready() {
+    while true; do
+        count=$(kubectl get azuremachines -ojson | jq '.items | length' 2>/dev/null || echo 0)
+        if [[ "$count" -eq 3 ]]; then
+            break
+        fi
+        log "Waiting for azuremachines to be ready. Current count: $count"
+        kubectl get azuremachines -A || log "Failed to fetch azuremachines"
+        sleep 5
+    done
+}
+
 
 apply_workload_configuraiton(){
     log "wait for cluster to stabilize"
