@@ -580,11 +580,11 @@ set_ci_version() {
 
 wait_for_azuremachines_ready() {
     while true; do
-        count=$(kubectl get azuremachines -ojson | jq '.items | length' 2>/dev/null || echo 0)
+        count=$(kubectl get azuremachines -A -ojson | jq '.items | length' 2>/dev/null || echo 0)
         if [[ "$count" -eq 3 ]]; then
             break
         fi
-        log "Waiting for azuremachines to be ready. Current count: $count"
+        log "Waiting for azuremachines to be be created. Current count: $count"
         kubectl get azuremachines -A || log "Failed to fetch azuremachines"
         sleep 5
     done
