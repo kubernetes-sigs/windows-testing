@@ -476,7 +476,7 @@ wait_for_nodes() {
         log "Current registered nodes: ${current_nodes}; expecting ${total_nodes}."
 
         log "Checking for VMs with provisioningState 'Failed'..."
-        failed_vms=$(az vm --resource-group "$CLUSTER_NAME" list --resource--query "[?provisioningState=='Failed']" -o json)
+        failed_vms=$(az vm list  --resource-group "$CLUSTER_NAME" --query "[?provisioningState=='Failed']" -o json)
         failed_count=$(echo "$failed_vms" | jq 'length')
         if [[ "${failed_count}" -gt 0 ]]; then
             log "Found ${failed_count} failed VM(s): ${failed_vms}. Force deleting them..."
