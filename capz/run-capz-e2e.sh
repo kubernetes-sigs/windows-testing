@@ -482,7 +482,7 @@ wait_for_nodes() {
             log "Found ${failed_count} failed VM(s): ${failed_vms}. Force deleting them..."
             for vm in $(echo "$failed_vms" | jq -r '.[].id'); do
                 log "Force deleting VM with id: ${vm}"
-                az vm delete --ids "${vm}" --yes --force-deletion
+                az vm delete --ids "${vm}" --yes --force-deletion yes
             done
         else
             log "No failed VMs detected."
