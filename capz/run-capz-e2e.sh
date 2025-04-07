@@ -472,7 +472,22 @@ wait_for_nodes() {
     # Ensure that all nodes are registered with the API server before checking for readiness
     local total_nodes="$((CONTROL_PLANE_MACHINE_COUNT + WINDOWS_WORKER_MACHINE_COUNT))"
     while [[ $(kubectl get nodes -ojson | jq '.items | length') -ne "${total_nodes}" ]]; do
-        sleep 10
+        current_nodes=$(kubectl get nodes -ojson | jq '.items | length')
+        log "Current registered nodes: ${current_nodes}; expecting ${total_nodes}."
+
+        log "Checking for VMs with provisioningState 'Failed'..."
+        failed_vms=$(az vm --resource-group "$CLUSTER_NAME" list --resource--query "[?provisioningState=='Failed']" -o json)
+        failed_count=$(echo "$failed_vms" | jq 'length')
+        if [[ "${failed_count}" -gt 0 ]]; then
+            log "Found ${failed_count} failed VM(s): ${failed_vms}. Force deleting them..."
+            for vm in $(echo "$failed_vms" | jq -r '.[].id'); do
+                log "Force deleting VM with id: ${vm}"
+                az vm delete --ids "${vm}" --yes --force-deletion
+            done
+        else
+            log "No failed VMs detected."
+        fi
+        sleep 45
     done
 
     kubectl get nodes -o wide
