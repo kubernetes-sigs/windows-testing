@@ -465,15 +465,21 @@ run_e2e_test() {
 }
 
 wait_for_nodes() {
+
+
     log "Waiting for ${CONTROL_PLANE_MACHINE_COUNT} control plane machine(s) and ${WINDOWS_WORKER_MACHINE_COUNT} windows machine(s) to become Ready"
     kubectl get nodes -o wide
     kubectl get pods -A -o wide
-    
+
+    # switch KUBECONFIG to point to management cluster so we can check for provisioning status on
+    # if any of the machines are in a failed state
+    az aks get-credentials --resource-group "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" --overwrite-existing
+
     # Ensure that all nodes are registered with the API server before checking for readiness
     local total_nodes="$((CONTROL_PLANE_MACHINE_COUNT + WINDOWS_WORKER_MACHINE_COUNT))"
-    while [[ $(kubectl get nodes -ojson | jq '.items | length') -ne "${total_nodes}" ]]; do
-        current_nodes=$(kubectl get nodes -ojson | jq '.items | length')
-        log "Current registered nodes: ${current_nodes}; expecting ${total_nodes}."
+    while [[ $(kubectl get AzureMachine -ojson | jq '.items[] | select(.status.ready=="True") | length') -ne "${total_nodes}" ]]; do
+        current_nodes=$(kubectl get AzureMachine -ojson | jq '.items[] | select(.status.ready=="True") | length')
+        log "Current registered AzureMachine count: ${current_nodes}; expecting ${total_nodes}."
 
         log "Checking for AzureMachines in Failed state..."
         failed_machines=$(kubectl get AzureMachine -o json | jq -r '.items[] | select(.status.state=="Failed") | .metadata.name')
@@ -491,6 +497,9 @@ wait_for_nodes() {
         fi
         sleep 45
     done
+
+    # switch kubeconfig back to workload cluster 
+    export KUBECONFIG="$SCRIPT_ROOT"/"${CLUSTER_NAME}".kubeconfig
 
     kubectl get nodes -o wide
     kubectl get pods -A -o wide
