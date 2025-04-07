@@ -477,13 +477,12 @@ wait_for_nodes() {
 
     # Ensure that all nodes are registered with the API server before checking for readiness
     local total_nodes="$((CONTROL_PLANE_MACHINE_COUNT + WINDOWS_WORKER_MACHINE_COUNT))"
-    while [[ $(kubectl get AzureMachine -ojson | jq '.items[] | select(.status.ready=="True") | length') -ne "${total_nodes}" ]]; do
-        current_nodes=$(kubectl get AzureMachine -ojson | jq '.items[] | select(.status.ready=="True") | length')
+    while [[ $(kubectl get AzureMachine -ojson | jq '[.items[] | select(.status.ready=="True")] | length') -ne "${total_nodes}" ]]; do
+        current_nodes=$(kubectl get AzureMachine -ojson | jq '[.items[] | select(.status.ready=="True")] | length')
         log "Current registered AzureMachine count: ${current_nodes}; expecting ${total_nodes}."
 
         log "Checking for AzureMachines in Failed state..."
         failed_machines=$(kubectl get AzureMachine -o json | jq -r '.items[] | select(.status.state=="Failed") | .metadata.name')
-        failed_count=$(echo "$failed_vms" | jq 'length')
         if [[ -n "${failed_machines}" ]]; then
             for machine in ${failed_machines}; do
                 kubectl describe AzureMachine "${machine}"
