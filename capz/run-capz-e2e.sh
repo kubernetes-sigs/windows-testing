@@ -475,17 +475,19 @@ wait_for_nodes() {
         current_nodes=$(kubectl get nodes -ojson | jq '.items | length')
         log "Current registered nodes: ${current_nodes}; expecting ${total_nodes}."
 
-        log "Checking for VMs with provisioningState 'Failed'..."
-        failed_vms=$(az vm list  --resource-group "$CLUSTER_NAME" --query "[?provisioningState=='Failed']" -o json)
+        log "Checking for AzureMachines in Failed state..."
+        failed_machines=$(kubectl get AzureMachine -o json | jq -r '.items[] | select(.status.state=="Failed") | .metadata.name')
         failed_count=$(echo "$failed_vms" | jq 'length')
-        if [[ "${failed_count}" -gt 0 ]]; then
-            log "Found ${failed_count} failed VM(s): ${failed_vms}. Force deleting them..."
-            for vm in $(echo "$failed_vms" | jq -r '.[].id'); do
-                log "Force deleting VM with id: ${vm}"
-                az vm delete --ids "${vm}" --yes --force-deletion yes
+        if [[ -n "${failed_machines}" ]]; then
+            for machine in ${failed_machines}; do
+                kubectl describe AzureMachine "${machine}"
+                log "Force deleting failed AzureMachine: ${machine}"
+                kubectl delete AzureMachine "${machine}"
+                log "Force deleting corresponding Machine: ${machine}"
+                kubectl delete Machine "${machine}"
             done
         else
-            log "No failed VMs detected."
+            log "No failed AzureMachines detected."
         fi
         sleep 45
     done
