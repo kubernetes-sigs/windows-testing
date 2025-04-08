@@ -484,7 +484,7 @@ wait_for_nodes() {
         log "Current registered AzureMachine count: ${current_nodes}; expecting ${total_nodes}."
 
         log "Checking for AzureMachines in Failed state..."
-        failed_machines=$(kubectl get AzureMachine -o json | jq -r '.items[] | select(.status.vmState=="Failed") | .metadata.name')
+        failed_machines=$(kubectl get AzureMachine --all-namespaces -o json | jq -r '.items[] | select(.status.vmState=="Failed") | .metadata.name')
         if [[ -n "${failed_machines}" ]]; then
             for machine in ${failed_machines}; do
                 kubectl describe AzureMachine "${machine}"
