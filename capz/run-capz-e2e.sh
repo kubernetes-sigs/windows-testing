@@ -487,11 +487,12 @@ wait_for_nodes() {
         failed_machines=$(kubectl get AzureMachine --all-namespaces -o json | jq -r '.items[] | select(.status.vmState=="Failed") | .metadata.name')
         if [[ -n "${failed_machines}" ]]; then
             for machine in ${failed_machines}; do
-                kubectl describe AzureMachine "${machine}"
+                log "AzureMachine ${machine} is in Failed state. Attempting delete..."
+                kubectl -n default describe  AzureMachine "${machine}"
                 log "Force deleting failed AzureMachine: ${machine}"
-                kubectl delete AzureMachine "${machine}"
+                kubectl -n default delete AzureMachine "${machine}"
                 log "Force deleting corresponding Machine: ${machine}"
-                kubectl delete Machine "${machine}"
+                kubectl -n default delete Machine "${machine}"
             done
         else
             log "No failed AzureMachines detected."
