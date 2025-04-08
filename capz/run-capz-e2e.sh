@@ -473,13 +473,14 @@ wait_for_nodes() {
 
     # switch KUBECONFIG to point to management cluster so we can check for provisioning status on
     # if any of the machines are in a failed state
-    az aks get-credentials --resource-group "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" -f management.kubeconfig
+    az aks get-credentials --resource-group "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" -f management.kubeconfig --overwrite-existing
     export KUBECONFIG=./management.kubeconfig
-    kubectl get AzureMachines
+
+    kubectl get AzureMachines --all-namespaces
     # Ensure that all nodes are registered with the API server before checking for readiness
     local total_nodes="$((CONTROL_PLANE_MACHINE_COUNT + WINDOWS_WORKER_MACHINE_COUNT))"
-    while [[ $(kubectl get azuremachines -o json | jq '[.items[] | select(.status.ready == true and .status.vmState == "Succeeded")] | length') -ne "${total_nodes}" ]]; do
-        current_nodes=$(kubectl get azuremachines -o json | jq '[.items[] | select(.status.ready == true and .status.vmState == "Succeeded")] | length')
+    while [[ $(kubectl get azuremachines --all-namespaces -o json | jq '[.items[] | select(.status.ready == true and .status.vmState == "Succeeded")] | length') -ne "${total_nodes}" ]]; do
+        current_nodes=$(kubectl get azuremachines --all-namespaces -o json | jq '[.items[] | select(.status.ready == true and .status.vmState == "Succeeded")] | length')
         log "Current registered AzureMachine count: ${current_nodes}; expecting ${total_nodes}."
 
         log "Checking for AzureMachines in Failed state..."
