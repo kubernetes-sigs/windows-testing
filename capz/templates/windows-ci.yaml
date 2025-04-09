@@ -431,10 +431,16 @@ spec:
       annotations:
         runtime: containerd
     spec:
+      dataDisks:
+      - diskSizeGB: 4
+        lun: 0
+        managedDisk:
+          storageAccountType: Standard_LRS
+        nameSuffix: bootstrapconfig
       identity: UserAssigned
       image:
         computeGallery:
-          gallery: ClusterAPI-f72ceb4f-5159-4c26-a0fe-2ea738f0d019
+          gallery: sigwin-068aede1-4405-4abc-901e-2bf263de589a
           name: ${GALLERY_IMAGE_NAME:=capi-win-2022-containerd}
           version: ${IMAGE_VERSION:=latest}
       osDisk:
