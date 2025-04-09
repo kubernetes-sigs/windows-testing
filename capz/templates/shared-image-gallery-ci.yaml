@@ -437,6 +437,12 @@ spec:
       annotations:
         runtime: containerd
     spec:
+      dataDisks:
+      - diskSizeGB: 4
+        lun: 0
+        managedDisk:
+          storageAccountType: Standard_LRS
+        nameSuffix: bootstrapconfig
       identity: UserAssigned
       image:
         sharedGallery:
