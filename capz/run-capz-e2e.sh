@@ -468,43 +468,15 @@ run_e2e_test() {
 }
 
 wait_for_nodes() {
-
-
     log "Waiting for ${CONTROL_PLANE_MACHINE_COUNT} control plane machine(s) and ${WINDOWS_WORKER_MACHINE_COUNT} windows machine(s) to become Ready"
     kubectl get nodes -o wide
     kubectl get pods -A -o wide
-
-    # switch KUBECONFIG to point to management cluster so we can check for provisioning status on
-    # if any of the machines are in a failed state
-    az aks get-credentials --resource-group "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" -f management.kubeconfig --overwrite-existing
-    export KUBECONFIG=./management.kubeconfig
-
-    kubectl get AzureMachines --all-namespaces
+    
     # Ensure that all nodes are registered with the API server before checking for readiness
     local total_nodes="$((CONTROL_PLANE_MACHINE_COUNT + WINDOWS_WORKER_MACHINE_COUNT))"
-    while [[ $(kubectl get azuremachines --all-namespaces -o json | jq '[.items[] | select(.status.ready == true and .status.vmState == "Succeeded")] | length') -ne "${total_nodes}" ]]; do
-        current_nodes=$(kubectl get azuremachines --all-namespaces -o json | jq '[.items[] | select(.status.ready == true and .status.vmState == "Succeeded")] | length')
-        log "Current registered AzureMachine count: ${current_nodes}; expecting ${total_nodes}."
-
-        log "Checking for AzureMachines in Failed state..."
-        failed_machines=$(kubectl get AzureMachine --all-namespaces -o json | jq -r '.items[] | select(.status.vmState=="Failed") | .metadata.name')
-        if [[ -n "${failed_machines}" ]]; then
-            for machine in ${failed_machines}; do
-                log "AzureMachine ${machine} is in Failed state. Attempting delete..."
-                kubectl -n default describe  AzureMachine "${machine}"
-                log "Force deleting failed AzureMachine: ${machine}"
-                kubectl -n default delete AzureMachine "${machine}"
-                log "Force deleting corresponding Machine: ${machine}"
-                kubectl -n default delete Machine "${machine}"
-            done
-        else
-            log "No failed AzureMachines detected."
-        fi
-        sleep 45
+    while [[ $(kubectl get nodes -ojson | jq '.items | length') -ne "${total_nodes}" ]]; do
+        sleep 10
     done
-
-    # switch kubeconfig back to workload cluster 
-    export KUBECONFIG="$SCRIPT_ROOT"/"${CLUSTER_NAME}".kubeconfig
 
     kubectl get nodes -o wide
     kubectl get pods -A -o wide
