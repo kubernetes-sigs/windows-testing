@@ -36,7 +36,8 @@ main() {
 
     # other config
     export ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
-    export CLUSTER_NAME="${CLUSTER_NAME:-capz-conf-$(head /dev/urandom | LC_ALL=C tr -dc a-z0-9 | head -c 6 ; echo '')}"
+    export SKIP_CREATE="true"
+    export CLUSTER_NAME="capz-conf-tmlt70"
     export IMAGE_SKU="${IMAGE_SKU:-"${WINDOWS_SERVER_VERSION:=windows-2019}-containerd-gen1"}"
     export GALLERY_IMAGE_NAME="${GALLERY_IMAGE_NAME:-"${WINDOWS_SERVER_VERSION//windows/capi-win}-containerd"}"
     
@@ -260,6 +261,11 @@ create_cluster(){
         mkdir -p "${ARTIFACTS}"/clusters/bootstrap
         cp "$SCRIPT_ROOT"/"${CLUSTER_NAME}-template.yaml" "${ARTIFACTS}"/clusters/bootstrap || true
         log "cluster creation complete"
+    else
+        log "skipping cluster creation"
+        az aks get-credentials --resource-group "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" --overwrite-existing
+        log "wait for workload cluster config"
+        timeout --foreground 300 bash -c "until $TOOLS_BIN_DIR/clusterctl get kubeconfig ${CLUSTER_NAME} > ${CLUSTER_NAME}.kubeconfig 2>/dev/null; do sleep 3; done"
     fi
 
     # set the SSH bastion that can be used to SSH into nodes
@@ -278,6 +284,10 @@ create_cluster(){
 }
 
 apply_workload_configuraiton(){
+    if [[ "$SKIP_CREATE" == "true" ]]; then
+        log "skipping workload configuration"
+        return
+    fi
     log "wait for cluster to stabilize"
     timeout --foreground 300 bash -c "until kubectl get --raw /version --request-timeout 5s > /dev/null 2>&1; do sleep 3; done"
     
@@ -327,6 +337,10 @@ EOF
 }
 
 apply_cloud_provider_azure() {
+    if [[ "$SKIP_CREATE" == "true" ]]; then
+        log "skipping cloud provider azure configuration"
+        return
+    fi
     echo "KUBERNETES_VERSION = ${KUBERNETES_VERSION}"
 
     echo "Building cloud provider images"
@@ -467,7 +481,10 @@ run_e2e_test() {
 }
 
 wait_for_nodes() {
-
+    if [[ "$SKIP_CREATE" == "true" ]]; then
+        log "skipping waiting for nodes"
+        return
+    fi
 
     log "Waiting for ${CONTROL_PLANE_MACHINE_COUNT} control plane machine(s) and ${WINDOWS_WORKER_MACHINE_COUNT} windows machine(s) to become Ready"
     kubectl get nodes -o wide
