@@ -37,7 +37,7 @@ main() {
     # other config
     export ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
     export SKIP_CREATE="true"
-    export CLUSTER_NAME="capz-conf-tmlt70"
+    export CLUSTER_NAME="capz-conf-hy4yex"
     export IMAGE_SKU="${IMAGE_SKU:-"${WINDOWS_SERVER_VERSION:=windows-2019}-containerd-gen1"}"
     export GALLERY_IMAGE_NAME="${GALLERY_IMAGE_NAME:-"${WINDOWS_SERVER_VERSION//windows/capi-win}-containerd"}"
     
@@ -421,11 +421,11 @@ run_e2e_test() {
 
         if [[ ! "${RUN_SERIAL_TESTS:-}" == "true" ]]; then
             # Default GINKGO settings for non-serial jobs
-            export GINKGO_FOCUS=${GINKGO_FOCUS:-"\[Conformance\]|\[NodeConformance\]|\[sig-windows\]|\[sig-apps\].CronJob|\[sig-api-machinery\].ResourceQuota|\[sig-scheduling\].SchedulerPreemption"}
+            export GINKGO_FOCUS="\[Conformance\]|\[NodeConformance\]|\[sig-windows\]|\[sig-apps\].CronJob|\[sig-api-machinery\].ResourceQuota|\[sig-scheduling\].SchedulerPreemption"
             export GINKGO_SKIP=${GINKGO_SKIP:-"\[LinuxOnly\]|\[Serial\]|\[Slow\]|\[Excluded:WindowsDocker\]|\[Feature:DynamicResourceAllocation\]|Networking.Granular.Checks(.*)node-pod.communication|Guestbook.application.should.create.and.stop.a.working.application|device.plugin.for.Windows|Container.Lifecycle.Hook.when.create.a.pod.with.lifecycle.hook.should.execute(.*)http.hook.properly|\[sig-api-machinery\].Garbage.collector|\[Alpha\]|\[Beta\].\[Feature:OffByDefault\]"}
             export GINKGO_NODES="${GINKGO_NODES:-"4"}"
         else
-            export GINKGO_FOCUS=${GINKGO_FOCUS:-"(\[sig-windows\]|\[sig-scheduling\].SchedulerPreemption|\[sig-autoscaling\].\[Feature:HPA\]|\[sig-apps\].CronJob).*(\[Serial\]|\[Slow\])|(\[Serial\]|\[Slow\]).*(\[Conformance\]|\[NodeConformance\])|\[sig-api-machinery\].Garbage.collector"}
+            export GINKGO_FOCUS="\[sig-windows\]|\[sig-scheduling\].SchedulerPreemption|\[sig-autoscaling\].\[Feature:HPA\]|\[sig-apps\].CronJob).*(\[Serial\]|\[Slow\])|(\[Serial\]|\[Slow\]).*(\[Conformance\]|\[NodeConformance\])|\[sig-api-machinery\].Garbage.collector"
             export GINKGO_SKIP=${GINKGO_SKIP:-"\[LinuxOnly\]|\[Excluded:WindowsDocker\]|device.plugin.for.Windows|should.be.able.to.gracefully.shutdown.pods.with.various.grace.periods|\[Alpha\]|\[Beta\].\[Feature:OffByDefault\]"}
             export GINKGO_NODES="${GINKGO_NODES:-"1"}"
         fi
