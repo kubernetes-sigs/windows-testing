@@ -131,8 +131,10 @@ run_capz_e2e_cleanup() {
 
     SKIP_CLEANUP="${SKIP_CLEANUP:-"false"}"
     if [[ ! "$SKIP_CLEANUP" == "true" ]]; then
-        log "removing role assignment"
-        az role assignment delete --ids "$assignmentId" || true
+        log "removing role assignment if the RG is not locked"
+        if ! az lock list --resource-group "$CLUSTER_NAME" --output json | jq -e '.[] | select(.level == "CanNotDelete")' > /dev/null; then
+            az role assignment delete --ids "$assignmentId" || true
+        fi
 
         log "deleting cluster"
         az group delete --name "$CLUSTER_NAME" --no-wait -y --force-deletion-types=Microsoft.Compute/virtualMachines --force-deletion-types=Microsoft.Compute/virtualMachineScaleSets || true
