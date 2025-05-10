@@ -345,3 +345,5 @@ spec:
       userAssignedIdentities:
       - providerID: ${USER_IDENTITY}
       vmSize: ${AZURE_NODE_MACHINE_TYPE:-"Standard_D4s_v3"}
+      additionalTags:
+        AzSecPackAutoConfigReady: true

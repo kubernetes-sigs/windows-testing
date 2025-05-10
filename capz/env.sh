@@ -1,0 +1,1 @@
+    export AZURE_LOCATION="uksouth"
