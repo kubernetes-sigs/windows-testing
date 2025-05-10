@@ -11,5 +11,5 @@ spec:
       image:
         computeGallery:
           name: "${GALLERY_IMAGE_NAME:=capi-win-2022-containerd}"
-          gallery: "ClusterAPI-f72ceb4f-5159-4c26-a0fe-2ea738f0d019"
+          gallery: "sigwin-068aede1-4405-4abc-901e-2bf263de589a"
           version: "${IMAGE_VERSION:=latest}"

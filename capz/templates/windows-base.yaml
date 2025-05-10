@@ -341,6 +341,12 @@ spec:
         managedDisk:
           storageAccountType: Premium_LRS
         osType: Windows
+      dataDisks: 
+        - nameSuffix: bootstrapconfig
+          diskSizeGB: 4
+          managedDisk:
+            storageAccountType: Standard_LRS
+          lun: 0
       sshPublicKey: ${AZURE_SSH_PUBLIC_KEY_B64:=""}
       userAssignedIdentities:
       - providerID: ${USER_IDENTITY}
