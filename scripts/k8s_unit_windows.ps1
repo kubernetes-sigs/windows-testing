@@ -77,7 +77,9 @@ function Prepare-LogsDir {
 
 function Clone-TestRepo {
     Write-Host "Cloning $repoName repo"
-    git clone --branch $pullBaseRef $RepoURL $RepoPath --depth=1
+    # Do NOT use --depth (shallow clone), otherwise the relationship between tags and commits may be incomplete.
+    # Because it will cause Get-VersionLdflags to fail to get correct gitVersion and gitMajor/gitMinor values.
+    git clone --branch $pullBaseRef $RepoURL $RepoPath
     if (($pullRequestNo -ne $null) -and ($pullRequestNo -ne "")) {
         Write-Host "Pulling PR $pullRequestNo changes"
         cd $RepoPath
@@ -112,18 +114,58 @@ function Prepare-Vendor {
 
 }
 
+function Get-VersionLdflags {
+    $GitCommit = (git -C $RepoPath rev-parse "HEAD^{commit}").Trim()
+    $GitStatus = (git -C $RepoPath status --porcelain)
+    $GitTreeState = if ([string]::IsNullOrWhiteSpace($GitStatus)) { "clean" } else { "dirty" }
+   
+    $GitVersion = (git -C $RepoPath describe --tags --match='v*' --abbrev=14 "$GitCommit^{commit}").Trim()
+    $DashesInVersion = ($GitVersion -replace "[^-]", "")
+    if ($DashesInVersion -eq '---') {
+        $GitVersion = $GitVersion -replace '-([0-9]+)-g([0-9a-f]{14})$', '.$1+$2'
+    } elseif ($DashesInVersion -eq '--') {
+        $GitVersion = $GitVersion -replace '-g([0-9a-f]{14})$', '+$1'
+    }
+    if ($GitTreeState -eq 'dirty') { $GitVersion += '-dirty' }
+    
+    $GitMajor = $null; $GitMinor = $null
+    if ($GitVersion -match '^v([0-9]+)\.([0-9]+)(\.[0-9]+)?([-].*)?([+].*)?$') {
+        $GitMajor = $Matches[1]
+        $GitMinor = $Matches[2]
+        if ($Matches[4]) { $GitMinor += '+' }
+    }
+
+    $BuildDate = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ')
+    
+    $ldflags = @()
+    $ldflags += "-X 'k8s.io/client-go/pkg/version.buildDate=$BuildDate'"
+    $ldflags += "-X 'k8s.io/component-base/version.buildDate=$BuildDate'"
+    if ($GitCommit) {
+        $ldflags += "-X 'k8s.io/client-go/pkg/version.gitCommit=$GitCommit'"
+        $ldflags += "-X 'k8s.io/component-base/version.gitCommit=$GitCommit'"
+        $ldflags += "-X 'k8s.io/client-go/pkg/version.gitTreeState=$GitTreeState'"
+        $ldflags += "-X 'k8s.io/component-base/version.gitTreeState=$GitTreeState'"
+    }
+    if ($GitVersion) {
+        $ldflags += "-X 'k8s.io/client-go/pkg/version.gitVersion=$GitVersion'"
+        $ldflags += "-X 'k8s.io/component-base/version.gitVersion=$GitVersion'"
+    }
+    if ($GitMajor -and $GitMinor) {
+        $ldflags += "-X 'k8s.io/client-go/pkg/version.gitMajor=$GitMajor'"
+        $ldflags += "-X 'k8s.io/component-base/version.gitMajor=$GitMajor'"
+        $ldflags += "-X 'k8s.io/client-go/pkg/version.gitMinor=$GitMinor'"
+        $ldflags += "-X 'k8s.io/component-base/version.gitMinor=$GitMinor'"
+    }
+    return $ldflags -join ' '
+}
+
 function Build-Kubeadm {
     # For the cmd/kubeadm tests, we need to build the kubeadm binary and set the KUBEADM_PATH path.
     # Before building the binary, we need to inject a few fields into k8s.io/component-base/version/base.go,
     # otherwise version-related unit tests for kubeadm will fail. 
-    $buildFlags = @(
-        "-X 'k8s.io/component-base/version.gitTreeState=clean'",
-        "-X 'k8s.io/component-base/version.gitMajor=1'",
-        "-X 'k8s.io/component-base/version.gitMinor=30'",
-        "-X 'k8s.io/component-base/version.gitVersion=v1.30.0'",
-        "-X 'k8s.io/component-base/version.gitCommit=a06568062c41b4f0f903dcb78aa6ea348bbdecfc'"
-    )
-
+    $buildFlags = Get-VersionLdflags
+    Write-Host "[Build-Kubeadm] buildFlags: $buildFlags"
+    
     Push-Location "$RepoPath"
     go build -ldflags "$buildFlags" -o kubeadm.exe .\cmd\kubeadm\
     $env:KUBEADM_PATH = Join-Path "$RepoPath" "kubeadm.exe"
