@@ -7,6 +7,7 @@ set -o functrace
 
 SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
 SCRIPT_ROOT=$(dirname "${SCRIPT_PATH}")
+
 export CAPZ_DIR="${CAPZ_DIR:-"${GOPATH}/src/sigs.k8s.io/cluster-api-provider-azure"}"
 : "${CAPZ_DIR:?Environment variable empty or not defined.}"
 if [[ ! -d $CAPZ_DIR ]]; then
@@ -412,7 +413,7 @@ run_e2e_test() {
             export GINKGO_NODES="${GINKGO_NODES:-"4"}"
         else
             export GINKGO_FOCUS=${GINKGO_FOCUS:-"(\[sig-windows\]|\[sig-scheduling\].SchedulerPreemption|\[sig-autoscaling\].\[Feature:HPA\]|\[sig-apps\].CronJob).*(\[Serial\]|\[Slow\])|(\[Serial\]|\[Slow\]).*(\[Conformance\]|\[NodeConformance\])|\[sig-api-machinery\].Garbage.collector"}
-            export GINKGO_SKIP=${GINKGO_SKIP:-"\[LinuxOnly\]|\[Excluded:WindowsDocker\]|device.plugin.for.Windows|should.be.able.to.gracefully.shutdown.pods.with.various.grace.periods|\[Alpha\]|\[Beta\].\[Feature:OffByDefault\]"}
+            export GINKGO_SKIP=${GINKGO_SKIP:-"\[LinuxOnly\]|\[Excluded:WindowsDocker\]|device.plugin.for.Windows|\[Alpha\]|\[Beta\].\[Feature:OffByDefault\]"}
             export GINKGO_NODES="${GINKGO_NODES:-"1"}"
         fi
 
