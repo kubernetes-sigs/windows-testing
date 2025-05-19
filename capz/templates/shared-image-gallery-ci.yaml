@@ -62,13 +62,42 @@ spec:
         permissions: "0744"
       - content: |
           $ErrorActionPreference = "Stop"
+          $FileContent = Get-Content -Path "$env:SYSTEMDRIVE/var/lib/kubelet/kubeadm-flags.env"
+          $kubeAdmArgs = $FileContent.TrimStart('KUBELET_KUBEADM_ARGS=').Trim('"')
+
+          # Set the path to your kubelet config file
+          $configFile = "$env:SYSTEMDRIVE/var/lib/kubelet/config.yaml"
+          $content = Get-Content -Path $configFile
           # Check if NodeLogQuery feature gate was specified for the cluster and if so, also enable it via kubelet config
-          $kubeletEnvContents = Get-Content -Path "/var/lib/kubelet/kubeadm-flags.env"
-          if ($kubeletEnvContents.Contains("NodeLogQuery=true")) {
-              Add-Content -Path "$env:SYSTEMDRIVE/var/lib/kubelet/config.yaml" -Value "enableSystemLogQuery: true" -Encoding ascii -NoNewLine
-              nssm restart kubelet
+          if ($kubeAdmArgs.Contains("NodeLogQuery=true")) {
+              $content += "enableSystemLogQuery: true"
           }
-        path: C:/NodeLogQueryKubeletConfig.ps1
+          if ($kubeAdmArgs.Contains("WindowsGracefulNodeShutdown=true")) {
+            # Remove existing lines that match the settings
+            $content = $content | Where-Object { $_ -notmatch "^shutdownGracePeriod:" -and $_ -notmatch "^shutdownGracePeriodCriticalPods:" }
+            # Append new values at the end
+            $content += "shutdownGracePeriod: 1m"
+            $content += "shutdownGracePeriodCriticalPods: 20s"
+          }
+
+          # Write the updated content back to the file
+          $content | Set-Content -Path $configFile -Encoding ascii
+        path: C:/updateKubeletConfig.ps1
+        permissions: "0744"
+      - content: |
+          # This script restarts the kubelet service.
+          # It supports both nssm and Windows service configurations,
+          # ensuring a smooth transition between service managers without interruption.
+          # This script will eventually be removed once nssm is no longer used.
+          $scriptPath = "$env:SYSTEMDRIVE/k/RestartKubelet.ps1"
+          if (Test-Path $scriptPath) {
+              Write-Host "Found RestartKubelet.ps1, executing..."
+              & $scriptPath
+          } else {
+              Write-Host "RestartKubelet.ps1 not found. Running fallback command..."
+              nssm set kubelet start SERVICE_AUTO_START
+          }
+        path: C:/KubeletRestart_nssm_sc.ps1
         permissions: "0744"
       - content: |
           mkdir -Force c:/localdumps
@@ -138,8 +167,8 @@ spec:
             windows-priorityclass: ABOVE_NORMAL_PRIORITY_CLASS
           name: '{{ ds.meta_data["local_hostname"] }}'
       postKubeadmCommands:
-      - powershell C:/NodeLogQueryKubeletConfig.ps1
-      - nssm set kubelet start SERVICE_AUTO_START
+      - powershell C:/updateKubeletConfig.ps1
+      - powershell C:/KubeletRestart_nssm_sc.ps1
       - powershell C:/defender-exclude-calico.ps1
       preKubeadmCommands:
       - powershell C:/create-temp-folder.ps1
