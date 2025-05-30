@@ -33,7 +33,7 @@ spec:
             Stop-Service containerd -Force
             echo "downloading containerd: $$CONTAINERD_URL"
             # If the URL is set to "latest", we will query the GitHub API for the latest containerd release
-            if ($$CONTAINERD_URL.ToLower() -ne "latest") {
+            if ($$CONTAINERD_URL.ToLower() -eq "latest") {
               # Query GitHub API for latest containerd release for Windows
               $githubApiUrl = "https://api.github.com/repos/containerd/containerd/releases/latest"
               Write-Output "Fetching latest containerd release from GitHub..."
