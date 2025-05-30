@@ -32,6 +32,19 @@ spec:
             Stop-Service kubelet -Force -ErrorAction SilentlyContinue
             Stop-Service containerd -Force
             echo "downloading containerd: $$CONTAINERD_URL"
+            # If the URL is set to "latest", we will query the GitHub API for the latest containerd release
+            if ($$CONTAINERD_URL.ToLower() -eq "latest") {
+              # Query GitHub API for latest containerd release for Windows
+              $githubApiUrl = "https://api.github.com/repos/containerd/containerd/releases/latest"
+              Write-Output "Fetching latest containerd release from GitHub..."
+              $releaseInfo = Invoke-RestMethod -Uri $githubApiUrl -UseBasicParsing
+              $asset = $releaseInfo.assets | Where-Object { $_.name -like "*windows-amd64.tar.gz" } | Select-Object -First 1
+              if ($null -eq $asset) {
+                Write-Output "Could not find a Windows containerd release asset in the latest GitHub release."
+                exit 1
+              }
+              $$CONTAINERD_URL = $asset.browser_download_url
+            }
             curl.exe --retry 10 --retry-delay 5 -L "$$CONTAINERD_URL" --output "c:/k/containerd.tar.gz"
             # Log service state and if any files under containerd director are locked
             Get-Service -Name containerd, kubelet
