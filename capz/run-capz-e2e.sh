@@ -20,6 +20,7 @@ if [[ ! -d $AZURE_CLOUD_PROVIDER_ROOT ]]; then
 fi
 
 main() {
+    export AZURE_LOCATION="uksouth"
     # defaults
     export KUBERNETES_VERSION="${KUBERNETES_VERSION:-"latest"}"
     export CONTROL_PLANE_MACHINE_COUNT="${AZURE_CONTROL_PLANE_MACHINE_COUNT:-"1"}"
