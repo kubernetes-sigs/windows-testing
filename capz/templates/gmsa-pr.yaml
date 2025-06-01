@@ -439,9 +439,9 @@ spec:
       identity: UserAssigned
       image:
         computeGallery:
-          gallery: wcctpub-151cac41-04fa-4bf3-b811-419553465c10
+          gallery: wcctpub-85c68f48-bd4b-40ad-99b7-4a2faaadf526
           name: yuanliangtest
-          version: 0.3.1747617671
+          version: 0.3.1748735262
       osDisk:
         diskSizeGB: 128
         managedDisk:
