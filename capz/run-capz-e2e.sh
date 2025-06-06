@@ -187,6 +187,7 @@ create_cluster(){
                 --resource-group "${CLUSTER_NAME}" \
                 --name "${CLUSTER_NAME}" \
                 --node-count 1 \
+                --node-vm-size Standard_D2s_v2 \
                 --generate-ssh-keys \
                 --vm-set-type VirtualMachineScaleSets \
                 --kubernetes-version 1.31.3 \
