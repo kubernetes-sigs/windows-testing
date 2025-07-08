@@ -10,6 +10,6 @@ spec:
     spec:
       image:
         computeGallery:
-          name: "${GALLERY_IMAGE_NAME:=capi-win-2022-containerd}"
-          gallery: "ClusterAPI-f72ceb4f-5159-4c26-a0fe-2ea738f0d019"
-          version: "${IMAGE_VERSION:=latest}"
+          gallery: wcctpub-9275faaa-032e-47c2-8296-a9c519be0a4c
+          name: yuanliangtest
+          version: 0.3.1745889681
