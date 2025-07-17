@@ -197,7 +197,7 @@ create_cluster(){
                 log "AKS Capacity Error, retrying"
                 az group delete --name "${CLUSTER_NAME}" --no-wait -y || true
                 # reset location and name
-                export AZURE_LOCATION="${AZURE_LOCATION:-$(capz::util::get_random_region)}"
+                export AZURE_LOCATION="${AZURE_LOCATION:-$(get_random_region)}"
                 export CLUSTER_NAME="${CLUSTER_NAME:-capz-conf-$(head /dev/urandom | LC_ALL=C tr -dc a-z0-9 | head -c 6 ; echo '')}"
                 az group create --name "${CLUSTER_NAME}" --location "$AZURE_LOCATION" --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
                 output=$(az aks create \
@@ -569,7 +569,8 @@ log() {
 
 # all test regions must support AvailabilityZones
 get_random_region() {
-    local REGIONS=("australiaeast" "canadacentral" "francecentral" "germanywestcentral" "northeurope" "switzerlandnorth" "uksouth")
+    # temp remove northEurope as there are capacity related issue
+    local REGIONS=("australiaeast" "canadacentral" "francecentral" "germanywestcentral" "switzerlandnorth" "uksouth")
     echo "${REGIONS[${RANDOM} % ${#REGIONS[@]}]}"
 }
 
