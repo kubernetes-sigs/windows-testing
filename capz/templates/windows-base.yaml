@@ -109,7 +109,7 @@ spec:
               & $scriptPath
           } else {
               Write-Host "RestartKubelet.ps1 not found. Running fallback command..."
-              & "$env:SYSTEMDRIVE\k\nssm" set kubelet start SERVICE_AUTO_START
+              & "$env:SYSTEMDRIVE\k\nssm.exe" set kubelet start SERVICE_AUTO_START
           }
         path: C:/KubeletRestart_nssm_sc.ps1
         permissions: "0744"
