@@ -33,6 +33,7 @@ main() {
     export CAPI_VERSION="${CAPI_VERSION:-"v1.7.2"}"
     export HELM_VERSION=v3.15.2
     export TOOLS_BIN_DIR="${TOOLS_BIN_DIR:-$SCRIPT_ROOT/tools/bin}"
+    export CONTAINERD_LOGGER="${CONTAINERD_LOGGER:-""}"
 
     # other config
     export ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
@@ -320,9 +321,10 @@ EOF
         kubectl apply -f "${CAPZ_DIR}"/templates/test/ci/patches/windows-kubeproxy-ci.yaml
         kubectl rollout restart ds -n kube-system kube-proxy-windows
     fi
-
     # apply additional helper manifests (logger etc)
-    kubectl apply -f "${CAPZ_DIR}"/templates/addons/windows/containerd-logging/containerd-logger.yaml
+    if [[ -n "$CONTAINERD_LOGGER" ]]; then
+        kubectl apply -f "${CAPZ_DIR}"/templates/addons/windows/containerd-logging/containerd-logger.yaml
+    fi
     kubectl apply -f "${CAPZ_DIR}"/templates/addons/windows/csi-proxy/csi-proxy.yaml
     kubectl apply -f "${CAPZ_DIR}"/templates/addons/metrics-server/metrics-server.yaml
 }
