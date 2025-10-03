@@ -41,7 +41,10 @@ echo "Using Go version: ${GO_VERSION}"
 run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/prepare_env_windows.ps1 -goVersion ${GO_VERSION}"
 
 echo "Install container features in VM"
-run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "powershell.exe -command { Install-WindowsFeature -Name 'Containers' -Restart }"
+# Use DISM with /norestart to avoid race condition with automatic restart
+run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} 'dism.exe /online /enable-feature /featurename:Containers /all /norestart'
+echo "Container feature installed. Initiating restart..."
+run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "shutdown.exe /r /f /t 5"
 wait_for_vm_restart
 
 # Skip failing tests by default
