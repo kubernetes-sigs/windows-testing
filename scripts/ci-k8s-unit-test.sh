@@ -5,7 +5,6 @@ set -o nounset
 set -o pipefail
 set -o errtrace
 
-SSH_OPTS="-o ServerAliveInterval=20 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 PROW_BUILD_ID="${BUILD_ID:-000000000000}"
 AZURE_RESOURCE_GROUP="win-unit-test-${PROW_BUILD_ID}"
 AZURE_DEFAULT_IMG="MicrosoftWindowsServer:WindowsServer:2022-datacenter-smalldisk-g2:latest"
@@ -42,7 +41,9 @@ echo "Using Go version: ${GO_VERSION}"
 run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/prepare_env_windows.ps1 -goVersion ${GO_VERSION}"
 
 echo "Install container features in VM"
-run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "powershell.exe -command { Install-WindowsFeature -Name 'Containers' -Restart }"
+run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} 'powershell.exe -Command "Install-WindowsFeature -Name Containers -NoRestart"'
+echo "Container feature installed. Initiating restart..."
+run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "shutdown.exe /r /f /t 5"
 wait_for_vm_restart
 
 # Skip failing tests by default
@@ -65,11 +66,13 @@ then
         test_packages_arg="-testPackages ${TEST_PACKAGES}"
     fi
 
-    run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_unit_windows.ps1 ${skip_arg} -repoName ${REPO_NAME} -repoOrg ${REPO_OWNER} -pullRequestNo ${PULL_NUMBER} -pullBaseRef ${PULL_BASE_REF} ${test_packages_arg}"
+    # Use SSH_OPTS_LONG for the resource-intensive command
+    ssh -i ${SSH_KEY_FILE} ${SSH_OPTS_LONG} azureuser@${VM_PUB_IP} "c:/k8s_unit_windows.ps1 ${skip_arg} -repoName ${REPO_NAME} -repoOrg ${REPO_OWNER} -pullRequestNo ${PULL_NUMBER} -pullBaseRef ${PULL_BASE_REF} ${test_packages_arg}"
     exit_code=$?
 else
     echo "Running periodic job"
-    run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_unit_windows.ps1 ${skip_arg}"
+    # Use SSH_OPTS_LONG for the resource-intensive command
+    ssh -i ${SSH_KEY_FILE} ${SSH_OPTS_LONG} azureuser@${VM_PUB_IP} "c:/k8s_unit_windows.ps1 ${skip_arg}"
     exit_code=$?
 fi
 set -e  # Re-enable errexit

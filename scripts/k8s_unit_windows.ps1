@@ -202,6 +202,8 @@ function Run-K8sUnitTests {
                 }
 
                 Push-Location "$RepoPath"
+                # Limit GOMAXPROCS to prevent each package from using all CPUs
+                $env:GOMAXPROCS = 2
 
                 # Collect output in an array.
                 $outputLines = @()
