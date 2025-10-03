@@ -235,7 +235,26 @@ function Run-K8sUnitTests {
 
         # Wait for at least one job to complete before starting more
         if ($jobs.Count -gt 0) {
-            $finishedJob = Wait-Job -Job $jobs -Any
+            $finishedJob = Wait-Job -Job $jobs -Any -Timeout 3600
+            
+            if ($null -eq $finishedJob) {
+                Write-Output "WARNING: Timeout waiting for job completion after 3600 seconds"
+                Write-Output "Active jobs:"
+                $jobs | ForEach-Object { 
+                    Write-Output "  Job $($_.Id): State=$($_.State), HasMoreData=$($_.HasMoreData)"
+                }
+                # Try to get partial results
+                foreach ($job in $jobs) {
+                    Write-Output "Attempting to receive data from job $($job.Id)..."
+                    try {
+                        Receive-Job -Job $job -ErrorAction SilentlyContinue | Out-String | Write-Output
+                    } catch {
+                        Write-Output "  Failed to receive job data: $_"
+                    }
+                }
+                exit 1
+            }
+            
             $result = Receive-Job -Job $finishedJob
             
             if ($result.ExitCode -ne 0) {
@@ -247,6 +266,8 @@ function Run-K8sUnitTests {
             Write-Output "Exit code: $($result.ExitCode)"
             Write-Output ("-" * 40)
         
+            # Clean up the completed job
+            Remove-Job -Job $finishedJob -Force
             $jobs = $jobs | Where-Object { $_.Id -ne $finishedJob.Id }
             $remainingPackages = $TEST_PACKAGES.Count - $packageIndex
             Write-Output "Active jobs: $($jobs.Count), Remaining packages: $remainingPackages"
