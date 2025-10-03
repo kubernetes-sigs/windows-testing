@@ -167,7 +167,7 @@ function Build-Kubeadm {
 
 function Run-K8sUnitTests {
     # Limit parallel jobs to prevent CPU oversubscription
-    $maxParallelJobs = 8
+    $maxParallelJobs = 4
     $jobs = @()
     $failedJobCount = 0
     $packageIndex = 0
