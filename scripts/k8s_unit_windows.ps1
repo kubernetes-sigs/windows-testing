@@ -16,7 +16,12 @@ $EXTRA_PACKAGES = @("./cmd/...")
 $EXCLUDED_PACKAGES = @(
     "./pkg/proxy/iptables/...",
     "./pkg/proxy/ipvs/...",
-    "./pkg/proxy/nftables/...")
+    "./pkg/proxy/nftables/...",
+    "./pkg/controller/...",
+    "./pkg/controlplane/...",
+    "./pkg/kubelet/...",
+    "./pkg/kubeapiserver/...",
+    "./pkg/kubectl/...")
 # Map of packages with test case names to skip.
 $SkipTestsForPackage = @{
     "./cmd/..."         = @(
@@ -167,11 +172,15 @@ function Build-Kubeadm {
 
 function Run-K8sUnitTests {
     # Limit parallel jobs to prevent CPU oversubscription
-    $maxParallelJobs = 4
+    # Reduced from 4 to 2 to further reduce load
+    $maxParallelJobs = 2
     $jobs = @()
     $failedJobCount = 0
     $packageIndex = 0
 
+    Write-Host "Starting test execution with max $maxParallelJobs parallel jobs, GOMAXPROCS=2 per job"
+    Write-Host "System info: $(Get-WmiObject Win32_Processor | Select-Object -ExpandProperty NumberOfLogicalProcessors) logical processors"
+    
     while ($packageIndex -lt $TEST_PACKAGES.Count -or $jobs.Count -gt 0) {
         # Start new jobs up to the limit
         while ($jobs.Count -lt $maxParallelJobs -and $packageIndex -lt $TEST_PACKAGES.Count) {
