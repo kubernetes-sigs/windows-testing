@@ -16,7 +16,7 @@ $EXTRA_PACKAGES = @("./cmd/...")
 $EXCLUDED_PACKAGES = @(
     "./pkg/proxy/iptables/...",
     "./pkg/proxy/ipvs/...",
-    "./pkg/proxy/nftables/...") 
+    "./pkg/proxy/nftables/...")
 # Map of packages with test case names to skip.
 $SkipTestsForPackage = @{
     "./cmd/..."         = @(
@@ -66,13 +66,10 @@ function Prepare-TestPackages {
     $EXCLUDED_PACKAGES | foreach { $packages = $packages -ne $_ }
     Pop-Location
     return $packages
-
 }
 
 function Prepare-LogsDir {
-    
     mkdir $LogsDirPath
-
 }
 
 function Clone-TestRepo {
@@ -93,7 +90,6 @@ function Clone-TestRepo {
 }
 
 function Install-Tools {
-
     Write-Host "Install testing tools"
     Push-Location "$RepoPath/hack/tools"
     go install gotest.tools/gotestsum
@@ -102,16 +98,13 @@ function Install-Tools {
     Push-Location "$RepoPath/cmd/prune-junit-xml"
     go install .
     Pop-Location
-
 }
 
 function Prepare-Vendor {
-    
     Write-Host "Downloading vendor files"
     Push-Location "$RepoPath"
     go mod vendor
     Pop-Location
-
 }
 
 function Get-VersionLdflags {
@@ -173,72 +166,81 @@ function Build-Kubeadm {
 }
 
 function Run-K8sUnitTests {
-
+    # Limit parallel jobs to prevent CPU oversubscription
+    $maxParallelJobs = 8
     $jobs = @()
+    $failedJobCount = 0
+    $packageIndex = 0
 
-    for ($index = 0; $index -lt $TEST_PACKAGES.Count; $index++) {
-        $package = $TEST_PACKAGES[$index]
-        $junit_output_file = Join-Path -Path $LogsDirPath -ChildPath ("{0}_{1}.xml" -f $JUNIT_FILE_NAME, $index)
+    while ($packageIndex -lt $TEST_PACKAGES.Count -or $jobs.Count -gt 0) {
+        # Start new jobs up to the limit
+        while ($jobs.Count -lt $maxParallelJobs -and $packageIndex -lt $TEST_PACKAGES.Count) {
+            $package = $TEST_PACKAGES[$packageIndex]
+            $junit_output_file = Join-Path -Path $LogsDirPath -ChildPath ("{0}_{1}.xml" -f $JUNIT_FILE_NAME, $packageIndex)
 
-        $testsToSkip = $null
-        if ($SkipFailingTests -and $SkipTestsForPackage.ContainsKey($package)) {
-            $testsToSkip = $SkipTestsForPackage[$package] -join "|"
-            Write-Output "Skipping tests for package: $package, tests: $testsToSkip"
-        } else {
-            Write-Output "Not skipping any tests for package: $package"
-        }
-
-        
-        Write-Output "Starting job to run tests for package: $package"
-        $jobs += Start-Job -ScriptBlock {
-            param($pkg, $outputFile, $RepoPath, $skipRegex)
-
-            Push-Location "$RepoPath"
-	        $args = @(
-		        "--junitfile=$outputFile",
-		        "--packages=`"$pkg`""
-            )
-	        if ($skipRegex) {
-		        $args += "--"
-		        $args += "--skip"
-		        $args += $skipRegex
+            $testsToSkip = $null
+            if ($SkipFailingTests -and $SkipTestsForPackage.ContainsKey($package)) {
+                $testsToSkip = $SkipTestsForPackage[$package] -join "|"
+                Write-Output "Skipping tests for package: $package, tests: $testsToSkip"
+            } else {
+                Write-Output "Not skipping any tests for package: $package"
             }
 
-            Push-Location "$RepoPath"
-            # Collect output in an array.
-            $outputLines = @()
-            $outputLines += "Running unit tests for package: $pkg :: gotestsum.exe " + ($args -join ' ')
-            $cmdOutput = & gotestsum.exe @args 2>&1
-            $outputLines += $cmdOutput
-            $exitCode = $LASTEXITCODE
-            $combinedOutput = $outputLines -join "`n"
-            & prune-junit-xml.exe $outputFile
+            Write-Output "Starting job to run tests for package: $package ($(($packageIndex + 1)) of $($TEST_PACKAGES.Count))"
+            $jobs += Start-Job -ScriptBlock {
+                param($pkg, $outputFile, $RepoPath, $skipRegex)
 
-            [PSCustomObject]@{
-                Package  = $pkg
-                ExitCode = $exitCode
-                Output   = $combinedOutput
-            }
-        } -ArgumentList $package, $junit_output_file, $RepoPath, $testsToSkip
-    }
+                Push-Location "$RepoPath"
+                $args = @(
+                    "--junitfile=$outputFile",
+                    "--packages=`"$pkg`""
+                )
+                if ($skipRegex) {
+                    $args += "--"
+                    $args += "--skip"
+                    $args += $skipRegex
+                }
 
-    $failedJobCount = 0 
-    while ($jobs.Count -gt 0) {
-        $finishedJob = Wait-Job -Job $jobs -Any
-        $result = Receive-Job -Job $finishedJob
+                Push-Location "$RepoPath"
+
+                # Collect output in an array.
+                $outputLines = @()
+                $outputLines += "Running unit tests for package: $pkg :: gotestsum.exe " + ($args -join ' ')
+                $cmdOutput = & gotestsum.exe @args 2>&1
+                $outputLines += $cmdOutput
+                $exitCode = $LASTEXITCODE
+                $combinedOutput = $outputLines -join "`n"
+                & prune-junit-xml.exe $outputFile
+
+                [PSCustomObject]@{
+                    Package  = $pkg
+                    ExitCode = $exitCode
+                    Output   = $combinedOutput
+                }
+            } -ArgumentList $package, $junit_output_file, $RepoPath, $testsToSkip
         
-        if ($result.ExitCode -ne 0) {
-            $failedJobCount++
+            $packageIndex++
         }
-    
-        Write-Output "Output for package: $($result.Package)"
-        Write-Output $result.Output
-        Write-Output "Exit code: $($result.ExitCode)"
-        Write-Output ("-" * 40)
-    
-        $jobs = $jobs | Where-Object { $_.Id -ne $finishedJob.Id }
-        Write-Output "Waiting for $($jobs.Count) more jobs to complete"
-        Write-Output ("-" * 40)
+
+        # Wait for at least one job to complete before starting more
+        if ($jobs.Count -gt 0) {
+            $finishedJob = Wait-Job -Job $jobs -Any
+            $result = Receive-Job -Job $finishedJob
+            
+            if ($result.ExitCode -ne 0) {
+                $failedJobCount++
+            }
+        
+            Write-Output "Output for package: $($result.Package)"
+            Write-Output $result.Output
+            Write-Output "Exit code: $($result.ExitCode)"
+            Write-Output ("-" * 40)
+        
+            $jobs = $jobs | Where-Object { $_.Id -ne $finishedJob.Id }
+            $remainingPackages = $TEST_PACKAGES.Count - $packageIndex
+            Write-Output "Active jobs: $($jobs.Count), Remaining packages: $remainingPackages"
+            Write-Output ("-" * 40)
+        }
     }
 
     if ($failedJobCount) {
