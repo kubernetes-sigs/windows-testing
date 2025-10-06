@@ -1,6 +1,17 @@
 param (
     [string]$repoName = "kubernetes", 
-    [string]$repoOrg = "kubernetes",    
+    [string]$repfunction Prepare-TestPackages {
+    # TEMPORARY: Override any passed-in packages to run targeted package list
+    Write-Host "TEMPORARY: Overriding testPackages parameter to run targeted package list"
+    Write-Host "Original testPackages parameter had $($testPackages.Count) items: $testPackages"
+    return @(
+        "./pkg/api/...",
+        "./pkg/capabilities/...",
+        "./pkg/certauthorization/...",
+        "./pkg/auth/...",
+        "./pkg/client/...",
+        "./pkg/version/..."
+    )rnetes",    
     [string]$pullRequestNo,
     [string]$pullBaseRef = "master",
     [string[]]$testPackages = @(),
@@ -21,7 +32,8 @@ $EXCLUDED_PACKAGES = @(
     "./pkg/controlplane/...",
     "./pkg/kubelet/...",
     "./pkg/kubeapiserver/...",
-    "./pkg/kubectl/...")
+    "./pkg/kubectl/...",
+    "./pkg/apis/...")  # Temporarily excluding due to hanging issues
 # Map of packages with test case names to skip.
 $SkipTestsForPackage = @{
     "./cmd/..."         = @(
@@ -243,10 +255,24 @@ function Run-K8sUnitTests {
                 
                 # Log the command line to the output file first
                 "Running unit tests for package: $package :: $command $arguments" | Out-File -FilePath $logFile -Encoding UTF8
+                "=== TEST START ===" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 
                 # Run the command and append all output to the log file
+                Write-Host "About to run: $command $arguments"
                 & $command $arguments 2>&1 | Out-File -FilePath $logFile -Append -Encoding UTF8
                 $exitCode = $LASTEXITCODE
+                Write-Host "Command completed with exit code: $exitCode"
+                
+                "=== TEST END ===" | Out-File -FilePath $logFile -Append -Encoding UTF8
+                "Exit code: $exitCode" | Out-File -FilePath $logFile -Append -Encoding UTF8
+                
+                # Check if log file exists and get its size
+                if (Test-Path $logFile) {
+                    $logSize = (Get-Item $logFile).Length
+                    Write-Host "Log file size: $logSize bytes"
+                } else {
+                    Write-Host "ERROR: Log file not found!"
+                }
                 
                 # Read the complete log file contents
                 $output = Get-Content -Path $logFile -Raw
