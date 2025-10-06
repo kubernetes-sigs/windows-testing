@@ -281,6 +281,7 @@ function Run-K8sUnitTests {
             Write-Host "Found $($completedJobs.Count) completed/faulted job(s) to process."
         }
 
+        $jobsToRemove = @()
         foreach ($finishedJob in $completedJobs) {
             Write-Host "Receiving job results for job $($finishedJob.Id) (State: $($finishedJob.State))..."
             if ($finishedJob.State -eq 'Faulted') {
@@ -302,11 +303,14 @@ function Run-K8sUnitTests {
 
             Write-Host "Cleaning up job $($finishedJob.Id)..."
             Remove-Job -Job $finishedJob
-            [void]$jobs.Remove($finishedJob)
+            $jobsToRemove += $finishedJob
             
             Write-Host "Active jobs: $($jobs.Count), Remaining packages: $($TEST_PACKAGES.Count - $packageIndex)"
             Write-Host "----------------------------------------"
         }
+        
+        # Remove all processed jobs from the collection at once
+        $jobsToRemove | ForEach-Object { [void]$jobs.Remove($_) }
     }
 
     Write-Host "All packages have been processed. Final job cleanup..."
