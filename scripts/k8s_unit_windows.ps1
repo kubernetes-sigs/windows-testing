@@ -249,7 +249,7 @@ function Run-K8sUnitTests {
 
                 return [PSCustomObject]@{
                     Package    = $package
-                    Output     = $testOutput
+                    Output     = $testOutput | Out-String
                     ExitCode   = $exitCode
                 }
             } -ArgumentList $package, $packageIndex, $RepoPath
@@ -263,9 +263,15 @@ function Run-K8sUnitTests {
         if ($jobs.Count -gt 0) {
             Write-Host "Waiting for at least one job to complete... ($($jobs.Count) active jobs)"
             
+            $waitCounter = 0
             # Continuously check for completed jobs until at least one is found
             while (($jobs | Where-Object { $_.State -in @('Completed', 'Faulted') }).Count -eq 0 -and $jobs.Count -gt 0) {
                 Start-Sleep -Seconds 1
+                $waitCounter++
+                if (($waitCounter % 15) -eq 0) {
+                    Write-Host "DEBUG: Still waiting for jobs to complete after $waitCounter seconds. Current job states:"
+                    $jobs | ForEach-Object { Write-Host "  - Job ID: $($_.Id), Name: $($_.Name), State: $($_.State)" }
+                }
             }
         }
 
