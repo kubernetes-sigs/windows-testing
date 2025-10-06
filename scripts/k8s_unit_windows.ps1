@@ -1,17 +1,6 @@
 param (
-    [string]$repoName = "kubernetes", 
-    [string]$repfunction Prepare-TestPackages {
-    # TEMPORARY: Override any passed-in packages to run targeted package list
-    Write-Host "TEMPORARY: Overriding testPackages parameter to run targeted package list"
-    Write-Host "Original testPackages parameter had $($testPackages.Count) items: $testPackages"
-    return @(
-        "./pkg/api/...",
-        "./pkg/capabilities/...",
-        "./pkg/certauthorization/...",
-        "./pkg/auth/...",
-        "./pkg/client/...",
-        "./pkg/version/..."
-    )rnetes",    
+    [string]$repoName = "kubernetes",
+    [string]$repoOrg = "kubernetes",
     [string]$pullRequestNo,
     [string]$pullBaseRef = "master",
     [string[]]$testPackages = @(),
@@ -73,16 +62,16 @@ $SkipTestsForPackage = @{
 }
 
 function Prepare-TestPackages {
-    # TEMPORARY: Override any passed-in packages to run the first six packages from the working log
+    # TEMPORARY: Override any passed-in packages to run targeted package list
     Write-Host "TEMPORARY: Overriding testPackages parameter to run targeted package list"
     Write-Host "Original testPackages parameter had $($testPackages.Count) items: $testPackages"
     return @(
         "./pkg/api/...",
-        "./pkg/apis/...",
         "./pkg/capabilities/...",
         "./pkg/certauthorization/...",
         "./pkg/auth/...",
-        "./pkg/client/..."
+        "./pkg/client/...",
+        "./pkg/version/..."
     )
     
     # Original code commented out for now
@@ -200,11 +189,10 @@ function Run-K8sUnitTests {
     # Set GOMAXPROCS globally for the entire machine/session
     $env:GOMAXPROCS = 4
     [Environment]::SetEnvironmentVariable("GOMAXPROCS", "4", "Process")
-    Write-Host "Set GOMAXPROCS=2 globally for this session"
+    Write-Host "Set GOMAXPROCS=4 globally for this session"
     Write-Host "Verification: GOMAXPROCS = $env:GOMAXPROCS"
     
     # Limit parallel jobs to prevent CPU oversubscription
-    # Reduced from 4 to 2 to further reduce load
     $maxParallelJobs = 4
     $jobs = New-Object System.Collections.ArrayList
     $failedPackages = New-Object System.Collections.ArrayList
@@ -214,11 +202,18 @@ function Run-K8sUnitTests {
     Write-Host "TEST_PACKAGES contents: $TEST_PACKAGES"
     Write-Host "TEST_PACKAGES type: $($TEST_PACKAGES.GetType().Name)"
     
+    # Add immediate debugging with flush
+    Write-Host "=== STARTING MAIN PROCESSING LOOP ===" 
+    [Console]::Out.Flush()
+    
     while ($packageIndex -lt $TEST_PACKAGES.Count -or $jobs.Count -gt 0) {
-        Write-Host "Loop iteration: packageIndex=$packageIndex, jobs.Count=$($jobs.Count)"
+        Write-Host "=== Loop iteration: packageIndex=$packageIndex, jobs.Count=$($jobs.Count) ==="
+        [Console]::Out.Flush()
         
         # Start new jobs up to the limit
         while ($jobs.Count -lt $maxParallelJobs -and $packageIndex -lt $TEST_PACKAGES.Count) {
+            Write-Host ">>> Starting new job: jobs.Count=$($jobs.Count), packageIndex=$packageIndex"
+            [Console]::Out.Flush()
             $package = $TEST_PACKAGES[$packageIndex]
             Write-Host "DEBUG: packageIndex=$packageIndex, package retrieved='$package'"
             $junit_output_file = Join-Path -Path $LogsDirPath -ChildPath ("{0}_{1}.xml" -f $JUNIT_FILE_NAME, $packageIndex)
@@ -232,6 +227,7 @@ function Run-K8sUnitTests {
             }
 
             Write-Output "Starting job to run tests for package: $package ($($packageIndex + 1) of $($TEST_PACKAGES.Count))"
+            [Console]::Out.Flush()
             
             $job = Start-Job -ScriptBlock {
                 param($package, $junitIndex, $repoPath)
@@ -250,19 +246,78 @@ function Run-K8sUnitTests {
                 $junitFile = "c:\Logs\junit_$($junitIndex).xml"
                 $logFile = "c:\Logs\output_$($junitIndex).log"
                 $command = "gotestsum.exe"
-                $arguments = @("--junitfile=$junitFile", "--packages=""$package""")
+                $arguments = "--junitfile=$junitFile --packages=""$package"""
                 Write-Host "Running unit tests for package: $package :: $command $arguments"
                 
                 # Log the command line to the output file first
                 "Running unit tests for package: $package :: $command $arguments" | Out-File -FilePath $logFile -Encoding UTF8
                 "=== TEST START ===" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 
-                # Run the command and append all output to the log file
+                # Use System.Diagnostics.Process with async output reading to prevent buffer overflow
                 Write-Host "About to run: $command $arguments"
-                & $command $arguments 2>&1 | Out-File -FilePath $logFile -Append -Encoding UTF8
-                $exitCode = $LASTEXITCODE
+                
+                $process = New-Object System.Diagnostics.Process
+                $process.StartInfo.FileName = $command
+                $process.StartInfo.Arguments = $arguments
+                $process.StartInfo.RedirectStandardOutput = $true
+                $process.StartInfo.RedirectStandardError = $true
+                $process.StartInfo.UseShellExecute = $false
+                $process.StartInfo.CreateNoWindow = $true
+                $process.StartInfo.WorkingDirectory = $repoPath
+                
+                # Set 10 minute timeout
+                $timeoutMs = 20 * 60 * 1000
+                
+                # Create StringBuilder to collect output without blocking
+                $stdout = New-Object System.Text.StringBuilder
+                $stderr = New-Object System.Text.StringBuilder
+                
+                # Event handlers to read output asynchronously and prevent buffer overflow
+                $outputAction = {
+                    if ($EventArgs.Data) {
+                        [void]$Event.MessageData.AppendLine($EventArgs.Data)
+                        # Also write directly to log file to prevent memory buildup
+                        $EventArgs.Data | Out-File -FilePath $using:logFile -Append -Encoding UTF8
+                    }
+                }
+                $errorAction = {
+                    if ($EventArgs.Data) {
+                        [void]$Event.MessageData.AppendLine($EventArgs.Data)
+                        # Also write directly to log file
+                        "STDERR: $($EventArgs.Data)" | Out-File -FilePath $using:logFile -Append -Encoding UTF8
+                    }
+                }
+                
+                $outputEvent = Register-ObjectEvent -InputObject $process -EventName OutputDataReceived -Action $outputAction -MessageData $stdout
+                $errorEvent = Register-ObjectEvent -InputObject $process -EventName ErrorDataReceived -Action $errorAction -MessageData $stderr
+                
+                $process.Start()
+                $process.BeginOutputReadLine()
+                $process.BeginErrorReadLine()
+                
+                Write-Host "Process started with PID: $($process.Id), waiting for completion..."
+                
+                if (-not $process.WaitForExit($timeoutMs)) {
+                    Write-Host "Process timed out after 20 minutes, killing it"
+                    $process.Kill()
+                    $process.WaitForExit(5000) # Wait up to 5 seconds for clean shutdown
+                    $exitCode = -1
+                    $output = "TIMEOUT: Process killed after 20 minutes"
+                } else {
+                    $exitCode = $process.ExitCode
+                    $output = "Process completed normally"
+                }
+                
+                # Clean up event handlers
+                Unregister-Event -SourceIdentifier $outputEvent.Name
+                Unregister-Event -SourceIdentifier $errorEvent.Name
+                
+                # Final output is primarily in the log file now
+                $output += "`nOutput and errors written to: $logFile"
+                
                 Write-Host "Command completed with exit code: $exitCode"
                 
+                # Final output summary (actual output is in log file)
                 "=== TEST END ===" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 "Exit code: $exitCode" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 
@@ -274,28 +329,28 @@ function Run-K8sUnitTests {
                     Write-Host "ERROR: Log file not found!"
                 }
                 
-                # Read the complete log file contents
-                $output = Get-Content -Path $logFile -Raw
-                
                 Write-Host "---PROCESS LIST after test---"
                 Get-Process gotestsum, go -ErrorAction SilentlyContinue
                 Write-Host "-----------------------------"
 
                 return [PSCustomObject]@{
                     Package    = $package
-                    Output     = $output
+                    Output     = "See log file: $logFile (size: $logSize bytes)"
                     ExitCode   = $exitCode
                 }
             } -ArgumentList $package, $packageIndex, $RepoPath
             $job.Name = "UnitTest-$package"
             [void]$jobs.Add($job)
+            Write-Host ">>> Job started with ID: $($job.Id), Name: $($job.Name)"
+            [Console]::Out.Flush()
 
             $packageIndex++
         }
 
         # Wait for jobs to finish
         if ($jobs.Count -gt 0) {
-            Write-Host "Waiting for at least one job to complete... ($($jobs.Count) active jobs)"
+            Write-Host ">>> Waiting for at least one job to complete... ($($jobs.Count) active jobs)"
+            [Console]::Out.Flush()
             
             $waitCounter = 0
             # Continuously check for completed jobs until at least one is found
@@ -354,8 +409,8 @@ function Run-K8sUnitTests {
         $remainingSystemJobs | Remove-Job -Force
     }
     
-    if ($failedJobCount) {
-        Write-Host "Exiting with code 1 due to $failedJobCount failed jobs"
+    if ($failedPackages.Count -gt 0) {
+        Write-Host "Exiting with code 1 due to $($failedPackages.Count) failed packages: $($failedPackages -join ', ')"
         exit 1
     }
     else {
@@ -364,12 +419,15 @@ function Run-K8sUnitTests {
     }
 }
 
+# Main script execution
 Prepare-LogsDir
 Clone-TestRepo
 Prepare-Vendor
 Build-Kubeadm
 Install-Tools
+
 Write-Host "DEBUG: Before calling Prepare-TestPackages"
 $TEST_PACKAGES = @(Prepare-TestPackages)
 Write-Host "DEBUG: After Prepare-TestPackages, TEST_PACKAGES = $TEST_PACKAGES (Count: $($TEST_PACKAGES.Count), Type: $($TEST_PACKAGES.GetType().Name))"
+
 Run-K8sUnitTests
