@@ -61,10 +61,17 @@ $SkipTestsForPackage = @{
 }
 
 function Prepare-TestPackages {
-    # TEMPORARY: Override any passed-in packages to only test pkg/api package
-    Write-Host "TEMPORARY: Overriding testPackages parameter to only test pkg/api package"
+    # TEMPORARY: Override any passed-in packages to run the first six packages from the working log
+    Write-Host "TEMPORARY: Overriding testPackages parameter to run targeted package list"
     Write-Host "Original testPackages parameter had $($testPackages.Count) items: $testPackages"
-    return @("./cmd/...")
+    return @(
+        "./pkg/api/...",
+        "./pkg/apis/...",
+        "./pkg/capabilities/...",
+        "./pkg/certauthorization/...",
+        "./pkg/auth/...",
+        "./pkg/client/..."
+    )
     
     # Original code commented out for now
     if ($testPackages.Count -ne 0) {
@@ -179,14 +186,14 @@ function Build-Kubeadm {
 
 function Run-K8sUnitTests {
     # Set GOMAXPROCS globally for the entire machine/session
-    $env:GOMAXPROCS = 2
-    [Environment]::SetEnvironmentVariable("GOMAXPROCS", "2", "Process")
+    $env:GOMAXPROCS = 4
+    [Environment]::SetEnvironmentVariable("GOMAXPROCS", "4", "Process")
     Write-Host "Set GOMAXPROCS=2 globally for this session"
     Write-Host "Verification: GOMAXPROCS = $env:GOMAXPROCS"
     
     # Limit parallel jobs to prevent CPU oversubscription
     # Reduced from 4 to 2 to further reduce load
-    $maxParallelJobs = 2
+    $maxParallelJobs = 4
     $jobs = New-Object System.Collections.ArrayList
     $failedJobCount = 0
     $packageIndex = 0
