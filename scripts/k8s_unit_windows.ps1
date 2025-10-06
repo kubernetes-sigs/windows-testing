@@ -61,13 +61,15 @@ $SkipTestsForPackage = @{
 }
 
 function Prepare-TestPackages {
+    # TEMPORARY: Override any passed-in packages to only test pkg/api package
+    Write-Host "TEMPORARY: Overriding testPackages parameter to only test pkg/api package"
+    Write-Host "Original testPackages parameter had $($testPackages.Count) items: $testPackages"
+    return @("./pkg/api/...")
+    
+    # Original code commented out for now
     if ($testPackages.Count -ne 0) {
         return $testPackages
     }
-
-    # TEMPORARY: Only test pkg/api package
-    Write-Host "TEMPORARY: Testing only pkg/api package"
-    return @("./pkg/api/...")
     
     # Original code commented out for now
     # Push-Location "$RepoPath/pkg"
