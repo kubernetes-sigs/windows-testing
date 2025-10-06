@@ -195,12 +195,9 @@ function Run-K8sUnitTests {
     # Reduced from 4 to 2 to further reduce load
     $maxParallelJobs = 4
     $jobs = New-Object System.Collections.ArrayList
-    $failedJobCount = 0
+    $failedPackages = New-Object System.Collections.ArrayList
     $packageIndex = 0
 
-    Write-Host "Starting test execution with max $maxParallelJobs parallel jobs, GOMAXPROCS=2 per job"
-    Write-Host "System info: $(Get-WmiObject Win32_Processor | Select-Object -ExpandProperty NumberOfLogicalProcessors) logical processors"
-    
     Write-Host "Total packages to test: $($TEST_PACKAGES.Count)"
     Write-Host "TEST_PACKAGES contents: $TEST_PACKAGES"
     Write-Host "TEST_PACKAGES type: $($TEST_PACKAGES.GetType().Name)"
@@ -235,6 +232,7 @@ function Run-K8sUnitTests {
                 Get-Process gotestsum, go -ErrorAction SilentlyContinue
                 Write-Host "------------------------------"
 
+                $junitFile = "c:\Logs\junit_$($junitIndex).xml"
                 $command = "gotestsum.exe"
                 $arguments = @("--junitfile=$junitFile", "--packages=""$package""")
                 Write-Host "Running unit tests for package: $package :: $command $arguments"
