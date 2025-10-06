@@ -321,6 +321,6 @@ Prepare-Vendor
 Build-Kubeadm
 Install-Tools
 Write-Host "DEBUG: Before calling Prepare-TestPackages"
-$TEST_PACKAGES = Prepare-TestPackages
-Write-Host "DEBUG: After Prepare-TestPackages, TEST_PACKAGES = $TEST_PACKAGES (Count: $($TEST_PACKAGES.Count))"
+$TEST_PACKAGES = @(Prepare-TestPackages)
+Write-Host "DEBUG: After Prepare-TestPackages, TEST_PACKAGES = $TEST_PACKAGES (Count: $($TEST_PACKAGES.Count), Type: $($TEST_PACKAGES.GetType().Name))"
 Run-K8sUnitTests
