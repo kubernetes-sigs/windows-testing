@@ -195,6 +195,8 @@ function Run-K8sUnitTests {
     Write-Host "System info: $(Get-WmiObject Win32_Processor | Select-Object -ExpandProperty NumberOfLogicalProcessors) logical processors"
     
     Write-Host "Total packages to test: $($TEST_PACKAGES.Count)"
+    Write-Host "TEST_PACKAGES contents: $TEST_PACKAGES"
+    Write-Host "TEST_PACKAGES type: $($TEST_PACKAGES.GetType().Name)"
     
     while ($packageIndex -lt $TEST_PACKAGES.Count -or $jobs.Count -gt 0) {
         Write-Host "Loop iteration: packageIndex=$packageIndex, jobs.Count=$($jobs.Count)"
@@ -202,6 +204,7 @@ function Run-K8sUnitTests {
         # Start new jobs up to the limit
         while ($jobs.Count -lt $maxParallelJobs -and $packageIndex -lt $TEST_PACKAGES.Count) {
             $package = $TEST_PACKAGES[$packageIndex]
+            Write-Host "DEBUG: packageIndex=$packageIndex, package retrieved='$package'"
             $junit_output_file = Join-Path -Path $LogsDirPath -ChildPath ("{0}_{1}.xml" -f $JUNIT_FILE_NAME, $packageIndex)
 
             $testsToSkip = $null
@@ -317,5 +320,7 @@ Clone-TestRepo
 Prepare-Vendor
 Build-Kubeadm
 Install-Tools
+Write-Host "DEBUG: Before calling Prepare-TestPackages"
 $TEST_PACKAGES = Prepare-TestPackages
+Write-Host "DEBUG: After Prepare-TestPackages, TEST_PACKAGES = $TEST_PACKAGES (Count: $($TEST_PACKAGES.Count))"
 Run-K8sUnitTests
