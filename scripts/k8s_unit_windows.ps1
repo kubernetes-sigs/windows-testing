@@ -236,12 +236,20 @@ function Run-K8sUnitTests {
                 Write-Host "------------------------------"
 
                 $junitFile = "c:\Logs\junit_$($junitIndex).xml"
+                $logFile = "c:\Logs\output_$($junitIndex).log"
                 $command = "gotestsum.exe"
                 $arguments = @("--junitfile=$junitFile", "--packages=""$package""")
                 Write-Host "Running unit tests for package: $package :: $command $arguments"
                 
-                $output = & $command $arguments 2>&1 | Tee-Object -Variable testOutput
+                # Log the command line to the output file first
+                "Running unit tests for package: $package :: $command $arguments" | Out-File -FilePath $logFile -Encoding UTF8
+                
+                # Run the command and append all output to the log file
+                & $command $arguments 2>&1 | Out-File -FilePath $logFile -Append -Encoding UTF8
                 $exitCode = $LASTEXITCODE
+                
+                # Read the complete log file contents
+                $output = Get-Content -Path $logFile -Raw
                 
                 Write-Host "---PROCESS LIST after test---"
                 Get-Process gotestsum, go -ErrorAction SilentlyContinue
@@ -249,7 +257,7 @@ function Run-K8sUnitTests {
 
                 return [PSCustomObject]@{
                     Package    = $package
-                    Output     = $testOutput | Out-String
+                    Output     = $output
                     ExitCode   = $exitCode
                 }
             } -ArgumentList $package, $packageIndex, $RepoPath
