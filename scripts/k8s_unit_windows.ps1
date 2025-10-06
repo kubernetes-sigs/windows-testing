@@ -252,8 +252,9 @@ function Run-K8sUnitTests {
                 # Log the command line to the output file first
                 "Running unit tests for package: $package :: $command $arguments" | Out-File -FilePath $logFile -Encoding UTF8
                 "=== TEST START ===" | Out-File -FilePath $logFile -Append -Encoding UTF8
+                "Job started at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 
-                # Use System.Diagnostics.Process with async output reading to prevent buffer overflow
+                # Use System.Diagnostics.Process with simple output reading to avoid event handler complexity in jobs
                 Write-Host "About to run: $command $arguments"
                 
                 $process = New-Object System.Diagnostics.Process
@@ -265,56 +266,57 @@ function Run-K8sUnitTests {
                 $process.StartInfo.CreateNoWindow = $true
                 $process.StartInfo.WorkingDirectory = $repoPath
                 
-                # Set 10 minute timeout
+                # Set 20 minute timeout
                 $timeoutMs = 20 * 60 * 1000
                 
-                # Create StringBuilder to collect output without blocking
-                $stdout = New-Object System.Text.StringBuilder
-                $stderr = New-Object System.Text.StringBuilder
-                
-                # Event handlers to read output asynchronously and prevent buffer overflow
-                $outputAction = {
-                    if ($EventArgs.Data) {
-                        [void]$Event.MessageData.StringBuilder.AppendLine($EventArgs.Data)
-                        # Also write directly to log file to prevent memory buildup
-                        $EventArgs.Data | Out-File -FilePath "c:\Logs\output_$($Event.MessageData.Tag).log" -Append -Encoding UTF8
-                    }
-                }
-                $errorAction = {
-                    if ($EventArgs.Data) {
-                        [void]$Event.MessageData.StringBuilder.AppendLine($EventArgs.Data)
-                        # Also write directly to log file
-                        "STDERR: $($EventArgs.Data)" | Out-File -FilePath "c:\Logs\output_$($Event.MessageData.Tag).log" -Append -Encoding UTF8
-                    }
-                }
-                
-                $outputEvent = Register-ObjectEvent -InputObject $process -EventName OutputDataReceived -Action $outputAction -MessageData @{StringBuilder=$stdout; Tag=$junitIndex}
-                $errorEvent = Register-ObjectEvent -InputObject $process -EventName ErrorDataReceived -Action $errorAction -MessageData @{StringBuilder=$stderr; Tag=$junitIndex}
-                
+                Write-Host "Process starting..."
+                "Process starting at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 $process.Start()
-                $process.BeginOutputReadLine()
-                $process.BeginErrorReadLine()
                 
                 Write-Host "Process started with PID: $($process.Id), waiting for completion..."
+                "Process started with PID: $($process.Id) at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 
+                # Use async reading to prevent blocking
+                $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+                $stderrTask = $process.StandardError.ReadToEndAsync()
+                
+                "About to wait for process completion..." | Out-File -FilePath $logFile -Append -Encoding UTF8
                 if (-not $process.WaitForExit($timeoutMs)) {
                     Write-Host "Process timed out after 20 minutes, killing it"
-                    $process.Kill()
-                    $process.WaitForExit(5000) # Wait up to 5 seconds for clean shutdown
+                    "Process TIMED OUT after 20 minutes at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
+                    try {
+                        $process.Kill()
+                        $process.WaitForExit(5000) # Wait up to 5 seconds for clean shutdown
+                    } catch {
+                        Write-Host "Error killing process: $_"
+                        "Error killing process: $_" | Out-File -FilePath $logFile -Append -Encoding UTF8
+                    }
                     $exitCode = -1
                     $output = "TIMEOUT: Process killed after 20 minutes"
                 } else {
+                    Write-Host "Process completed normally"
+                    "Process completed normally at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
                     $exitCode = $process.ExitCode
-                    $output = "Process completed normally"
+                    try {
+                        $stdout = $stdoutTask.Result
+                        $stderr = $stderrTask.Result
+                        $output = $stdout
+                        if ($stderr) {
+                            $output += "`nSTDERR:`n$stderr"
+                        }
+                    } catch {
+                        Write-Host "Error reading process output: $_"
+                        "Error reading process output: $_" | Out-File -FilePath $logFile -Append -Encoding UTF8
+                        $output = "Error reading process output: $_"
+                    }
                 }
-                
-                # Clean up event handlers
-                Unregister-Event -SourceIdentifier $outputEvent.Name
-                Unregister-Event -SourceIdentifier $errorEvent.Name
                 
                 Write-Host "Command completed with exit code: $exitCode"
                 
-                # Final output summary (actual output is in log file)
+                # Write output to log file
+                if ($output) {
+                    $output | Out-File -FilePath $logFile -Append -Encoding UTF8
+                }
                 "=== TEST END ===" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 "Exit code: $exitCode" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 
