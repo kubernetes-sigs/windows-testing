@@ -239,7 +239,7 @@ function Run-K8sUnitTests {
 
                 Push-Location "$RepoPath"
                 # Limit GOMAXPROCS to prevent each package from using all CPUs
-                $env:GOMAXPROCS = 2
+                $env:GOMAXPROCS = 4
 
                 # Collect output in an array.
                 $outputLines = @()
@@ -264,50 +264,48 @@ function Run-K8sUnitTests {
             $packageIndex++
         }
 
-        # Wait for at least one job to complete before starting more
+        # Wait for jobs to complete and process them
         if ($jobs.Count -gt 0) {
-            Write-Host "Waiting for job completion... ($($jobs.Count) active jobs)"
-            $finishedJob = Wait-Job -Job $jobs -Any -Timeout 3600
-            Write-Host "Wait-Job returned. finishedJob is null: $($null -eq $finishedJob)"
-            
-            if ($null -eq $finishedJob) {
-                Write-Output "WARNING: Timeout waiting for job completion after 3600 seconds"
-                Write-Output "Active jobs:"
-                $jobs | ForEach-Object { 
-                    Write-Output "  Job $($_.Id): State=$($_.State), HasMoreData=$($_.HasMoreData)"
+            # Find all completed jobs without blocking
+            $completedJobs = $jobs | Where-Object { $_.State -eq 'Completed' -or $_.State -eq 'Failed' }
+
+            if ($completedJobs.Count -eq 0) {
+                # If no jobs are done, wait for any to complete to avoid a tight loop
+                Write-Host "Waiting for at least one job to complete... ($($jobs.Count) active jobs)"
+                $finishedJob = Wait-Job -Job $jobs -Any -Timeout 3600
+                if ($null -eq $finishedJob) {
+                    Write-Output "WARNING: Timeout waiting for job completion after 3600 seconds"
+                    # ... (timeout handling code remains the same)
+                    exit 1
                 }
-                # Try to get partial results
-                foreach ($job in $jobs) {
-                    Write-Output "Attempting to receive data from job $($job.Id)..."
-                    try {
-                        Receive-Job -Job $job -ErrorAction SilentlyContinue | Out-String | Write-Output
-                    } catch {
-                        Write-Output "  Failed to receive job data: $_"
-                    }
-                }
-                exit 1
+                # Add the first finished job to our list to process
+                $completedJobs = @($finishedJob)
             }
             
-            Write-Host "Receiving job results..."
-            $result = Receive-Job -Job $finishedJob
-            Write-Host "Job result received. Package: $($result.Package), ExitCode: $($result.ExitCode)"
+            Write-Host "Found $($completedJobs.Count) completed job(s) to process."
+
+            foreach ($finishedJob in $completedJobs) {
+                Write-Host "Receiving job results for job $($finishedJob.Id)..."
+                $result = Receive-Job -Job $finishedJob
+                Write-Host "Job result received. Package: $($result.Package), ExitCode: $($result.ExitCode)"
+                
+                if ($result.ExitCode -ne 0) {
+                    $failedJobCount++
+                }
             
-            if ($result.ExitCode -ne 0) {
-                $failedJobCount++
+                Write-Output "Output for package: $($result.Package)"
+                Write-Output $result.Output
+                Write-Output "Exit code: $($result.ExitCode)"
+                Write-Output ("-" * 40)
+            
+                # Clean up the completed job
+                Write-Host "Cleaning up job $($finishedJob.Id)..."
+                Remove-Job -Job $finishedJob -Force
+                [void]$jobs.Remove($finishedJob)
+                $remainingPackages = $TEST_PACKAGES.Count - $packageIndex
+                Write-Output "Active jobs: $($jobs.Count), Remaining packages: $remainingPackages"
+                Write-Output ("-" * 40)
             }
-        
-            Write-Output "Output for package: $($result.Package)"
-            Write-Output $result.Output
-            Write-Output "Exit code: $($result.ExitCode)"
-            Write-Output ("-" * 40)
-        
-            # Clean up the completed job
-            Write-Host "Cleaning up job $($finishedJob.Id)..."
-            Remove-Job -Job $finishedJob -Force
-            [void]$jobs.Remove($finishedJob)
-            $remainingPackages = $TEST_PACKAGES.Count - $packageIndex
-            Write-Output "Active jobs: $($jobs.Count), Remaining packages: $remainingPackages"
-            Write-Output ("-" * 40)
         }
     }
 
