@@ -64,7 +64,7 @@ function Prepare-TestPackages {
     # TEMPORARY: Override any passed-in packages to only test pkg/api package
     Write-Host "TEMPORARY: Overriding testPackages parameter to only test pkg/api package"
     Write-Host "Original testPackages parameter had $($testPackages.Count) items: $testPackages"
-    return @("./pkg/api/...")
+    return @("./cmd/...")
     
     # Original code commented out for now
     if ($testPackages.Count -ne 0) {
@@ -187,7 +187,7 @@ function Run-K8sUnitTests {
     # Limit parallel jobs to prevent CPU oversubscription
     # Reduced from 4 to 2 to further reduce load
     $maxParallelJobs = 2
-    $jobs = @()
+    $jobs = New-Object System.Collections.ArrayList
     $failedJobCount = 0
     $packageIndex = 0
 
@@ -216,7 +216,7 @@ function Run-K8sUnitTests {
             }
 
             Write-Output "Starting job to run tests for package: $package ($(($packageIndex + 1)) of $($TEST_PACKAGES.Count))"
-            $jobs += Start-Job -ScriptBlock {
+            $job = Start-Job -ScriptBlock {
                 param($pkg, $outputFile, $RepoPath, $skipRegex)
 
                 Push-Location "$RepoPath"
@@ -252,7 +252,8 @@ function Run-K8sUnitTests {
                     Output   = $combinedOutput
                 }
             } -ArgumentList $package, $junit_output_file, $RepoPath, $testsToSkip
-        
+
+            [void]$jobs.Add($job)
             $packageIndex++
         }
 
@@ -296,7 +297,7 @@ function Run-K8sUnitTests {
             # Clean up the completed job
             Write-Host "Cleaning up job $($finishedJob.Id)..."
             Remove-Job -Job $finishedJob -Force
-            $jobs = $jobs | Where-Object { $_.Id -ne $finishedJob.Id }
+            [void]$jobs.Remove($finishedJob)
             $remainingPackages = $TEST_PACKAGES.Count - $packageIndex
             Write-Output "Active jobs: $($jobs.Count), Remaining packages: $remainingPackages"
             Write-Output ("-" * 40)
@@ -304,6 +305,11 @@ function Run-K8sUnitTests {
     }
 
     Write-Host "All packages processed. failedJobCount=$failedJobCount"
+    $remainingSystemJobs = Get-Job
+    if ($remainingSystemJobs) {
+        Write-Host "Cleaning up remaining background jobs: $($remainingSystemJobs.Count)"
+        $remainingSystemJobs | Remove-Job -Force
+    }
     
     if ($failedJobCount) {
         Write-Host "Exiting with code 1 due to $failedJobCount failed jobs"
