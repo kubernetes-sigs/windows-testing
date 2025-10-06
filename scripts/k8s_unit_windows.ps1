@@ -224,92 +224,84 @@ function Run-K8sUnitTests {
 
             Write-Output "Starting job to run tests for package: $package ($(($packageIndex + 1)) of $($TEST_PACKAGES.Count))"
             $job = Start-Job -ScriptBlock {
-                param($pkg, $outputFile, $RepoPath, $skipRegex)
+                param($package, $junitIndex)
 
-                Push-Location "$RepoPath"
-                $args = @(
-                    "--junitfile=$outputFile",
-                    "--packages=`"$pkg`""
-                )
-                if ($skipRegex) {
-                    $args += "--"
-                    $args += "--skip"
-                    $args += $skipRegex
-                }
-
-                Push-Location "$RepoPath"
-                # Limit GOMAXPROCS to prevent each package from using all CPUs
                 $env:GOMAXPROCS = 4
+                Write-Host "Job starting for package: $package"
+                Write-Host "GOMAXPROCS in job: $env:GOMAXPROCS"
+                Write-Host "Verification via go: $(go env GOMAXPROCS)"
+                
+                Write-Host "---PROCESS LIST before test---"
+                Get-Process gotestsum, go -ErrorAction SilentlyContinue
+                Write-Host "------------------------------"
 
-                # Collect output in an array.
-                $outputLines = @()
-                $outputLines += "Job starting for package: $pkg"
-                $outputLines += "GOMAXPROCS in job: $env:GOMAXPROCS"
-                $outputLines += "Verification via go: $(go env GOMAXPROCS)"
-                $outputLines += "Running unit tests for package: $pkg :: gotestsum.exe " + ($args -join ' ')
-                $cmdOutput = & gotestsum.exe @args 2>&1
-                $outputLines += $cmdOutput
+                $junitFile = "c:\Logs\junit_$($junitIndex).xml"
+                $command = "gotestsum.exe --junitfile=$junitFile --packages=""$package"""
+                Write-Host "Running unit tests for package: $package :: $command"
+                
+                $output = & $command 2>&1 | Tee-Object -Variable testOutput
                 $exitCode = $LASTEXITCODE
-                $combinedOutput = $outputLines -join "`n"
-                & prune-junit-xml.exe $outputFile
+                
+                Write-Host "---PROCESS LIST after test---"
+                Get-Process gotestsum, go -ErrorAction SilentlyContinue
+                Write-Host "-----------------------------"
 
-                [PSCustomObject]@{
-                    Package  = $pkg
-                    ExitCode = $exitCode
-                    Output   = $combinedOutput
+                return [PSCustomObject]@{
+                    Package    = $package
+                    Output     = $testOutput
+                    ExitCode   = $exitCode
                 }
-            } -ArgumentList $package, $junit_output_file, $RepoPath, $testsToSkip
+            } -ArgumentList $package, $packageIndex
 
             [void]$jobs.Add($job)
             $packageIndex++
         }
 
-        # Wait for jobs to complete and process them
+        # Wait for jobs to finish
         if ($jobs.Count -gt 0) {
-            # Find all completed jobs without blocking
-            $completedJobs = $jobs | Where-Object { $_.State -eq 'Completed' -or $_.State -eq 'Failed' }
-
-            if ($completedJobs.Count -eq 0) {
-                # If no jobs are done, wait for any to complete to avoid a tight loop
-                Write-Host "Waiting for at least one job to complete... ($($jobs.Count) active jobs)"
-                $finishedJob = Wait-Job -Job $jobs -Any -Timeout 3600
-                if ($null -eq $finishedJob) {
-                    Write-Output "WARNING: Timeout waiting for job completion after 3600 seconds"
-                    # ... (timeout handling code remains the same)
-                    exit 1
-                }
-                # Add the first finished job to our list to process
-                $completedJobs = @($finishedJob)
-            }
+            Write-Host "Waiting for at least one job to complete... ($($jobs.Count) active jobs)"
             
-            Write-Host "Found $($completedJobs.Count) completed job(s) to process."
+            # Continuously check for completed jobs until at least one is found
+            while (($jobs | Where-Object { $_.State -in @('Completed', 'Faulted') }).Count -eq 0 -and $jobs.Count -gt 0) {
+                Start-Sleep -Seconds 1
+            }
+        }
 
-            foreach ($finishedJob in $completedJobs) {
-                Write-Host "Receiving job results for job $($finishedJob.Id)..."
+        $completedJobs = $jobs | Where-Object { $_.State -in @('Completed', 'Faulted') }
+        
+        if ($completedJobs.Count -gt 0) {
+            Write-Host "Found $($completedJobs.Count) completed/faulted job(s) to process."
+        }
+
+        foreach ($finishedJob in $completedJobs) {
+            Write-Host "Receiving job results for job $($finishedJob.Id) (State: $($finishedJob.State))..."
+            if ($finishedJob.State -eq 'Faulted') {
+                Write-Host "Job $($finishedJob.Id) has faulted. Error:"
+                $finishedJob.ChildJobs[0].JobStateInfo.Reason.Message | Write-Host
+                $failedPackages.Add("FAULTED_JOB: $($finishedJob.Name)") | Out-Null
+            } else {
                 $result = Receive-Job -Job $finishedJob
                 Write-Host "Job result received. Package: $($result.Package), ExitCode: $($result.ExitCode)"
                 
+                Write-Host "Output for package: $($result.Package)"
+                Write-Host $result.Output
+                Write-Host "----------------------------------------"
+
                 if ($result.ExitCode -ne 0) {
-                    $failedJobCount++
+                    $failedPackages.Add($result.Package) | Out-Null
                 }
-            
-                Write-Output "Output for package: $($result.Package)"
-                Write-Output $result.Output
-                Write-Output "Exit code: $($result.ExitCode)"
-                Write-Output ("-" * 40)
-            
-                # Clean up the completed job
-                Write-Host "Cleaning up job $($finishedJob.Id)..."
-                Remove-Job -Job $finishedJob -Force
-                [void]$jobs.Remove($finishedJob)
-                $remainingPackages = $TEST_PACKAGES.Count - $packageIndex
-                Write-Output "Active jobs: $($jobs.Count), Remaining packages: $remainingPackages"
-                Write-Output ("-" * 40)
             }
+
+            Write-Host "Cleaning up job $($finishedJob.Id)..."
+            Remove-Job -Job $finishedJob
+            [void]$jobs.Remove($finishedJob)
+            
+            Write-Host "Active jobs: $($jobs.Count), Remaining packages: $($TEST_PACKAGES.Count - $packageIndex)"
+            Write-Host "----------------------------------------"
         }
     }
 
-    Write-Host "All packages processed. failedJobCount=$failedJobCount"
+    Write-Host "All packages have been processed. Final job cleanup..."
     $remainingSystemJobs = Get-Job
     if ($remainingSystemJobs) {
         Write-Host "Cleaning up remaining background jobs: $($remainingSystemJobs.Count)"
