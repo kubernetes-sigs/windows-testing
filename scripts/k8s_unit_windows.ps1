@@ -219,12 +219,15 @@ function Run-K8sUnitTests {
                 Write-Output "Not skipping any tests for package: $package"
             }
 
-            Write-Output "Starting job to run tests for package: $package ($(($packageIndex + 1)) of $($TEST_PACKAGES.Count))"
+            Write-Output "Starting job to run tests for package: $package ($($packageIndex + 1) of $($TEST_PACKAGES.Count))"
+            
             $job = Start-Job -ScriptBlock {
-                param($package, $junitIndex)
+                param($package, $junitIndex, $repoPath)
+
+                Set-Location $repoPath
 
                 $env:GOMAXPROCS = 4
-                Write-Host "Job starting for package: $package"
+                Write-Host "Job starting for package: $package from $(Get-Location)"
                 Write-Host "GOMAXPROCS in job: $env:GOMAXPROCS"
                 Write-Host "Verification via go: $(go env GOMAXPROCS)"
                 
@@ -249,9 +252,10 @@ function Run-K8sUnitTests {
                     Output     = $testOutput
                     ExitCode   = $exitCode
                 }
-            } -ArgumentList $package, $packageIndex
-
+            } -ArgumentList $package, $packageIndex, $RepoPath
+            $job.Name = "UnitTest-$package"
             [void]$jobs.Add($job)
+
             $packageIndex++
         }
 
@@ -271,7 +275,7 @@ function Run-K8sUnitTests {
             Write-Host "Found $($completedJobs.Count) completed/faulted job(s) to process."
         }
 
-        foreach ($finishedJob in $completedJobs) {
+        foreach $finishedJob in $completedJobs {
             Write-Host "Receiving job results for job $($finishedJob.Id) (State: $($finishedJob.State))..."
             if ($finishedJob.State -eq 'Faulted') {
                 Write-Host "Job $($finishedJob.Id) has faulted. Error:"
