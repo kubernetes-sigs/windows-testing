@@ -275,7 +275,7 @@ function Run-K8sUnitTests {
             Write-Host "Found $($completedJobs.Count) completed/faulted job(s) to process."
         }
 
-        foreach $finishedJob in $completedJobs {
+        foreach ($finishedJob in $completedJobs) {
             Write-Host "Receiving job results for job $($finishedJob.Id) (State: $($finishedJob.State))..."
             if ($finishedJob.State -eq 'Faulted') {
                 Write-Host "Job $($finishedJob.Id) has faulted. Error:"
