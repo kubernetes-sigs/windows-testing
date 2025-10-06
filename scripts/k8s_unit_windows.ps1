@@ -235,11 +235,11 @@ function Run-K8sUnitTests {
                 Get-Process gotestsum, go -ErrorAction SilentlyContinue
                 Write-Host "------------------------------"
 
-                $junitFile = "c:\Logs\junit_$($junitIndex).xml"
-                $command = "gotestsum.exe --junitfile=$junitFile --packages=""$package"""
-                Write-Host "Running unit tests for package: $package :: $command"
+                $command = "gotestsum.exe"
+                $arguments = @("--junitfile=$junitFile", "--packages=""$package""")
+                Write-Host "Running unit tests for package: $package :: $command $arguments"
                 
-                $output = & $command 2>&1 | Tee-Object -Variable testOutput
+                $output = & $command $arguments 2>&1 | Tee-Object -Variable testOutput
                 $exitCode = $LASTEXITCODE
                 
                 Write-Host "---PROCESS LIST after test---"
