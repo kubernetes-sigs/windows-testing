@@ -275,21 +275,21 @@ function Run-K8sUnitTests {
                 # Event handlers to read output asynchronously and prevent buffer overflow
                 $outputAction = {
                     if ($EventArgs.Data) {
-                        [void]$Event.MessageData.AppendLine($EventArgs.Data)
+                        [void]$Event.MessageData.StringBuilder.AppendLine($EventArgs.Data)
                         # Also write directly to log file to prevent memory buildup
-                        $EventArgs.Data | Out-File -FilePath $using:logFile -Append -Encoding UTF8
+                        $EventArgs.Data | Out-File -FilePath "c:\Logs\output_$($Event.MessageData.Tag).log" -Append -Encoding UTF8
                     }
                 }
                 $errorAction = {
                     if ($EventArgs.Data) {
-                        [void]$Event.MessageData.AppendLine($EventArgs.Data)
+                        [void]$Event.MessageData.StringBuilder.AppendLine($EventArgs.Data)
                         # Also write directly to log file
-                        "STDERR: $($EventArgs.Data)" | Out-File -FilePath $using:logFile -Append -Encoding UTF8
+                        "STDERR: $($EventArgs.Data)" | Out-File -FilePath "c:\Logs\output_$($Event.MessageData.Tag).log" -Append -Encoding UTF8
                     }
                 }
                 
-                $outputEvent = Register-ObjectEvent -InputObject $process -EventName OutputDataReceived -Action $outputAction -MessageData $stdout
-                $errorEvent = Register-ObjectEvent -InputObject $process -EventName ErrorDataReceived -Action $errorAction -MessageData $stderr
+                $outputEvent = Register-ObjectEvent -InputObject $process -EventName OutputDataReceived -Action $outputAction -MessageData @{StringBuilder=$stdout; Tag=$junitIndex}
+                $errorEvent = Register-ObjectEvent -InputObject $process -EventName ErrorDataReceived -Action $errorAction -MessageData @{StringBuilder=$stderr; Tag=$junitIndex}
                 
                 $process.Start()
                 $process.BeginOutputReadLine()
@@ -312,9 +312,6 @@ function Run-K8sUnitTests {
                 Unregister-Event -SourceIdentifier $outputEvent.Name
                 Unregister-Event -SourceIdentifier $errorEvent.Name
                 
-                # Final output is primarily in the log file now
-                $output += "`nOutput and errors written to: $logFile"
-                
                 Write-Host "Command completed with exit code: $exitCode"
                 
                 # Final output summary (actual output is in log file)
@@ -327,6 +324,7 @@ function Run-K8sUnitTests {
                     Write-Host "Log file size: $logSize bytes"
                 } else {
                     Write-Host "ERROR: Log file not found!"
+                    $logSize = 0
                 }
                 
                 Write-Host "---PROCESS LIST after test---"
@@ -339,9 +337,15 @@ function Run-K8sUnitTests {
                     ExitCode   = $exitCode
                 }
             } -ArgumentList $package, $packageIndex, $RepoPath
-            $job.Name = "UnitTest-$package"
-            [void]$jobs.Add($job)
-            Write-Host ">>> Job started with ID: $($job.Id), Name: $($job.Name)"
+            
+            if ($job) {
+                $job.Name = "UnitTest-$package"
+                [void]$jobs.Add($job)
+                Write-Host ">>> Job started with ID: $($job.Id), Name: $($job.Name)"
+            } else {
+                Write-Host "ERROR: Failed to create job for package: $package"
+                $failedPackages.Add("FAILED_TO_CREATE_JOB: $package") | Out-Null
+            }
             [Console]::Out.Flush()
 
             $packageIndex++
