@@ -65,9 +65,9 @@ function Prepare-TestPackages {
         return $testPackages
     }
 
-    # TEMPORARY: Only test the 2 packages that are completing in logs
-    Write-Host "TEMPORARY: Testing only pkg/api and pkg/apis packages"
-    return @("./pkg/api/...", "./pkg/apis/...")
+    # TEMPORARY: Only test pkg/api package
+    Write-Host "TEMPORARY: Testing only pkg/api package"
+    return @("./pkg/api/...")
     
     # Original code commented out for now
     # Push-Location "$RepoPath/pkg"
@@ -192,7 +192,11 @@ function Run-K8sUnitTests {
     Write-Host "Starting test execution with max $maxParallelJobs parallel jobs, GOMAXPROCS=2 per job"
     Write-Host "System info: $(Get-WmiObject Win32_Processor | Select-Object -ExpandProperty NumberOfLogicalProcessors) logical processors"
     
+    Write-Host "Total packages to test: $($TEST_PACKAGES.Count)"
+    
     while ($packageIndex -lt $TEST_PACKAGES.Count -or $jobs.Count -gt 0) {
+        Write-Host "Loop iteration: packageIndex=$packageIndex, jobs.Count=$($jobs.Count)"
+        
         # Start new jobs up to the limit
         while ($jobs.Count -lt $maxParallelJobs -and $packageIndex -lt $TEST_PACKAGES.Count) {
             $package = $TEST_PACKAGES[$packageIndex]
@@ -249,7 +253,9 @@ function Run-K8sUnitTests {
 
         # Wait for at least one job to complete before starting more
         if ($jobs.Count -gt 0) {
+            Write-Host "Waiting for job completion... ($($jobs.Count) active jobs)"
             $finishedJob = Wait-Job -Job $jobs -Any -Timeout 3600
+            Write-Host "Wait-Job returned. finishedJob is null: $($null -eq $finishedJob)"
             
             if ($null -eq $finishedJob) {
                 Write-Output "WARNING: Timeout waiting for job completion after 3600 seconds"
@@ -269,7 +275,9 @@ function Run-K8sUnitTests {
                 exit 1
             }
             
+            Write-Host "Receiving job results..."
             $result = Receive-Job -Job $finishedJob
+            Write-Host "Job result received. Package: $($result.Package), ExitCode: $($result.ExitCode)"
             
             if ($result.ExitCode -ne 0) {
                 $failedJobCount++
@@ -281,6 +289,7 @@ function Run-K8sUnitTests {
             Write-Output ("-" * 40)
         
             # Clean up the completed job
+            Write-Host "Cleaning up job $($finishedJob.Id)..."
             Remove-Job -Job $finishedJob -Force
             $jobs = $jobs | Where-Object { $_.Id -ne $finishedJob.Id }
             $remainingPackages = $TEST_PACKAGES.Count - $packageIndex
@@ -289,10 +298,14 @@ function Run-K8sUnitTests {
         }
     }
 
+    Write-Host "All packages processed. failedJobCount=$failedJobCount"
+    
     if ($failedJobCount) {
+        Write-Host "Exiting with code 1 due to $failedJobCount failed jobs"
         exit 1
     }
     else {
+        Write-Host "Exiting with code 0 - all tests passed"
         exit 0
     }
 }
