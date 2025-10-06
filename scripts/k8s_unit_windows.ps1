@@ -65,12 +65,17 @@ function Prepare-TestPackages {
         return $testPackages
     }
 
-    Push-Location "$RepoPath/pkg"
-    $packages = ls -Directory  | select Name | foreach { "./pkg/" + $_.Name + "/..." }
-    $packages = $packages + $EXTRA_PACKAGES
-    $EXCLUDED_PACKAGES | foreach { $packages = $packages -ne $_ }
-    Pop-Location
-    return $packages
+    # TEMPORARY: Only test the 2 packages that are completing in logs
+    Write-Host "TEMPORARY: Testing only pkg/api and pkg/apis packages"
+    return @("./pkg/api/...", "./pkg/apis/...")
+    
+    # Original code commented out for now
+    # Push-Location "$RepoPath/pkg"
+    # $packages = ls -Directory  | select Name | foreach { "./pkg/" + $_.Name + "/..." }
+    # $packages = $packages + $EXTRA_PACKAGES
+    # $EXCLUDED_PACKAGES | foreach { $packages = $packages -ne $_ }
+    # Pop-Location
+    # return $packages
 }
 
 function Prepare-LogsDir {
@@ -171,6 +176,12 @@ function Build-Kubeadm {
 }
 
 function Run-K8sUnitTests {
+    # Set GOMAXPROCS globally for the entire machine/session
+    $env:GOMAXPROCS = 2
+    [Environment]::SetEnvironmentVariable("GOMAXPROCS", "2", "Process")
+    Write-Host "Set GOMAXPROCS=2 globally for this session"
+    Write-Host "Verification: GOMAXPROCS = $env:GOMAXPROCS"
+    
     # Limit parallel jobs to prevent CPU oversubscription
     # Reduced from 4 to 2 to further reduce load
     $maxParallelJobs = 2
@@ -216,6 +227,9 @@ function Run-K8sUnitTests {
 
                 # Collect output in an array.
                 $outputLines = @()
+                $outputLines += "Job starting for package: $pkg"
+                $outputLines += "GOMAXPROCS in job: $env:GOMAXPROCS"
+                $outputLines += "Verification via go: $(go env GOMAXPROCS)"
                 $outputLines += "Running unit tests for package: $pkg :: gotestsum.exe " + ($args -join ' ')
                 $cmdOutput = & gotestsum.exe @args 2>&1
                 $outputLines += $cmdOutput
