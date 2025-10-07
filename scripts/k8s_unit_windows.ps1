@@ -71,7 +71,13 @@ function Prepare-TestPackages {
         "./pkg/certauthorization/...",
         "./pkg/auth/...",
         "./pkg/client/...",
-        "./pkg/version/..."
+        "./pkg/version/...",
+        "./pkg/apis/...",
+        "./pkg/controller/...",
+        "./pkg/controlplane/...",
+        "./pkg/kubelet/...",
+        "./pkg/kubeapiserver/...",
+        "./pkg/kubectl/..."
     )
     
     # Original code commented out for now
