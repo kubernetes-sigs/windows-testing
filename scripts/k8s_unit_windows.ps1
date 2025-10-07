@@ -254,71 +254,59 @@ function Run-K8sUnitTests {
                 "=== TEST START ===" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 "Job started at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 
-                # Use System.Diagnostics.Process with simple output reading to avoid event handler complexity in jobs
+                # Use cmd.exe with file redirection to avoid PowerShell buffer issues
                 Write-Host "About to run: $command $arguments"
+                "About to run: $command $arguments at $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 
-                $process = New-Object System.Diagnostics.Process
-                $process.StartInfo.FileName = $command
-                $process.StartInfo.Arguments = $arguments
-                $process.StartInfo.RedirectStandardOutput = $true
-                $process.StartInfo.RedirectStandardError = $true
-                $process.StartInfo.UseShellExecute = $false
-                $process.StartInfo.CreateNoWindow = $true
-                $process.StartInfo.WorkingDirectory = $repoPath
+                # Create temporary output file
+                $tempOutputFile = "$logFile.temp"
                 
-                # Set 20 minute timeout
-                $timeoutMs = 20 * 60 * 1000
+                # Use cmd.exe to redirect output directly to file, avoiding PowerShell buffers
+                $cmdLine = "cmd.exe /c `"$command $arguments > `"$tempOutputFile`" 2>&1`""
                 
-                Write-Host "Process starting..."
-                "Process starting at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
-                $process.Start()
+                Write-Host "Starting process with cmd.exe redirection..."
+                "Starting process at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
+                "Command line: $cmdLine" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 
-                Write-Host "Process started with PID: $($process.Id), waiting for completion..."
-                "Process started with PID: $($process.Id) at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
+                # Use Invoke-Expression to run the cmd command
+                try {
+                    Invoke-Expression $cmdLine
+                    $exitCode = $LASTEXITCODE
+                    if (-not $exitCode) { $exitCode = 0 }
+                    
+                    Write-Host "Process completed with exit code: $exitCode"
+                    "Process completed with exit code: $exitCode at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
+                } catch {
+                    Write-Host "Error running command: $_"
+                    "Error running command: $_ at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
+                    $exitCode = 1
+                }
                 
-                # Use async reading to prevent blocking
-                $stdoutTask = $process.StandardOutput.ReadToEndAsync()
-                $stderrTask = $process.StandardError.ReadToEndAsync()
-                
-                "About to wait for process completion..." | Out-File -FilePath $logFile -Append -Encoding UTF8
-                if (-not $process.WaitForExit($timeoutMs)) {
-                    Write-Host "Process timed out after 20 minutes, killing it"
-                    "Process TIMED OUT after 20 minutes at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
+                # Read the output file
+                $output = ""
+                if (Test-Path $tempOutputFile) {
                     try {
-                        $process.Kill()
-                        $process.WaitForExit(5000) # Wait up to 5 seconds for clean shutdown
+                        $output = Get-Content $tempOutputFile -Raw
+                        # Remove the temp file
+                        Remove-Item $tempOutputFile -ErrorAction SilentlyContinue
                     } catch {
-                        Write-Host "Error killing process: $_"
-                        "Error killing process: $_" | Out-File -FilePath $logFile -Append -Encoding UTF8
+                        Write-Host "Error reading output file: $_"
+                        "Error reading output file: $_" | Out-File -FilePath $logFile -Append -Encoding UTF8
+                        $output = "Error reading output file: $_"
                     }
-                    $exitCode = -1
-                    $output = "TIMEOUT: Process killed after 20 minutes"
                 } else {
-                    Write-Host "Process completed normally"
-                    "Process completed normally at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
-                    $exitCode = $process.ExitCode
-                    try {
-                        $stdout = $stdoutTask.Result
-                        $stderr = $stderrTask.Result
-                        $output = $stdout
-                        if ($stderr) {
-                            $output += "`nSTDERR:`n$stderr"
-                        }
-                    } catch {
-                        Write-Host "Error reading process output: $_"
-                        "Error reading process output: $_" | Out-File -FilePath $logFile -Append -Encoding UTF8
-                        $output = "Error reading process output: $_"
-                    }
+                    $output = "No output file created"
                 }
                 
                 Write-Host "Command completed with exit code: $exitCode"
                 
-                # Write output to log file
+                # Write combined output to main log file
                 if ($output) {
                     $output | Out-File -FilePath $logFile -Append -Encoding UTF8
                 }
                 "=== TEST END ===" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 "Exit code: $exitCode" | Out-File -FilePath $logFile -Append -Encoding UTF8
+                "Job completed at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 
                 # Check if log file exists and get its size
                 if (Test-Path $logFile) {
