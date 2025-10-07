@@ -207,8 +207,6 @@ function Run-K8sUnitTests {
             $job = Start-Job -ScriptBlock {
                 param($package, $junitIndex, $repoPath, $testsToSkip)
 
-                Write-Host "INFO: Job started with package='$package', junitIndex=$junitIndex, testsToSkip='$testsToSkip'"
-                
                 Set-Location $repoPath
 
                 $env:GOMAXPROCS = 4
@@ -246,14 +244,12 @@ function Run-K8sUnitTests {
                 # which cause a hang if output buffers fill up
                 Write-Host "About to run: $command $arguments"
                 "About to run: $command $arguments at $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
-                
+
                 # Create temporary output file
                 $tempOutputFile = "$logFile.temp"
-                
+
                 # Use cmd.exe to redirect output directly to file, avoiding PowerShell buffers
                 $cmdLine = "cmd.exe /c $command $arguments > `"$tempOutputFile`" 2>&1"
-                
-                Write-Host "Starting process with cmd.exe redirection..."
                 "Starting process at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 "Command line: $cmdLine" | Out-File -FilePath $logFile -Append -Encoding UTF8
 
@@ -293,10 +289,9 @@ function Run-K8sUnitTests {
                 if ($output) {
                     $output | Out-File -FilePath $logFile -Append -Encoding UTF8
                 }
-                "=== TEST END ===" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 "Exit code: $exitCode" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 "Job completed at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
-                
+
                 # Check if log file exists and get its size
                 if (Test-Path $logFile) {
                     $logSize = (Get-Item $logFile).Length
@@ -305,21 +300,14 @@ function Run-K8sUnitTests {
                     Write-Host "ERROR: Log file not found!"
                     $logSize = 0
                 }
-                
-                Write-Host "---PROCESS LIST after test---"
-                Get-Process gotestsum, go -ErrorAction SilentlyContinue
-                Write-Host "-----------------------------"
 
                 return [PSCustomObject]@{
                     Package    = $package
                     Output     = "See log file: $logFile (size: $logSize bytes)"
                     ExitCode   = $exitCode
                 }
-                
-                # Debug output to help troubleshoot
-                Write-Host "DEBUG: Job returning - Package: '$package', ExitCode: $exitCode"
             } -ArgumentList $package, $packageIndex, $RepoPath, $testsToSkip
-            
+
             if ($job) {
                 $job.Name = "UnitTest-$package"
                 [void]$jobs.Add($job)
@@ -343,15 +331,15 @@ function Run-K8sUnitTests {
             while (($jobs | Where-Object { $_.State -in @('Completed', 'Faulted') }).Count -eq 0 -and $jobs.Count -gt 0) {
                 Start-Sleep -Seconds 1
                 $waitCounter++
-                if (($waitCounter % 15) -eq 0) {
-                    Write-Host "DEBUG: Still waiting for jobs to complete after $waitCounter seconds. Current job states:"
+                if (($waitCounter % 30) -eq 0) {
+                    Write-Host "INFO: Still waiting for jobs to complete after $waitCounter seconds. Current job states:"
                     $jobs | ForEach-Object { Write-Host "  - Job ID: $($_.Id), Name: $($_.Name), State: $($_.State)" }
                 }
             }
         }
 
         $completedJobs = $jobs | Where-Object { $_.State -in @('Completed', 'Faulted') }
-        
+
         if ($completedJobs.Count -gt 0) {
             Write-Host "Found $($completedJobs.Count) completed/faulted job(s) to process."
         }
@@ -365,36 +353,39 @@ function Run-K8sUnitTests {
                 [void]$failedPackages.Add("FAULTED_JOB: $($finishedJob.Name)")
             } else {
                 $result = Receive-Job -Job $finishedJob
-                Write-Host "Job result received. Package: $($result.Package), ExitCode: $($result.ExitCode)"
                 
-                # Debug: Check what we actually got back
-                Write-Host "DEBUG: result object type: $($result.GetType().Name)"
-                Write-Host "DEBUG: result.Package value: '$($result.Package)'"
-                Write-Host "DEBUG: result.Package type: $($result.Package.GetType().Name)"
+                # Extract package name properly, handling both array and object cases
+                $packageName = $result.Package
+                if ($packageName -is [array]) {
+                    $packageName = $packageName[0]
+                }
+                # Clean up whitespace and ensure it's a string
+                $packageName = [string]$packageName
+                $packageName = $packageName.Trim()
                 
-                Write-Host "Output for package: $($result.Package)"
+                # Additional safety check for empty/null values
+                if ([string]::IsNullOrWhiteSpace($packageName)) {
+                    $packageName = "UNKNOWN_PACKAGE_$($finishedJob.Id)"
+                }
+                
+                Write-Host "Job result received. Package: $packageName, ExitCode: $($result.ExitCode)"
+
+                Write-Host "Output for package: $packageName"
                 Write-Host $result.Output
                 Write-Host "----------------------------------------"
 
                 if ($result.ExitCode -ne 0) {
-                    # Ensure we add the package name as a string, not an array
-                    $packageName = $result.Package
-                    if ($packageName -is [array]) {
-                        $packageName = $packageName[0]
-                    }
-                    # Additional safety check for empty/null values
-                    if ([string]::IsNullOrWhiteSpace($packageName)) {
-                        $packageName = "UNKNOWN_PACKAGE_$($finishedJob.Id)"
-                    }
-                    Write-Host "DEBUG: Adding failed package: '$packageName'"
+                    Write-Host "Adding failed package to results: '$packageName' (exit code: $($result.ExitCode))"
                     [void]$failedPackages.Add($packageName)
+                } else {
+                    Write-Host "Package '$packageName' passed (exit code: $($result.ExitCode))"
                 }
             }
 
             Write-Host "Cleaning up job $($finishedJob.Id)..."
             Remove-Job -Job $finishedJob
             $jobsToRemove += $finishedJob
-            
+
             Write-Host "Active jobs: $($jobs.Count), Remaining packages: $($TEST_PACKAGES.Count - $packageIndex)"
             Write-Host "----------------------------------------"
         }
