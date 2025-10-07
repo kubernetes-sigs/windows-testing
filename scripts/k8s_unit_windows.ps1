@@ -74,20 +74,6 @@ function Prepare-TestPackages {
     Pop-Location
     return $packages
 }
-    
-    # Original code commented out for now
-    if ($testPackages.Count -ne 0) {
-        return $testPackages
-    }
-    
-    # Original code commented out for now
-    # Push-Location "$RepoPath/pkg"
-    # $packages = ls -Directory  | select Name | foreach { "./pkg/" + $_.Name + "/..." }
-    # $packages = $packages + $EXTRA_PACKAGES
-    # $EXCLUDED_PACKAGES | foreach { $packages = $packages -ne $_ }
-    # Pop-Location
-    # return $packages
-}
 
 function Prepare-LogsDir {
     mkdir $LogsDirPath
