@@ -227,7 +227,7 @@ function Run-K8sUnitTests {
                     Write-Host "Adding skip arguments for tests: $testsToSkip"
                     $args += "--"
                     $args += "--skip"
-                    $args += $testsToSkip
+                    $args += "`"$testsToSkip`""
                 }
                 
                 # Convert args array to string for cmd.exe
