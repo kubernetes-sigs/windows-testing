@@ -23,7 +23,21 @@ SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
 SCRIPT_ROOT=$(dirname "${SCRIPT_PATH}")
 source ${SCRIPT_ROOT}/ci-k8s-common.sh
 
-trap onError ERR 
+trap onError ERR
+
+function copy_logs {
+    echo "Copying c:/Logs/*.xml from ${VM_PUB_IP}:c:/Logs/*.xml to ${ARTIFACTS}"
+    scp -i ${SSH_KEY_FILE} ${SSH_OPTS} azureuser@${VM_PUB_IP}:"c:/Logs/*.xml" ${ARTIFACTS}
+    echo "Copying c:/Logs/*.log from ${VM_PUB_IP}:c:/Logs/*.log to ${ARTIFACTS}"
+    scp -i ${SSH_KEY_FILE} ${SSH_OPTS} azureuser@${VM_PUB_IP}:"c:/Logs/*.log" ${ARTIFACTS}
+}
+
+function destroy_resource_group_and_exit {
+    local exit_code=$1
+    copy_logs
+    destroy_resource_group
+    exit $exit_code
+}
 
 ensure_azure_cli
 build_resource_group
@@ -76,7 +90,5 @@ fi
 set -e  # Re-enable errexit
 trap onError ERR  # Re-enable the ERR trap
 
-copy_from 'c:/Logs/*.xml' ${ARTIFACTS} ${VM_PUB_IP}
-destroy_resource_group
+destroy_resource_group_and_exit $exit_code
 
-exit $exit_code
