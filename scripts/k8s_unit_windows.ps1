@@ -212,6 +212,8 @@ function Run-K8sUnitTests {
             $job = Start-Job -ScriptBlock {
                 param($package, $junitIndex, $repoPath, $testsToSkip)
 
+                Write-Host "DEBUG: Job started with package='$package', junitIndex=$junitIndex, testsToSkip='$testsToSkip'"
+                
                 Set-Location $repoPath
 
                 $env:GOMAXPROCS = 4
@@ -323,6 +325,9 @@ function Run-K8sUnitTests {
                     Output     = "See log file: $logFile (size: $logSize bytes)"
                     ExitCode   = $exitCode
                 }
+                
+                # Debug output to help troubleshoot
+                Write-Host "DEBUG: Job returning - Package: '$package', ExitCode: $exitCode"
             } -ArgumentList $package, $packageIndex, $RepoPath, $testsToSkip
             
             if ($job) {
@@ -372,6 +377,11 @@ function Run-K8sUnitTests {
                 $result = Receive-Job -Job $finishedJob
                 Write-Host "Job result received. Package: $($result.Package), ExitCode: $($result.ExitCode)"
                 
+                # Debug: Check what we actually got back
+                Write-Host "DEBUG: result object type: $($result.GetType().Name)"
+                Write-Host "DEBUG: result.Package value: '$($result.Package)'"
+                Write-Host "DEBUG: result.Package type: $($result.Package.GetType().Name)"
+                
                 Write-Host "Output for package: $($result.Package)"
                 Write-Host $result.Output
                 Write-Host "----------------------------------------"
@@ -382,6 +392,11 @@ function Run-K8sUnitTests {
                     if ($packageName -is [array]) {
                         $packageName = $packageName[0]
                     }
+                    # Additional safety check for empty/null values
+                    if ([string]::IsNullOrWhiteSpace($packageName)) {
+                        $packageName = "UNKNOWN_PACKAGE_$($finishedJob.Id)"
+                    }
+                    Write-Host "DEBUG: Adding failed package: '$packageName'"
                     [void]$failedPackages.Add($packageName)
                 }
             }
