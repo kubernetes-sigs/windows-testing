@@ -62,23 +62,18 @@ $SkipTestsForPackage = @{
 }
 
 function Prepare-TestPackages {
-    # TEMPORARY: Override any passed-in packages to run targeted package list
-    Write-Host "TEMPORARY: Overriding testPackages parameter to run targeted package list"
-    Write-Host "Original testPackages parameter had $($testPackages.Count) items: $testPackages"
-    return @(
-        "./pkg/api/...",
-        "./pkg/capabilities/...",
-        "./pkg/certauthorization/...",
-        "./pkg/auth/...",
-        "./pkg/client/...",
-        "./pkg/version/...",
-        "./pkg/apis/...",
-        "./pkg/controller/...",
-        "./pkg/controlplane/...",
-        "./pkg/kubelet/...",
-        "./pkg/kubeapiserver/...",
-        "./pkg/kubectl/..."
-    )
+    # Back to testing all packages - the buffer overflow fixes should handle this now
+    if ($testPackages.Count -ne 0) {
+        return $testPackages
+    }
+    
+    Push-Location "$RepoPath/pkg"
+    $packages = ls -Directory | select Name | foreach { "./pkg/" + $_.Name + "/..." }
+    $packages = $packages + $EXTRA_PACKAGES
+    $EXCLUDED_PACKAGES | foreach { $packages = $packages -ne $_ }
+    Pop-Location
+    return $packages
+}
     
     # Original code commented out for now
     if ($testPackages.Count -ne 0) {
@@ -252,8 +247,23 @@ function Run-K8sUnitTests {
                 $junitFile = "c:\Logs\junit_$($junitIndex).xml"
                 $logFile = "c:\Logs\output_$($junitIndex).log"
                 $command = "gotestsum.exe"
-                # Use single quotes around package to prevent PowerShell from parsing the path
-                $arguments = "--junitfile=$junitFile --packages='$package'"
+                
+                # Build arguments array like the original
+                $args = @(
+                    "--junitfile=$junitFile",
+                    "--packages=`"$package`""
+                )
+                
+                # Add skip tests if specified (using the original logic)
+                if ($testsToSkip) {
+                    $args += "--"
+                    $args += "--skip"
+                    $args += $testsToSkip
+                }
+                
+                # Convert args array to string for cmd.exe
+                $arguments = $args -join " "
+                
                 Write-Host "Running unit tests for package: $package :: $command $arguments"
                 
                 # Log the command line to the output file first
