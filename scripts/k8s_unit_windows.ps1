@@ -16,13 +16,7 @@ $EXTRA_PACKAGES = @("./cmd/...")
 $EXCLUDED_PACKAGES = @(
     "./pkg/proxy/iptables/...",
     "./pkg/proxy/ipvs/...",
-    "./pkg/proxy/nftables/...",
-    "./pkg/controller/...",
-    "./pkg/controlplane/...",
-    "./pkg/kubelet/...",
-    "./pkg/kubeapiserver/...",
-    "./pkg/kubectl/...",
-    "./pkg/apis/...")  # Temporarily excluding due to hanging issues
+    "./pkg/proxy/nftables/...")
 # Map of packages with test case names to skip.
 $SkipTestsForPackage = @{
     "./cmd/..."         = @(
@@ -62,11 +56,10 @@ $SkipTestsForPackage = @{
 }
 
 function Prepare-TestPackages {
-    # Back to testing all packages - the buffer overflow fixes should handle this now
     if ($testPackages.Count -ne 0) {
         return $testPackages
     }
-    
+
     Push-Location "$RepoPath/pkg"
     $packages = ls -Directory | select Name | foreach { "./pkg/" + $_.Name + "/..." }
     $packages = $packages + $EXTRA_PACKAGES
