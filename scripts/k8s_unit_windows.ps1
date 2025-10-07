@@ -331,7 +331,7 @@ function Run-K8sUnitTests {
                 Write-Host ">>> Job started with ID: $($job.Id), Name: $($job.Name)"
             } else {
                 Write-Host "ERROR: Failed to create job for package: $package"
-                $failedPackages.Add("FAILED_TO_CREATE_JOB: $package") | Out-Null
+                [void]$failedPackages.Add("FAILED_TO_CREATE_JOB: $package")
             }
             [Console]::Out.Flush()
 
@@ -367,7 +367,7 @@ function Run-K8sUnitTests {
             if ($finishedJob.State -eq 'Faulted') {
                 Write-Host "Job $($finishedJob.Id) has faulted. Error:"
                 $finishedJob.ChildJobs[0].JobStateInfo.Reason.Message | Write-Host
-                $failedPackages.Add("FAULTED_JOB: $($finishedJob.Name)") | Out-Null
+                [void]$failedPackages.Add("FAULTED_JOB: $($finishedJob.Name)")
             } else {
                 $result = Receive-Job -Job $finishedJob
                 Write-Host "Job result received. Package: $($result.Package), ExitCode: $($result.ExitCode)"
@@ -377,7 +377,12 @@ function Run-K8sUnitTests {
                 Write-Host "----------------------------------------"
 
                 if ($result.ExitCode -ne 0) {
-                    $failedPackages.Add($result.Package) | Out-Null
+                    # Ensure we add the package name as a string, not an array
+                    $packageName = $result.Package
+                    if ($packageName -is [array]) {
+                        $packageName = $packageName[0]
+                    }
+                    [void]$failedPackages.Add($packageName)
                 }
             }
 
