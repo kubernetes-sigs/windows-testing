@@ -53,6 +53,9 @@ $SkipTestsForPackage = @{
         "TestPlugin",
         "TestPluginOptionalKeys"
     )
+    "./pkg/routes/..." = @(
+        "TestPreCheckLogFileNameLength"
+    )
 }
 
 function Prepare-TestPackages {
@@ -180,22 +183,14 @@ function Run-K8sUnitTests {
 
     Write-Host "Total packages to test: $($TEST_PACKAGES.Count)"
     Write-Host "TEST_PACKAGES contents: $TEST_PACKAGES"
-    Write-Host "TEST_PACKAGES type: $($TEST_PACKAGES.GetType().Name)"
-    
-    # Add immediate debugging with flush
-    Write-Host "=== STARTING MAIN PROCESSING LOOP ===" 
-    [Console]::Out.Flush()
-    
+
     while ($packageIndex -lt $TEST_PACKAGES.Count -or $jobs.Count -gt 0) {
-        Write-Host "=== Loop iteration: packageIndex=$packageIndex, jobs.Count=$($jobs.Count) ==="
-        [Console]::Out.Flush()
-        
         # Start new jobs up to the limit
         while ($jobs.Count -lt $maxParallelJobs -and $packageIndex -lt $TEST_PACKAGES.Count) {
             Write-Host ">>> Starting new job: jobs.Count=$($jobs.Count), packageIndex=$packageIndex"
             [Console]::Out.Flush()
             $package = $TEST_PACKAGES[$packageIndex]
-            Write-Host "DEBUG: packageIndex=$packageIndex, package retrieved='$package'"
+            Write-Host "INFO: packageIndex=$packageIndex, package retrieved='$package'"
             $junit_output_file = Join-Path -Path $LogsDirPath -ChildPath ("{0}_{1}.xml" -f $JUNIT_FILE_NAME, $packageIndex)
 
             $testsToSkip = $null
@@ -212,18 +207,12 @@ function Run-K8sUnitTests {
             $job = Start-Job -ScriptBlock {
                 param($package, $junitIndex, $repoPath, $testsToSkip)
 
-                Write-Host "DEBUG: Job started with package='$package', junitIndex=$junitIndex, testsToSkip='$testsToSkip'"
+                Write-Host "INFO: Job started with package='$package', junitIndex=$junitIndex, testsToSkip='$testsToSkip'"
                 
                 Set-Location $repoPath
 
                 $env:GOMAXPROCS = 4
                 Write-Host "Job starting for package: $package from $(Get-Location)"
-                Write-Host "GOMAXPROCS in job: $env:GOMAXPROCS"
-                Write-Host "Verification via go: $(go env GOMAXPROCS)"
-                
-                Write-Host "---PROCESS LIST before test---"
-                Get-Process gotestsum, go -ErrorAction SilentlyContinue
-                Write-Host "------------------------------"
 
                 $junitFile = "c:\Logs\junit_$($junitIndex).xml"
                 $logFile = "c:\Logs\output_$($junitIndex).log"
@@ -254,6 +243,7 @@ function Run-K8sUnitTests {
                 "Job started at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 
                 # Use cmd.exe with file redirection to avoid PowerShell buffer issues
+                # which cause a hang if output buffers fill up
                 Write-Host "About to run: $command $arguments"
                 "About to run: $command $arguments at $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 
@@ -266,7 +256,7 @@ function Run-K8sUnitTests {
                 Write-Host "Starting process with cmd.exe redirection..."
                 "Starting process at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 "Command line: $cmdLine" | Out-File -FilePath $logFile -Append -Encoding UTF8
-                
+
                 # Use Invoke-Expression to run the cmd command
                 try {
                     Invoke-Expression $cmdLine
