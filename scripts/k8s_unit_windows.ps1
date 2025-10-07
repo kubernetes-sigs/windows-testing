@@ -217,7 +217,7 @@ function Run-K8sUnitTests {
             [Console]::Out.Flush()
             
             $job = Start-Job -ScriptBlock {
-                param($package, $junitIndex, $repoPath)
+                param($package, $junitIndex, $repoPath, $testsToSkip)
 
                 Set-Location $repoPath
 
@@ -242,6 +242,7 @@ function Run-K8sUnitTests {
                 
                 # Add skip tests if specified (using the original logic)
                 if ($testsToSkip) {
+                    Write-Host "Adding skip arguments for tests: $testsToSkip"
                     $args += "--"
                     $args += "--skip"
                     $args += $testsToSkip
@@ -329,7 +330,7 @@ function Run-K8sUnitTests {
                     Output     = "See log file: $logFile (size: $logSize bytes)"
                     ExitCode   = $exitCode
                 }
-            } -ArgumentList $package, $packageIndex, $RepoPath
+            } -ArgumentList $package, $packageIndex, $RepoPath, $testsToSkip
             
             if ($job) {
                 $job.Name = "UnitTest-$package"
