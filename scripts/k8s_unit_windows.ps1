@@ -246,7 +246,8 @@ function Run-K8sUnitTests {
                 $junitFile = "c:\Logs\junit_$($junitIndex).xml"
                 $logFile = "c:\Logs\output_$($junitIndex).log"
                 $command = "gotestsum.exe"
-                $arguments = "--junitfile=$junitFile --packages=""$package"""
+                # Use single quotes around package to prevent PowerShell from parsing the path
+                $arguments = "--junitfile=$junitFile --packages='$package'"
                 Write-Host "Running unit tests for package: $package :: $command $arguments"
                 
                 # Log the command line to the output file first
@@ -262,7 +263,7 @@ function Run-K8sUnitTests {
                 $tempOutputFile = "$logFile.temp"
                 
                 # Use cmd.exe to redirect output directly to file, avoiding PowerShell buffers
-                $cmdLine = "cmd.exe /c `"$command $arguments > `"$tempOutputFile`" 2>&1`""
+                $cmdLine = "cmd.exe /c $command $arguments > `"$tempOutputFile`" 2>&1"
                 
                 Write-Host "Starting process with cmd.exe redirection..."
                 "Starting process at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
