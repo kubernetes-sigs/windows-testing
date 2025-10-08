@@ -1,5 +1,8 @@
 #!/bin/bash
 
+SSH_OPTS="-o ServerAliveInterval=20 -o ServerAliveCountMax=3 -o ConnectTimeout=30 -o ConnectionAttempts=3 -o TCPKeepAlive=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+SSH_OPTS_LONG="-o ServerAliveInterval=10 -o ServerAliveCountMax=12 -o ConnectTimeout=30 -o TCPKeepAlive=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+
 function onError(){
     az group list | jq ' .[] | .name' | grep ${AZURE_RESOURCE_GROUP}
     if [ $? -eq 0 ]; then
