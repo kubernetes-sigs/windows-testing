@@ -214,7 +214,7 @@ function Run-K8sUnitTests {
 
                 # Create filesystem-safe package name
                 $packageName = $package -replace '[./]', '-'
-                $junitFile = "c:\Logs\junit_$($junitIndex)_$packageName.xml"
+                $junitFile = "c:\Logs\junit_$($junitIndex).xml"
                 $logFile = "c:\Logs\output_$($junitIndex)_$packageName.log"
                 $command = "gotestsum.exe"
                 
