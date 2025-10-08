@@ -212,8 +212,10 @@ function Run-K8sUnitTests {
                 $env:GOMAXPROCS = 4
                 Write-Host "Job starting for package: $package from $(Get-Location)"
 
-                $junitFile = "c:\Logs\junit_$($junitIndex).xml"
-                $logFile = "c:\Logs\output_$($junitIndex).log"
+                # Create filesystem-safe package name
+                $packageName = $package -replace '[./]', '-'
+                $junitFile = "c:\Logs\junit_$($junitIndex)_$packageName.xml"
+                $logFile = "c:\Logs\output_$($junitIndex)_$packageName.log"
                 $command = "gotestsum.exe"
                 
                 # Build arguments array like the original
@@ -293,6 +295,10 @@ function Run-K8sUnitTests {
                 }
                 "Exit code: $exitCode" | Out-File -FilePath $logFile -Append -Encoding UTF8
                 "Job completed at: $(Get-Date)" | Out-File -FilePath $logFile -Append -Encoding UTF8
+
+                # Prune junit XML file to remove skipped tests
+                Write-Host "Pruning junit file: $junitFile"
+                & prune-junit-xml.exe "$junitFile"
 
                 # Check if log file exists and get its size
                 if (Test-Path $logFile) {
