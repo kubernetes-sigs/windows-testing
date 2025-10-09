@@ -45,6 +45,7 @@ main() {
 
     set_azure_envs
 
+    mkdir -p "${ARTIFACTS}"
     set_ci_version
     IS_PRESUBMIT="$(capz::util::should_build_kubernetes)"
     echo "IS_PRESUBMIT=$IS_PRESUBMIT"
@@ -599,6 +600,12 @@ set_ci_version() {
 
         log "Selected Kubernetes version:"
         log "$KUBERNETES_VERSION"
+
+        # write metadata.json to artifacts directory
+        # for testgrid to pick up the version.
+        cat <<EOF >"${ARTIFACTS}/metadata.json"
+{"revision":"${KUBERNETES_VERSION}"}
+EOF
     fi
 }
 
