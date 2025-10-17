@@ -150,11 +150,46 @@ enable_ssh_windows() {
     echo "Enabling SSH for Windows VM"
     local SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     local ENABLE_SSH_WINDOWS_SCRIPT="${SCRIPT_DIR}/enable_ssh_windows.ps1"
-    az vm run-command invoke  --command-id RunPowerShellScript -n ${VM_NAME} -g ${AZURE_RESOURCE_GROUP} --scripts @${ENABLE_SSH_WINDOWS_SCRIPT} --parameters "SSHPublicKey=${AZURE_SSH_PUBLIC_KEY}"
+    echo "Using run-command script: ${ENABLE_SSH_WINDOWS_SCRIPT}"
+    if [ ! -f "${ENABLE_SSH_WINDOWS_SCRIPT}" ]; then
+        echo "Enable-SSH script not found at ${ENABLE_SSH_WINDOWS_SCRIPT}"
+        return 1
+    fi
+    local run_command_output
+    if ! run_command_output=$(az vm run-command invoke --command-id RunPowerShellScript \
+        -n ${VM_NAME} -g ${AZURE_RESOURCE_GROUP} \
+        --scripts @${ENABLE_SSH_WINDOWS_SCRIPT} \
+        --parameters "SSHPublicKey=${AZURE_SSH_PUBLIC_KEY}" \
+        --only-show-errors -o json 2>&1); then
+        echo "Failed to enable SSH on Windows VM"
+        echo "Azure CLI output:"
+        echo "${run_command_output}"
+        return 1
+    fi
+    echo "Raw Azure run-command output:"
+    printf '%s\n' "${run_command_output}"
+    echo "Azure run-command output:"
+    printf '%s\n' "${run_command_output}" | jq -r '.value[].message'
 }
 
 test_ssh_connection() {
-	echo "Testing ssh connection to Windows VM"
+    echo "Checking sshd service state on Windows VM"
+    local service_check_output
+    if ! service_check_output=$(az vm run-command invoke --command-id RunPowerShellScript \
+        -n ${VM_NAME} -g ${AZURE_RESOURCE_GROUP} \
+        --scripts 'param([string]$serviceName) $svc = Get-Service -Name $serviceName -ErrorAction Stop; Write-Output ("sshd service status: {0}" -f $svc.Status); if ($svc.Status -ne "Running") { throw "Service $serviceName is not running" }' \
+        --parameters "serviceName=sshd" \
+        --only-show-errors -o json 2>&1); then
+        echo "Azure run-command indicates sshd service is not running"
+        echo "Azure CLI output:"
+        echo "${service_check_output}"
+        exit 1
+    fi
+    echo "Raw Azure run-command output:" 
+    printf '%s\n' "${service_check_output}"
+    echo "Azure run-command output:"
+    printf '%s\n' "${service_check_output}" | jq -r '.value[].message'
+    echo "Testing ssh connection to Windows VM"
     SSH_KEY_FILE=.sshkey
 	if ! ssh -i ${SSH_KEY_FILE} ${SSH_OPTS} azureuser@${VM_PUB_IP}  "hostname";
     then
