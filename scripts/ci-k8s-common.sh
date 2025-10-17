@@ -148,7 +148,9 @@ run_remote_cmd() {
 
 enable_ssh_windows() {
     echo "Enabling SSH for Windows VM"
-    az vm run-command invoke  --command-id RunPowerShellScript -n ${VM_NAME} -g ${AZURE_RESOURCE_GROUP} --scripts "@$(pwd)/scripts/enable_ssh_windows.ps1" --parameters "SSHPublicKey=${AZURE_SSH_PUBLIC_KEY}"
+    local SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local ENABLE_SSH_WINDOWS_SCRIPT="${SCRIPT_DIR}/enable_ssh_windows.ps1"
+    az vm run-command invoke  --command-id RunPowerShellScript -n ${VM_NAME} -g ${AZURE_RESOURCE_GROUP} --scripts @${ENABLE_SSH_WINDOWS_SCRIPT} --parameters "SSHPublicKey=${AZURE_SSH_PUBLIC_KEY}"
 }
 
 test_ssh_connection() {
