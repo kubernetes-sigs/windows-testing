@@ -533,6 +533,42 @@ wait_for_nodes() {
 
 }
 
+ensure_azcli_with_retry() {
+    local max_attempts=5
+    local attempt=1
+    local wait_time=2
+
+    while [[ $attempt -le $max_attempts ]]; do
+        log "Attempt $attempt/$max_attempts: Running CAPZ ensure-azcli.sh"
+        # shellcheck disable=SC1091
+        if source "${CAPZ_DIR}/hack/ensure-azcli.sh" 2>&1 | tee /tmp/ensure-azcli-${attempt}.log; then
+            return 0
+        fi
+
+        if [[ $attempt -lt $max_attempts ]]; then
+            log "Azure CLI installation failed. Waiting ${wait_time}s before retry ${attempt}/${max_attempts}..."
+            sleep $wait_time
+            wait_time=$((wait_time * 2))
+        fi
+        
+        ((attempt++))
+    done
+
+    if command -v az &> /dev/null && az version &> /dev/null; then
+        return 0
+    else
+        log "ERROR: Failed to install Azure CLI after $max_attempts attempts"
+        log "Logs from attempts:"
+        for i in $(seq 1 $max_attempts); do
+            if [[ -f "/tmp/ensure-azcli-${i}.log" ]]; then
+                log "=== Attempt $i log ==="
+                tail -20 "/tmp/ensure-azcli-${i}.log" | sed 's/^/  /'
+            fi
+        done
+        return 1
+    fi
+}
+
 set_azure_envs() {
     # shellcheck disable=SC1091
     source "${CAPZ_DIR}/hack/ensure-tags.sh"
@@ -543,10 +579,12 @@ set_azure_envs() {
     fi
     # shellcheck disable=SC1091
     source "${CAPZ_DIR}/hack/util.sh"
-    # shellcheck disable=SC1091
-    source "${CAPZ_DIR}/hack/ensure-azcli.sh"
 
-    
+    # use retry wrapper instead of source "${CAPZ_DIR}/hack/ensure-azcli.sh"
+    if ! ensure_azcli_with_retry; then
+        log "ERROR: Could not install Azure CLI"
+        exit 1
+    fi
 
     # Verify the required Environment Variables are present.
     : "${AZURE_SUBSCRIPTION_ID:?Environment variable empty or not defined.}"
