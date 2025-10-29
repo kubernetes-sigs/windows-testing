@@ -104,6 +104,11 @@ run_capz_e2e_cleanup() {
     log "cleaning up"
 
     capz::ci-build-azure-ccm::cleanup || true
+    if declare -f capz::ci-build-azure-ccm::cleanup > /dev/null 2>&1; then
+        capz::ci-build-azure-ccm::cleanup || true
+    else
+        log "warning: capz::ci-build-azure-ccm::cleanup not found, skipping"
+    fi
 
     if [[ "$(capz::util::should_build_kubernetes)" == "true" ]]; then
         capz::ci-build-kubernetes::cleanup || true
