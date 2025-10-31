@@ -13,6 +13,13 @@ installation:
 # Image and registry configuration for the tigera/operator pod.
 tigeraOperator:
   image: tigera/operator
-  registry: mcr.microsoft.com/oss
+  registry: capzcicommunity.azurecr.io
 calicoctl:
-  image: mcr.microsoft.com/oss/calico/ctl
+  image: capzcicommunity.azurecr.io/calico/ctl
+# when kubernetesServiceEndpoint need to pass dns to look up the name properly
+dnsConfig: 
+  nameservers:
+    - 127.0.0.53
+  options:
+    - name: edns0
+    - name: trust-ad
