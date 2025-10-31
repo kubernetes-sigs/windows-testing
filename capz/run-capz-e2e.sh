@@ -28,7 +28,7 @@ main() {
     export GMSA="${GMSA:-""}" 
     export HYPERV="${HYPERV:-""}"
     export KPNG="${WINDOWS_KPNG:-""}"
-    export CALICO_VERSION="${CALICO_VERSION:-"v3.29.2"}"
+    export CALICO_VERSION="${CALICO_VERSION:-"v3.31.0"}"
     export TEMPLATE="${TEMPLATE:-"windows-ci.yaml"}"
     export CAPI_VERSION="${CAPI_VERSION:-"v1.7.2"}"
     export HELM_VERSION=v3.15.2
@@ -298,6 +298,8 @@ apply_workload_configuraiton(){
 
     # get the info for the API server
     servername=$(kubectl config view -o json | jq -r '.clusters[0].cluster.server | sub("https://"; "") | split(":") | .[0]')
+    ipaddress=$(dig +short "$servername" | head -1)
+    echo "Server: $servername, IP: $ipaddress"
     port=$(kubectl config view -o json | jq -r '.clusters[0].cluster.server | sub("https://"; "") | split(":") | .[1]')
 
     kubectl apply -f - << EOF
@@ -307,7 +309,7 @@ metadata:
   name: kubernetes-services-endpoint
   namespace: tigera-operator
 data:
-  KUBERNETES_SERVICE_HOST: "${servername}"
+  KUBERNETES_SERVICE_HOST: "${ipaddress}"
   KUBERNETES_SERVICE_PORT: "${port}"
 EOF
 
