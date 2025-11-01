@@ -58,7 +58,7 @@ main() {
 
     install_tools
     create_cluster
-    apply_workload_configuraiton
+    apply_workload_configuration
     apply_cloud_provider_azure
     wait_for_nodes
     if [[ "${HYPERV}" == "true" ]]; then apply_hyperv_configuration; fi
@@ -227,7 +227,7 @@ create_cluster(){
         export AKS_INFRA_RG_NAME="${aks_infra_rg_name}"
         export AKS_VNET_NAME="${ask_vnet}"
 
-        # In a prod set up we probably would want a seperate identity for this operation but for ease of use we are re-using the one created by AKS for kubelet
+        # In a prod set up we probably would want a separate identity for this operation but for ease of use we are re-using the one created by AKS for kubelet
         log "applying role assignment to management cluster identity to have permissions to create workload cluster"
         MANAGEMENT_IDENTITY=$(az aks show -n "${CLUSTER_NAME}" -g "${CLUSTER_NAME}" --output json | jq -r '.identityProfile.kubeletidentity.clientId')
         export MANAGEMENT_IDENTITY
@@ -251,7 +251,7 @@ create_cluster(){
         timeout --foreground 300 bash -c "until kubectl get kubeadmcontrolplanes -A > /dev/null 2>&1; do sleep 3; done"
         
 
-        log "Provisiion workload cluster"
+        log "Provision workload cluster"
         "$TOOLS_BIN_DIR"/clusterctl generate cluster "${CLUSTER_NAME}" --kubernetes-version "$KUBERNETES_VERSION" --from "$template" > "$SCRIPT_ROOT"/"${CLUSTER_NAME}-template.yaml"
         kubectl apply -f "$SCRIPT_ROOT"/"${CLUSTER_NAME}-template.yaml"
 
@@ -279,7 +279,7 @@ create_cluster(){
     export KUBECONFIG="$SCRIPT_ROOT"/"${CLUSTER_NAME}".kubeconfig
 }
 
-apply_workload_configuraiton(){
+apply_workload_configuration(){
     log "wait for cluster to stabilize"
     timeout --foreground 300 bash -c "until kubectl get --raw /version --request-timeout 5s > /dev/null 2>&1; do sleep 3; done"
     
@@ -354,7 +354,7 @@ apply_cloud_provider_azure() {
 
 apply_hyperv_configuration(){
     set -x
-    log "applying contirguration for testing hyperv isolated containers"
+    log "applying configuration for testing hyperv isolated containers"
 
     log "installing hyperv runtime class"
     kubectl apply -f "${SCRIPT_ROOT}/../helpers/hyper-v-mutating-webhook/hyperv-runtimeclass.yaml"
@@ -368,7 +368,7 @@ apply_hyperv_configuration(){
     mapfile -t windows_nodes < <(kubectl get nodes -o wide | grep Windows | awk '{print $1}')
     kubectl taint nodes "${windows_nodes[@]}" os=windows:NoSchedule
 
-    log "installing cer-manager"
+    log "installing cert-manager"
     kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.5/cert-manager.yaml
 
     log "wait for cert-manager pods to start"
@@ -383,7 +383,7 @@ apply_hyperv_configuration(){
     log "untainting Windows agent nodes"
     kubectl taint nodes "${windows_nodes[@]}" os=windows:NoSchedule-
 
-    log "taining master nodes again"
+    log "tainting master nodes again"
     kubectl taint nodes "${cp_nodes[@]}" node-role.kubernetes.io/control-plane:NoSchedule || true
 
     log "done configuring testing for hyperv isolated containers"
@@ -431,7 +431,7 @@ run_e2e_test() {
             export KUBE_TEST_REPO_LIST="$SCRIPT_ROOT/../images/image-repo-list-private-registry-community"
         fi
 
-        # K8s 1.24 and below use ginkgo v1 which has slighly different args
+        # K8s 1.24 and below use ginkgo v1 which has slightly different args
         ginkgo_v1="false"
         if [[ "${KUBERNETES_VERSION}" =~ 1.24 ]]; then
             ginkgo_v1="true"
@@ -550,7 +550,7 @@ set_azure_envs() {
     # Generate SSH key.
     capz::util::generate_ssh_key
 
-    # Set the Azure Location, preferred locationc can be set through the AZURE_LOCATION environment variable.
+    # Set the Azure Location, preferred location can be set through the AZURE_LOCATION environment variable.
     AZURE_LOCATION="${AZURE_LOCATION:-$(get_random_region)}"
     export AZURE_LOCATION
     if [[ "${CI:-}" == "true" ]]; then
