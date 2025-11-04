@@ -67,7 +67,8 @@ spec:
             Write-Output "Extracting new containerd binaries"
             tar.exe -zxvf c:/k/containerd.tar.gz -C "c:/Program Files/containerd" --strip-components 1
             # Check if kube-log-runner.exe exists
-            if (Test-Path $kubeloggerPath) {
+            $kubeloggerPath = Join-Path $env:SYSTEMDRIVE "k\kube-log-runner.exe"
+            if ($kubeloggerPath -and (Test-Path -Path $kubeloggerPath)) {
               Write-Output "Recreating containerd service with kube-log-runner..."
               $logPath = "\var\log\containerd"
               # Check if directory exists
