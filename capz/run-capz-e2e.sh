@@ -264,9 +264,22 @@ create_cluster(){
         log "cluster creation complete"
     fi
 
+    log "wait for "${CLUSTER_NAME}" cluster to stabilize"
+    timeout --foreground 300 bash -c "until kubectl get --raw /version --request-timeout 5s > /dev/null 2>&1; do sleep 3; done"
+
+    CLUSTER_JSON=$(kubectl get cluster "${CLUSTER_NAME}" -n default -o json || true)
+    if [[ -z "${CLUSTER_JSON}" ]]; then
+        log "ERROR: failed to get cluster "${CLUSTER_NAME}" in namespace default"
+        exit 1
+    fi
+    BASTION_ADDRESS=$(echo "${CLUSTER_JSON}" | jq -r '.spec.controlPlaneEndpoint.host // empty')
+    if [[ -z "${BASTION_ADDRESS}" ]]; then
+        log "ERROR: bastion address lookup failed for cluster"
+        echo "${CLUSTER_JSON}"
+        exit 1
+    fi
     # set the SSH bastion that can be used to SSH into nodes
-    KUBE_SSH_BASTION=$(kubectl get azurecluster -o json | jq '.items[0].spec.networkSpec.apiServerLB.frontendIPs[0].publicIP.dnsName' | tr -d \"):22
-    export KUBE_SSH_BASTION
+    export KUBE_SSH_BASTION="${BASTION_ADDRESS}:22"
     KUBE_SSH_USER=capi
     export KUBE_SSH_USER
     log "bastion info: $KUBE_SSH_USER@$KUBE_SSH_BASTION"
@@ -282,7 +295,7 @@ create_cluster(){
 apply_workload_configuration(){
     log "wait for cluster to stabilize"
     timeout --foreground 300 bash -c "until kubectl get --raw /version --request-timeout 5s > /dev/null 2>&1; do sleep 3; done"
-    
+
     log "installing calico"
     "$TOOLS_BIN_DIR"/helm repo add projectcalico https://docs.tigera.io/calico/charts
     kubectl create ns calico-system
