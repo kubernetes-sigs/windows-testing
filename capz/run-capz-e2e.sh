@@ -264,12 +264,12 @@ create_cluster(){
         log "cluster creation complete"
     fi
 
-    log "wait for "${CLUSTER_NAME}" cluster to stabilize"
+    log "wait for \"${CLUSTER_NAME}\" cluster to stabilize"
     timeout --foreground 300 bash -c "until kubectl get --raw /version --request-timeout 5s > /dev/null 2>&1; do sleep 3; done"
 
     CLUSTER_JSON=$(kubectl get cluster "${CLUSTER_NAME}" -n default -o json || true)
     if [[ -z "${CLUSTER_JSON}" ]]; then
-        log "ERROR: failed to get cluster "${CLUSTER_NAME}" in namespace default"
+        log "ERROR: failed to get cluster \"${CLUSTER_NAME}\" in namespace default"
         exit 1
     fi
     BASTION_ADDRESS=$(echo "${CLUSTER_JSON}" | jq -r '.spec.controlPlaneEndpoint.host // empty')
