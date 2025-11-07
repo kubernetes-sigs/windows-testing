@@ -116,6 +116,18 @@ az role assignment create \
     --scope "/subscriptions/<subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Storage/storageAccounts/<storage-account-name>"
 ```
 
+## Running custom commands with `run-capz-e2e.sh`
+
+`run-capz-e2e.sh` now accepts an optional command to execute after the cluster and supporting components are ready. When any arguments are provided, the script runs the command in the prepared environment and skips the built-in Windows e2e Ginkgo suite.
+
+Example usage from a Prow job:
+
+```bash
+./capz/run-capz-e2e.sh bash -c "cd ${GOPATH}/src/sigs.k8s.io/azuredisk-csi-driver && ./deploy/install-driver.sh master local,snapshot,enable-avset && make e2e-test"
+```
+
+The script exits with the same status as the supplied command, so downstream automation can use the exit code to determine job success or failure.
+
 ## Hyper-V isolated containers support
 
 Requires containerd v1.7+ deployed to the Windows nodes.
