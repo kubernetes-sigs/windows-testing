@@ -28,7 +28,7 @@ main() {
     export GMSA="${GMSA:-""}" 
     export HYPERV="${HYPERV:-""}"
     export KPNG="${WINDOWS_KPNG:-""}"
-    export CALICO_VERSION="${CALICO_VERSION:-"v3.29.2"}"
+    export CALICO_VERSION="${CALICO_VERSION:-"v3.30.0"}"
     export TEMPLATE="${TEMPLATE:-"windows-ci.yaml"}"
     export CAPI_VERSION="${CAPI_VERSION:-"v1.7.2"}"
     export HELM_VERSION=v3.15.2
