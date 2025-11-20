@@ -7,6 +7,7 @@ set -o functrace
 
 SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
 SCRIPT_ROOT=$(dirname "${SCRIPT_PATH}")
+export MANAGEMENT_KUBECONFIG="${SCRIPT_ROOT}/management.kubeconfig"
 export CAPZ_DIR="${CAPZ_DIR:-"${GOPATH}/src/sigs.k8s.io/cluster-api-provider-azure"}"
 : "${CAPZ_DIR:?Environment variable empty or not defined.}"
 if [[ ! -d $CAPZ_DIR ]]; then
@@ -219,7 +220,8 @@ create_cluster(){
             export AZURE_LOCATION
         fi
 
-        az aks get-credentials --resource-group "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" --overwrite-existing
+        az aks get-credentials --resource-group "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" -f "${MANAGEMENT_KUBECONFIG}" --overwrite-existing
+        export KUBECONFIG="${MANAGEMENT_KUBECONFIG}"
 
         # some scenarios require knowing the vnet configuration of the management cluster in order to work in a restricted networking environment
         aks_infra_rg_name=$(az aks show -g "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" --query nodeResourceGroup --output tsv)
@@ -290,6 +292,46 @@ create_cluster(){
         mv "$PWD"/"${CLUSTER_NAME}".kubeconfig "$SCRIPT_ROOT"/"${CLUSTER_NAME}".kubeconfig
     fi
     export KUBECONFIG="$SCRIPT_ROOT"/"${CLUSTER_NAME}".kubeconfig
+
+    wait_for_windows_machinedeployment
+
+    ensure_cloud_provider_taint_on_windows_nodes
+}
+
+wait_for_windows_machinedeployment() {
+    local md_name="${CLUSTER_NAME}-md-win"
+    local kubeconfig="${MANAGEMENT_KUBECONFIG}"
+
+    if [[ ! -f "${kubeconfig}" ]]; then
+        log "management kubeconfig ${kubeconfig} not found; skipping MachineDeployment wait"
+        return
+    fi
+
+    log "waiting for MachineDeployment ${md_name} to exist on management cluster"
+    timeout --foreground 900 bash -c "until kubectl --kubeconfig \"${kubeconfig}\" get machinedeployment ${md_name} -n default > /dev/null 2>&1; do sleep 5; done"
+
+    log "waiting for MachineDeployment ${md_name} to become Available"
+    kubectl --kubeconfig "${kubeconfig}" wait --for=condition=Available --timeout=20m "machinedeployment/${md_name}" -n default
+}
+
+ensure_cloud_provider_taint_on_windows_nodes() {
+    log "waiting for Windows nodes to register on workload cluster"
+    timeout --foreground 900 bash -c "until kubectl get nodes -l kubernetes.io/os=windows -o name 2>/dev/null | grep -q .; do sleep 10; done"
+
+    local -a windows_nodes=()
+    mapfile -t windows_nodes < <(kubectl get nodes -l kubernetes.io/os=windows -o name)
+    if [[ ${#windows_nodes[@]} -eq 0 ]]; then
+        log "no Windows nodes found to taint"
+        return
+    fi
+
+    local node
+    local node_name
+    for node in "${windows_nodes[@]}"; do
+        node_name=${node#node/}
+        log "applying cloud-provider taint to ${node_name}"
+        kubectl taint "${node}" node.cloudprovider.kubernetes.io/uninitialized=true:NoSchedule --overwrite
+    done
 }
 
 apply_workload_configuration(){
@@ -491,8 +533,8 @@ wait_for_nodes() {
 
     # switch KUBECONFIG to point to management cluster so we can check for provisioning status on
     # if any of the machines are in a failed state
-    az aks get-credentials --resource-group "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" -f management.kubeconfig --overwrite-existing
-    export KUBECONFIG=./management.kubeconfig
+    az aks get-credentials --resource-group "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" -f "${MANAGEMENT_KUBECONFIG}" --overwrite-existing
+    export KUBECONFIG="${MANAGEMENT_KUBECONFIG}"
 
     kubectl get AzureMachines --all-namespaces
     # Ensure that all nodes are registered with the API server before checking for readiness
