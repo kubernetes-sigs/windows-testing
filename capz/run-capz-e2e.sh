@@ -317,10 +317,24 @@ wait_for_windows_machinedeployment() {
 
 ensure_cloud_provider_taint_on_windows_nodes() {
     log "waiting for Windows nodes to register on workload cluster"
-    timeout --foreground 900 bash -c "until kubectl get nodes -l kubernetes.io/os=windows -o name ${WINDOWS_WORKER_MACHINE_COUNT} > /dev/null | grep -q .; do sleep 10; done"
+    local -a windows_nodes
+    local -i deadline=$((SECONDS + 900))
+    while (( SECONDS < deadline )); do
+        local nodes_output
+        nodes_output=$(kubectl get nodes -l kubernetes.io/os=windows -o name 2>/dev/null || true)
+        if [[ -n "${nodes_output}" ]]; then
+            IFS=$'\n' read -r -a windows_nodes <<< "${nodes_output}"
+        else
+            windows_nodes=()
+        fi
 
-    local -a windows_nodes=()
-    mapfile -t windows_nodes < <(kubectl get nodes -l kubernetes.io/os=windows -o name)
+        if [[ ${#windows_nodes[@]} -ge ${WINDOWS_WORKER_MACHINE_COUNT} ]]; then
+            break
+        fi
+
+        sleep 10
+    done
+
     if [[ ${#windows_nodes[@]} -eq 0 ]]; then
         log "no Windows nodes found to taint"
         return
