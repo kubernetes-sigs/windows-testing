@@ -7,6 +7,7 @@ set -o functrace
 
 SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
 SCRIPT_ROOT=$(dirname "${SCRIPT_PATH}")
+export MANAGEMENT_KUBECONFIG="${SCRIPT_ROOT}/management.kubeconfig"
 export CAPZ_DIR="${CAPZ_DIR:-"${GOPATH}/src/sigs.k8s.io/cluster-api-provider-azure"}"
 : "${CAPZ_DIR:?Environment variable empty or not defined.}"
 if [[ ! -d $CAPZ_DIR ]]; then
@@ -61,6 +62,8 @@ main() {
     apply_workload_configuration
     apply_cloud_provider_azure
     wait_for_nodes
+    ensure_cloud_provider_taint_on_windows_nodes
+    wait_for_windows_machinedeployment
     if [[ "${HYPERV}" == "true" ]]; then apply_hyperv_configuration; fi
     run_e2e_test
 }
@@ -219,7 +222,8 @@ create_cluster(){
             export AZURE_LOCATION
         fi
 
-        az aks get-credentials --resource-group "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" --overwrite-existing
+        az aks get-credentials --resource-group "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" -f "${MANAGEMENT_KUBECONFIG}" --overwrite-existing
+        export KUBECONFIG="${MANAGEMENT_KUBECONFIG}"
 
         # some scenarios require knowing the vnet configuration of the management cluster in order to work in a restricted networking environment
         aks_infra_rg_name=$(az aks show -g "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" --query nodeResourceGroup --output tsv)
@@ -290,9 +294,73 @@ create_cluster(){
         mv "$PWD"/"${CLUSTER_NAME}".kubeconfig "$SCRIPT_ROOT"/"${CLUSTER_NAME}".kubeconfig
     fi
     export KUBECONFIG="$SCRIPT_ROOT"/"${CLUSTER_NAME}".kubeconfig
+
+    log "create_cluster complete"
+}
+
+wait_for_windows_machinedeployment() {
+    local md_name="${CLUSTER_NAME}-md-win"
+    local kubeconfig="${MANAGEMENT_KUBECONFIG}"
+
+    log "entering wait_for_windows_machinedeployment for ${md_name}"
+
+    if [[ ! -f "${kubeconfig}" ]]; then
+        log "management kubeconfig ${kubeconfig} not found; skipping MachineDeployment wait"
+        return
+    fi
+
+    log "waiting for MachineDeployment ${md_name} to exist on management cluster"
+    timeout --foreground 900 bash -c "until kubectl --kubeconfig \"${kubeconfig}\" get machinedeployment ${md_name} -n default > /dev/null 2>&1; do sleep 5; done"
+
+    log "waiting for MachineDeployment ${md_name} to become Available"
+    kubectl --kubeconfig "${kubeconfig}" wait --for=condition=Available --timeout=20m "machinedeployment/${md_name}" -n default
+}
+
+ensure_cloud_provider_taint_on_windows_nodes() {
+    log "waiting for Windows nodes to register on workload cluster"
+    local -a windows_nodes
+    local -i deadline=$((SECONDS + 900))
+    while (( SECONDS < deadline )); do
+        local nodes_output
+        nodes_output=$(kubectl get nodes -l kubernetes.io/os=windows -o name 2>/dev/null || true)
+        if [[ -n "${nodes_output}" ]]; then
+            IFS=$'\n' read -r -a windows_nodes <<< "${nodes_output}"
+        else
+            windows_nodes=()
+        fi
+
+        if [[ ${#windows_nodes[@]} -ge ${WINDOWS_WORKER_MACHINE_COUNT} ]]; then
+            break
+        fi
+
+        sleep 10
+    done
+
+    if [[ ${#windows_nodes[@]} -eq 0 ]]; then
+        log "no Windows nodes found to taint"
+        return
+    fi
+
+    if [[ ${#windows_nodes[@]} -lt ${WINDOWS_WORKER_MACHINE_COUNT} ]]; then
+        log "found ${#windows_nodes[@]} Windows nodes but expected ${WINDOWS_WORKER_MACHINE_COUNT}; logging available node details"
+    else
+        log "found ${#windows_nodes[@]} Windows nodes; logging details before applying taint"
+    fi
+
+    local node
+    local node_name
+    for node in "${windows_nodes[@]}"; do
+        node_name=${node#node/}
+        log "node state before tainting:" 
+        kubectl get node "${node_name}" -o wide | sed 's/^/  /'
+        kubectl get node "${node_name}" -o json | jq '{name: .metadata.name, taints: .spec.taints, conditions: [.status.conditions[] | select(.type=="Ready")]}'
+        log "applying cloud-provider taint to ${node_name}"
+        kubectl taint "${node}" node.cloudprovider.kubernetes.io/uninitialized=true:NoSchedule --overwrite
+    done
 }
 
 apply_workload_configuration(){
+    log "entering apply_workload_configuration"
     log "wait for cluster to stabilize"
     timeout --foreground 300 bash -c "until kubectl get --raw /version --request-timeout 5s > /dev/null 2>&1; do sleep 3; done"
 
@@ -343,6 +411,7 @@ EOF
 }
 
 apply_cloud_provider_azure() {
+    log "entering apply_cloud_provider_azure"
     echo "KUBERNETES_VERSION = ${KUBERNETES_VERSION}"
 
     echo "Building cloud provider images"
@@ -484,6 +553,7 @@ run_e2e_test() {
 
 wait_for_nodes() {
 
+    log "entering wait_for_nodes"
 
     log "Waiting for ${CONTROL_PLANE_MACHINE_COUNT} control plane machine(s) and ${WINDOWS_WORKER_MACHINE_COUNT} windows machine(s) to become Ready"
     kubectl get nodes -o wide
@@ -491,8 +561,8 @@ wait_for_nodes() {
 
     # switch KUBECONFIG to point to management cluster so we can check for provisioning status on
     # if any of the machines are in a failed state
-    az aks get-credentials --resource-group "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" -f management.kubeconfig --overwrite-existing
-    export KUBECONFIG=./management.kubeconfig
+    az aks get-credentials --resource-group "${CLUSTER_NAME}" --name "${CLUSTER_NAME}" -f "${MANAGEMENT_KUBECONFIG}" --overwrite-existing
+    export KUBECONFIG="${MANAGEMENT_KUBECONFIG}"
 
     kubectl get AzureMachines --all-namespaces
     # Ensure that all nodes are registered with the API server before checking for readiness
