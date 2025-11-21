@@ -61,6 +61,8 @@ main() {
     create_cluster
     apply_workload_configuration
     apply_cloud_provider_azure
+    ensure_cloud_provider_taint_on_windows_nodes
+    wait_for_windows_machinedeployment
     wait_for_nodes
     if [[ "${HYPERV}" == "true" ]]; then apply_hyperv_configuration; fi
     run_e2e_test
@@ -292,10 +294,6 @@ create_cluster(){
         mv "$PWD"/"${CLUSTER_NAME}".kubeconfig "$SCRIPT_ROOT"/"${CLUSTER_NAME}".kubeconfig
     fi
     export KUBECONFIG="$SCRIPT_ROOT"/"${CLUSTER_NAME}".kubeconfig
-
-    ensure_cloud_provider_taint_on_windows_nodes
-
-    wait_for_windows_machinedeployment
 
 }
 
