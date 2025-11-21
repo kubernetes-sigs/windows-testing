@@ -295,11 +295,14 @@ create_cluster(){
     fi
     export KUBECONFIG="$SCRIPT_ROOT"/"${CLUSTER_NAME}".kubeconfig
 
+    log "create_cluster complete"
 }
 
 wait_for_windows_machinedeployment() {
     local md_name="${CLUSTER_NAME}-md-win"
     local kubeconfig="${MANAGEMENT_KUBECONFIG}"
+
+    log "entering wait_for_windows_machinedeployment for ${md_name}"
 
     if [[ ! -f "${kubeconfig}" ]]; then
         log "management kubeconfig ${kubeconfig} not found; skipping MachineDeployment wait"
@@ -357,6 +360,7 @@ ensure_cloud_provider_taint_on_windows_nodes() {
 }
 
 apply_workload_configuration(){
+    log "entering apply_workload_configuration"
     log "wait for cluster to stabilize"
     timeout --foreground 300 bash -c "until kubectl get --raw /version --request-timeout 5s > /dev/null 2>&1; do sleep 3; done"
 
@@ -407,6 +411,7 @@ EOF
 }
 
 apply_cloud_provider_azure() {
+    log "entering apply_cloud_provider_azure"
     echo "KUBERNETES_VERSION = ${KUBERNETES_VERSION}"
 
     echo "Building cloud provider images"
@@ -548,6 +553,7 @@ run_e2e_test() {
 
 wait_for_nodes() {
 
+    log "entering wait_for_nodes"
 
     log "Waiting for ${CONTROL_PLANE_MACHINE_COUNT} control plane machine(s) and ${WINDOWS_WORKER_MACHINE_COUNT} windows machine(s) to become Ready"
     kubectl get nodes -o wide
