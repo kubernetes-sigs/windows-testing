@@ -293,9 +293,10 @@ create_cluster(){
     fi
     export KUBECONFIG="$SCRIPT_ROOT"/"${CLUSTER_NAME}".kubeconfig
 
+    ensure_cloud_provider_taint_on_windows_nodes
+
     wait_for_windows_machinedeployment
 
-    ensure_cloud_provider_taint_on_windows_nodes
 }
 
 wait_for_windows_machinedeployment() {
@@ -316,7 +317,7 @@ wait_for_windows_machinedeployment() {
 
 ensure_cloud_provider_taint_on_windows_nodes() {
     log "waiting for Windows nodes to register on workload cluster"
-    timeout --foreground 900 bash -c "until kubectl get nodes -l kubernetes.io/os=windows -o name 2>/dev/null | grep -q .; do sleep 10; done"
+    timeout --foreground 900 bash -c "until kubectl get nodes -l kubernetes.io/os=windows -o name ${WINDOWS_WORKER_MACHINE_COUNT} > /dev/null | grep -q .; do sleep 10; done"
 
     local -a windows_nodes=()
     mapfile -t windows_nodes < <(kubectl get nodes -l kubernetes.io/os=windows -o name)
@@ -325,10 +326,19 @@ ensure_cloud_provider_taint_on_windows_nodes() {
         return
     fi
 
+    if [[ ${#windows_nodes[@]} -lt ${WINDOWS_WORKER_MACHINE_COUNT} ]]; then
+        log "found ${#windows_nodes[@]} Windows nodes but expected ${WINDOWS_WORKER_MACHINE_COUNT}; logging available node details"
+    else
+        log "found ${#windows_nodes[@]} Windows nodes; logging details before applying taint"
+    fi
+
     local node
     local node_name
     for node in "${windows_nodes[@]}"; do
         node_name=${node#node/}
+        log "node state before tainting:" 
+        kubectl get node "${node_name}" -o wide | sed 's/^/  /'
+        kubectl get node "${node_name}" -o json | jq '{name: .metadata.name, taints: .spec.taints, conditions: [.status.conditions[] | select(.type=="Ready")]}'
         log "applying cloud-provider taint to ${node_name}"
         kubectl taint "${node}" node.cloudprovider.kubernetes.io/uninitialized=true:NoSchedule --overwrite
     done
