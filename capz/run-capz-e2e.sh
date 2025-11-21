@@ -61,9 +61,9 @@ main() {
     create_cluster
     apply_workload_configuration
     apply_cloud_provider_azure
+    wait_for_nodes
     ensure_cloud_provider_taint_on_windows_nodes
     wait_for_windows_machinedeployment
-    wait_for_nodes
     if [[ "${HYPERV}" == "true" ]]; then apply_hyperv_configuration; fi
     run_e2e_test
 }
