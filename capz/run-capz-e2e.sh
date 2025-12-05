@@ -20,6 +20,8 @@ if [[ ! -d $AZURE_CLOUD_PROVIDER_ROOT ]]; then
 fi
 
 main() {
+    local -a post_command=("$@")
+
     # defaults
     export KUBERNETES_VERSION="${KUBERNETES_VERSION:-"latest"}"
     export CONTROL_PLANE_MACHINE_COUNT="${AZURE_CONTROL_PLANE_MACHINE_COUNT:-"1"}"
@@ -65,6 +67,15 @@ main() {
     ensure_cloud_provider_taint_on_windows_nodes
     wait_for_windows_machinedeployment
     if [[ "${HYPERV}" == "true" ]]; then apply_hyperv_configuration; fi
+
+    if [[ ${#post_command[@]} -gt 0 ]]; then
+        local exit_code
+        log "post command detected; skipping default e2e tests"
+        run_post_command "${post_command[@]}"
+        exit_code=$?
+        return ${exit_code}
+    fi
+
     run_e2e_test
 }
 
@@ -458,6 +469,20 @@ apply_hyperv_configuration(){
     set +x
 }
 
+run_post_command() {
+    log "running user provided command: $*"
+    set +o errexit
+    "${@}"
+    local exit_code=$?
+    set -o errexit
+    if [[ ${exit_code} -ne 0 ]]; then
+        log "user provided command failed with exit code ${exit_code}"
+    else
+        log "user provided command completed successfully"
+    fi
+    return ${exit_code}
+}
+
 run_e2e_test() {
     export SKIP_TEST="${SKIP_TEST:-"false"}"
     if [[ ! "$SKIP_TEST" == "true" ]]; then
@@ -681,4 +706,4 @@ EOF
 }
 
 trap run_capz_e2e_cleanup EXIT
-main
+main "$@"
