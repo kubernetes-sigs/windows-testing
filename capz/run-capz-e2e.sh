@@ -589,6 +589,10 @@ wait_for_nodes() {
         log "Configuring workload cluster nodes for gmsa tests"
         # require kubeconfig to be pointed at management cluster 
         unset KUBECONFIG
+        if [[ -f "${MANAGEMENT_KUBECONFIG}" ]]; then
+            export KUBECONFIG="${MANAGEMENT_KUBECONFIG}"
+        fi
+
         pushd  "$SCRIPT_ROOT"/gmsa/configuration
         go run --tags e2e configure.go --name "${CLUSTER_NAME}" --namespace default
         popd
