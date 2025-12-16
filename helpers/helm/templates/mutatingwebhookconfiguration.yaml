@@ -1,0 +1,45 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: {{ include "webhook.fullname" . }}
+  labels:
+    {{- include "webhook.labels" . | nindent 4 }}
+  {{- if .Values.certificate.useCertManager }}
+  annotations:
+    cert-manager.io/inject-ca-from: {{ include "webhook.namespace" . }}/{{ include "webhook.fullname" . }}-serving-cert
+  {{- end }}
+webhooks:
+- name: {{ .Values.webhookType }}.windows.k8s.io
+  admissionReviewVersions:
+    {{- toYaml .Values.webhookConfiguration.admissionReviewVersions | nindent 4 }}
+  clientConfig:
+    service:
+      name: {{ include "webhook.fullname" . }}
+      namespace: {{ include "webhook.namespace" . }}
+      path: "/mutate"
+      port: {{ .Values.deployment.service.port }}
+    {{- if not .Values.certificate.useCertManager }}
+    caBundle: {{ .Values.certificate.manual.caCert | b64enc }}
+    {{- end }}
+  failurePolicy: {{ .Values.webhookConfiguration.failurePolicy }}
+  matchPolicy: {{ .Values.webhookConfiguration.matchPolicy }}
+  namespaceSelector:
+    matchExpressions:
+    {{- range .Values.webhookConfiguration.namespaceSelector.matchExpressions }}
+    - key: {{ .key }}
+      operator: {{ .operator }}
+      values:
+      {{- toYaml .values | nindent 6 }}
+    {{- end }}
+    - key: kubernetes.io/metadata.name
+      operator: NotIn
+      values:
+      - {{ include "webhook.namespace" . }}
+  {{- with .Values.webhookConfiguration.objectSelector }}
+  objectSelector:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- toYaml .Values.webhookConfiguration.rules | nindent 4 }}
+  sideEffects: {{ .Values.webhookConfiguration.sideEffects }}
+  timeoutSeconds: {{ .Values.webhookConfiguration.timeoutSeconds }}

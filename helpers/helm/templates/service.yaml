@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "webhook.fullname" . }}
+  namespace: {{ include "webhook.namespace" . }}
+  {{- with .Values.deployment.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- include "webhook.labels" . | nindent 4 }}
+    {{- with .Values.deployment.service.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  type: {{ .Values.deployment.service.type }}
+  ports:
+    - port: {{ .Values.deployment.service.port }}
+      targetPort: {{ .Values.deployment.service.targetPort }}
+      protocol: TCP
+      name: webhook
+  selector:
+    {{- include "webhook.selectorLabels" . | nindent 4 }}

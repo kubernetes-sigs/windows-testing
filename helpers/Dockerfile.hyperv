@@ -1,0 +1,25 @@
+# Dockerfile for hyperv mutating webhook
+
+ARG GOLANG_VERSION=1.24
+
+# Build the manager binary
+FROM golang:${GOLANG_VERSION} AS builder
+
+WORKDIR /workspace/hyper-v-mutating-webhook
+
+# Copy source code
+COPY hyper-v-mutating-webhook/go.mod hyper-v-mutating-webhook/go.sum ./
+RUN go mod download
+
+COPY hyper-v-mutating-webhook/ ./
+
+# Build
+RUN CGO_ENABLED=0 go build -a -o manager main.go webhook.go
+
+# Use distroless as minimal base image
+FROM gcr.io/distroless/static:nonroot
+WORKDIR /
+COPY --from=builder /workspace/hyper-v-mutating-webhook/manager .
+USER 65532:65532
+
+ENTRYPOINT ["/manager"]

@@ -1,0 +1,19 @@
+apiVersion: v2
+name: capz-mutating-webhook
+description: A Helm chart for Windows mutating webhooks (Hyper-V and HPC)
+type: application
+version: 0.1.0
+appVersion: "1.0"
+keywords:
+  - windows
+  - hyperv
+  - hpc
+  - webhook
+  - kubernetes
+  - admission-controller
+maintainers:
+  - name: Windows Testing Team
+home: https://github.com/kubernetes-sigs/windows-testing
+sources:
+  - https://github.com/kubernetes-sigs/windows-testing
+icon: https://raw.githubusercontent.com/kubernetes/kubernetes/master/logo/logo.png

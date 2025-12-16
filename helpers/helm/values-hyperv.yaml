@@ -1,0 +1,39 @@
+# Values for deploying Hyper-V mutating webhook
+# Usage: helm install hyperv-webhook ./helm -f values-hyperv.yaml
+#
+# Override registry and version via environment variables:
+#   helm install hyperv-webhook ./helm -f values-hyperv.yaml \
+#     --set deployment.image.registry=$REGISTRY \
+#     --set deployment.image.tag=$VERSION
+
+webhookType: hyperv
+
+deployment:
+  image:
+    # Uses default registry from values.yaml: ghcr.io/kubernetes-sigs/windows-testing
+    # Override with: --set deployment.image.registry=myregistry.io/myorg
+    tag: ""  # Uses chart appVersion by default, override with --set deployment.image.tag=$VERSION
+
+webhookConfiguration:
+  objectSelector:
+    matchLabels:
+      hyperv-isolation: "true"
+
+# RuntimeClass configuration for Hyper-V
+runtimeClass:
+  enabled: true
+  name: runhcs-wcow-hypervisor
+  handler: runhcs-wcow-hypervisor
+
+# Hyper-V specific configuration
+hypervConfig:
+  # Default Hyper-V isolation settings
+  runtimeClassName: runhcs-wcow-hypervisor
+  
+  # CPU and memory limits for Hyper-V isolated containers
+  defaultResources:
+    cpuLimit: "1000m"
+    memoryLimit: "2Gi"
+  
+  # Enable automatic resource adjustment
+  autoAdjustResources: true
