@@ -33,7 +33,7 @@ main() {
     export KPNG="${WINDOWS_KPNG:-""}"
     export CALICO_VERSION="${CALICO_VERSION:-"v3.31.0"}"
     export TEMPLATE="${TEMPLATE:-"windows-ci.yaml"}"
-    export CAPI_VERSION="${CAPI_VERSION:-"v1.7.2"}"
+    export CAPI_VERSION="${CAPI_VERSION:-"v1.12.1"}"
     export HELM_VERSION=v3.15.2
     export TOOLS_BIN_DIR="${TOOLS_BIN_DIR:-$SCRIPT_ROOT/tools/bin}"
     export CONTAINERD_LOGGER="${CONTAINERD_LOGGER:-""}"
@@ -267,7 +267,17 @@ create_cluster(){
         timeout --foreground 300 bash -c "until kubectl get clusters -A > /dev/null 2>&1; do sleep 3; done"
         timeout --foreground 300 bash -c "until kubectl get azureclusters -A > /dev/null 2>&1; do sleep 3; done"
         timeout --foreground 300 bash -c "until kubectl get kubeadmcontrolplanes -A > /dev/null 2>&1; do sleep 3; done"
-        
+
+
+        # This is a temporary fix to apply https://github.com/kubernetes-sigs/cluster-api/pull/13177 which stops setting 
+        # ControlPlaneKubeletLocalMode for K8s v1.36+ clusters.
+        # Override kubeadm control plane controller image on the management cluster (temporary fix)
+        # Remote this when CAPI_VERSION above is update to v1.12.2 OR GREATER
+        local KCP_CONTROLLER_IMAGE_OVERRIDE="gcr.io/k8s-staging-cluster-api/kubeadm-control-plane-controller:v20260109-v1.12.0-rc.0-186-ga64cfe0cc"
+        log "Overriding kubeadm-control-plane controller image to ${KCP_CONTROLLER_IMAGE_OVERRIDE}"
+        timeout --foreground 300 bash -c "until kubectl -n capi-kubeadm-control-plane-system get deployment/capi-kubeadm-control-plane-controller-manager > /dev/null 2>&1; do sleep 3; done"
+        kubectl -n capi-kubeadm-control-plane-system set image deployment/capi-kubeadm-control-plane-controller-manager manager="${KCP_CONTROLLER_IMAGE_OVERRIDE}"
+        kubectl -n capi-kubeadm-control-plane-system rollout status deployment/capi-kubeadm-control-plane-controller-manager --timeout=5m
 
         log "Provision workload cluster"
         "$TOOLS_BIN_DIR"/clusterctl generate cluster "${CLUSTER_NAME}" --kubernetes-version "$KUBERNETES_VERSION" --from "$template" > "$SCRIPT_ROOT"/"${CLUSTER_NAME}-template.yaml"
