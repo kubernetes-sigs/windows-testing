@@ -20,8 +20,8 @@
 # Override: make docker-build-all REGISTRY=myregistry.io VERSION=2.0
 
 # Image registry and version (edit here or override on command line)
-REGISTRY ?= wcctpublic.azurecr.io/kubernetes-sigs/windows-testing
-VERSION ?= 10.0
+REGISTRY ?= sigwindowstools
+VERSION ?= latest
 
 # Constructed image names
 HYPERV_IMG = $(REGISTRY)/hyperv-webhook:$(VERSION)

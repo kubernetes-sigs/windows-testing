@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: helm-chart-validation
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - helpers/helm/**
+      - helpers/hpc-mutating-webhook/**
+      - helpers/hyper-v-mutating-webhook/**
+  pull_request:
+    branches: [main, master] 
+    paths:
+      - helpers/helm/**
+      - helpers/hpc-mutating-webhook/**
+      - helpers/hyper-v-mutating-webhook/**
+      - .github/workflows/helm-chart-validation.yaml
+  workflow_dispatch:
+
+jobs:
+  validate-helm-chart:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        values-file: [values-hpc.yaml, values-hyperv.yaml]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Helm
+        run: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+      - name: Install kubeconform
+        run: |
+          wget -q https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz
+          tar xf kubeconform-linux-amd64.tar.gz
+          sudo mv kubeconform /usr/local/bin
+
+      - name: Validate Chart with ${{ matrix.values-file }}
+        run: |
+          echo "Validating Helm chart with ${{ matrix.values-file }}"
+
+          # Lint the chart with the values file (webhookType is required)
+          helm lint helpers/helm/ -f helpers/helm/${{ matrix.values-file }}
+
+          # Render and validate against Kubernetes schemas
+          # Skip Certificate and Issuer resources (cert-manager CRDs without built-in schemas)
+          helm template test helpers/helm/ -f helpers/helm/${{ matrix.values-file }} | kubeconform -summary -verbose -skip Certificate,Issuer
+          
+          echo "Chart validation passed!"
