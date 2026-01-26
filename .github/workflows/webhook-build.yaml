@@ -1,0 +1,46 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: webhook-build
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - helpers/hpc-mutating-webhook/**
+      - helpers/hyper-v-mutating-webhook/**
+      - helpers/*  # Dockerfile.*, Makefile, and any new build-related files
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - helpers/hpc-mutating-webhook/**
+      - helpers/hyper-v-mutating-webhook/**
+      - helpers/*
+      - .github/workflows/webhook-build.yaml
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build both webhook images
+        if: ${{ github.event_name != 'push' }}
+        run: |
+          echo "Building both HPC and Hyper-V webhook images..."
+          cd helpers
+          make docker-build-all
+          echo "Both webhook images built successfully!"
+
+      - name: Build and push webhook images to registry
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          echo "Building and pushing both webhook images to registry..."
+          echo "${{ secrets.DOCKER_SECRET }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          cd helpers
+          make docker-push-all
+          echo "Both webhook images built and pushed successfully!"

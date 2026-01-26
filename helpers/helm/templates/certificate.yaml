@@ -1,0 +1,40 @@
+{{- if .Values.certificate.useCertManager }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "webhook.certIssuerName" . }}
+  namespace: {{ include "webhook.namespace" . }}
+  labels:
+    {{- include "webhook.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "webhook.fullname" . }}-serving-cert
+  namespace: {{ include "webhook.namespace" . }}
+  labels:
+    {{- include "webhook.labels" . | nindent 4 }}
+spec:
+  dnsNames:
+  - {{ include "webhook.fullname" . }}.{{ include "webhook.namespace" . }}.svc
+  - {{ include "webhook.fullname" . }}.{{ include "webhook.namespace" . }}.svc.cluster.local
+  issuerRef:
+    kind: {{ .Values.certificate.certManager.issuerRef.kind }}
+    name: {{ include "webhook.certIssuerName" . }}
+  secretName: {{ include "webhook.fullname" . }}-tls
+{{- else }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "webhook.fullname" . }}-tls
+  namespace: {{ include "webhook.namespace" . }}
+  labels:
+    {{- include "webhook.labels" . | nindent 4 }}
+type: kubernetes.io/tls
+data:
+  ca.crt: {{ .Values.certificate.manual.caCert | b64enc }}
+  tls.crt: {{ .Values.certificate.manual.tlsCert | b64enc }}
+  tls.key: {{ .Values.certificate.manual.tlsKey | b64enc }}
+{{- end }}

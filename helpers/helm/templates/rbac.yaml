@@ -1,0 +1,30 @@
+{{- if .Values.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "webhook.fullname" . }}
+  labels:
+    {{- include "webhook.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "webhook.fullname" . }}
+  labels:
+    {{- include "webhook.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "webhook.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "webhook.serviceAccountName" . }}
+    namespace: {{ include "webhook.namespace" . }}
+{{- end }}

@@ -1,0 +1,180 @@
+# Default values for mutating webhook
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Webhook type: "hyperv" or "hpc"
+# This determines which webhook to deploy
+# Must be set via values-hyperv.yaml or values-hpc.yaml
+webhookType: ""
+
+# Namespace configuration
+namespace:
+  create: true
+  name: ""  # If empty, defaults to {webhookType}-webhook (e.g., hyperv-webhook, hpc-webhook)
+
+# Webhook deployment configuration
+deployment:
+  replicaCount: 1
+
+  # Deployment update strategy
+  # For example: { type: RollingUpdate, rollingUpdate: { maxSurge: 0, maxUnavailable: 1 } }
+  strategy: {}
+
+  image:
+    # Image registry (set via Makefile's REGISTRY variable)
+    registry: "ghcr.io/kubernetes-sigs/windows-testing"
+
+    # Full repository path - if set, overrides registry + auto-generated name
+    repository: ""
+
+    pullPolicy: IfNotPresent
+
+    # Image tag (set via Makefile's VERSION variable)
+    # Must match the tag used when building the Docker image
+    tag: ""  # If empty, defaults to chart appVersion
+  
+  imagePullSecrets: []
+  
+  service:
+    type: ClusterIP
+    port: 443
+    targetPort: 8443
+    # Optional additional annotations to add to the webhook Service
+    annotations: {}
+    # Optional additional labels to add to the webhook Service
+    labels: {}
+  
+  # Resource limits
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  
+  # Node selector for webhook pod
+  nodeSelector:
+    kubernetes.io/os: linux
+  
+  # Tolerations for webhook pod
+  tolerations: []
+  
+  # Affinity for webhook pod
+  affinity: {}
+  
+  # Optional additional annotations to add to the webhook Pods
+  podAnnotations: {}
+  
+  # Optional additional labels to add to the webhook Pods
+  podLabels: {}
+  
+  # Security context for webhook pod
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+  
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+  
+  # Liveness probe configuration
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: 8443
+      scheme: HTTPS
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 3
+  
+  # Readiness probe configuration
+  readinessProbe:
+    httpGet:
+      path: /healthz
+      port: 8443
+      scheme: HTTPS
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 3
+
+# ServiceAccount configuration
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# RBAC configuration
+rbac:
+  create: true
+
+# MutatingWebhookConfiguration resource settings
+webhookConfiguration:
+  # Timeout for the webhook call (between 1 and 30 seconds)
+  # See: https://kubernetes.io/docs/reference/kubernetes-api/extend-resources/mutating-webhook-configuration-v1/
+  timeoutSeconds: 10
+  
+  # Failure policy for the webhook
+  failurePolicy: Fail
+  
+  # Match policy for the webhook
+  matchPolicy: Equivalent
+  
+  # Namespace selector - which namespaces to apply webhook to
+  namespaceSelector:
+    matchExpressions:
+      - key: name
+        operator: NotIn
+        values:
+          - kube-system
+          - calico-system
+          - tigera-operator
+          # The webhook's own namespace is automatically added via template
+  
+  # Object selector - which objects to apply webhook to
+  objectSelector:
+    matchLabels: {}  # For hyperv: hyperv-isolation: "true"
+  
+  # Webhook rules
+  rules:
+    - apiGroups: [""]
+      apiVersions: ["v1"]
+      operations: ["CREATE", "UPDATE"]
+      resources: ["pods"]
+      scope: "*"
+  
+  # Side effects
+  sideEffects: None
+  
+  # Admission review versions
+  admissionReviewVersions: ["v1"]
+
+# Certificate configuration
+# Options: "cert-manager" or "manual"
+certificate:
+  # Use cert-manager for automatic certificate generation
+  useCertManager: true
+  
+  # Manual certificate configuration (used when useCertManager=false)
+  manual:
+    caCert: ""
+    tlsCert: ""
+    tlsKey: ""
+  
+  # cert-manager issuer configuration
+  certManager:
+    issuerRef:
+      name: ""  # If empty, defaults to {webhookType}-webhook-selfsigned-issuer
+      kind: Issuer
+
+# Logging configuration
+logging:
+  level: info  # debug, info, warn, error
+  format: json  # json or text

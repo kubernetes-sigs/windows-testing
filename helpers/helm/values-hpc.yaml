@@ -1,0 +1,23 @@
+# Values for deploying HPC mutating webhook
+# Usage: helm install hpc-webhook ./helm -f values-hpc.yaml
+#
+# Override registry and version via environment variables:
+#   helm install hpc-webhook ./helm -f values-hpc.yaml \
+#     --set deployment.image.registry=$REGISTRY \
+#     --set deployment.image.tag=$VERSION
+
+webhookType: hpc
+
+deployment:
+  image:
+    # Uses default registry from values.yaml: ghcr.io/kubernetes-sigs/windows-testing
+    # Override with: --set deployment.image.registry=myregistry.io/myorg
+    tag: ""  # Uses chart appVersion by default, override with --set deployment.image.tag=$VERSION
+
+webhookConfiguration:
+  objectSelector: {}
+
+# HPC specific configuration
+hpcConfig:
+  # HPC-specific settings can be added here
+  enabled: true

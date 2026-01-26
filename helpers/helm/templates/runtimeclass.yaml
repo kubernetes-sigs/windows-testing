@@ -1,0 +1,9 @@
+{{- if and (eq .Values.webhookType "hyperv") .Values.runtimeClass.enabled }}
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: {{ .Values.runtimeClass.name }}
+  labels:
+    {{- include "webhook.labels" . | nindent 4 }}
+handler: {{ .Values.runtimeClass.handler }}
+{{- end }}
