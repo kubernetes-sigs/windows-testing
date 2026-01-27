@@ -53,9 +53,23 @@ make docker-build-all
 make docker-push-all
 
 # 3. Install cert-manager (required once per cluster)
+# Taint Windows nodes to prevent cert-manager pods from scheduling there
+kubectl taint nodes -l kubernetes.io/os=windows os=windows:NoSchedule
+# Untaint Linux nodes if previously tainted
+kubectl taint nodes -l kubernetes.io/os=linux os=linux:NoSchedule-
+
 make helm-install-cert-manager
 
-# 4. Deploy webhook
+# After cert-manager is installed, restore taints if needed
+# Untaint Windows nodes
+kubectl taint nodes -l kubernetes.io/os=windows os=windows:NoSchedule-
+# Taint Linux nodes if needed
+kubectl taint nodes -l kubernetes.io/os=linux os=linux:NoSchedule-
+kubectl taint nodes -l  node-role.kubernetes.io/control-plane node-role.kubernetes.io/control-plane:NoSchedule
+
+
+# 4. Deploy 
+make helm-install-hpc
 make helm-install-hyperv
 ```
 
