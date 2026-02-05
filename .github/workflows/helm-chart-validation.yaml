@@ -7,14 +7,10 @@ on:
     branches: [main, master]
     paths:
       - helpers/helm/**
-      - helpers/hpc-mutating-webhook/**
-      - helpers/hyper-v-mutating-webhook/**
   pull_request:
     branches: [main, master] 
     paths:
       - helpers/helm/**
-      - helpers/hpc-mutating-webhook/**
-      - helpers/hyper-v-mutating-webhook/**
       - .github/workflows/helm-chart-validation.yaml
   workflow_dispatch:
 
