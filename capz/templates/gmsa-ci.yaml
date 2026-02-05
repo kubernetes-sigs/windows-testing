@@ -170,6 +170,20 @@ spec:
         path: C:/ProgramData/ssh/administrators_authorized_keys
         permissions: "0640"
       - content: |
+          $ErrorActionPreference = 'Continue'
+          $scriptUrl = 'https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/scripts/install-registry-structure.ps1'
+          $scriptPath = 'C:/install-registry-structure.ps1'
+          Write-Host "Downloading install-registry-structure.ps1 from GitHub..."
+          curl.exe -sL $scriptUrl -o $scriptPath
+          if (-not (Test-Path $scriptPath)) {
+              Write-Error "Failed to download script from $scriptUrl"
+              exit 1
+          }
+          Write-Host "Running install-registry-structure.ps1..."
+          & $scriptPath
+        path: C:/setup-registry-structure.ps1
+        permissions: "0744"
+      - content: |
           $ErrorActionPreference = 'Stop'
 
           Stop-Service kubelet -Force
@@ -217,6 +231,7 @@ spec:
       - powershell C:/updateKubeletConfig.ps1
       - powershell C:/KubeletRestart_nssm_sc.ps1
       - powershell C:/defender-exclude-calico.ps1
+      - powershell C:/setup-registry-structure.ps1
       preKubeadmCommands:
       - powershell C:/create-temp-folder.ps1
       - powershell C:/replace-containerd.ps1
