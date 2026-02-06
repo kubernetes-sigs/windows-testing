@@ -37,7 +37,7 @@ jobs:
           echo "Both webhook images built successfully!"
 
       - name: Build and push webhook images to registry
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           echo "Building and pushing both webhook images to registry..."
           echo "${{ secrets.DOCKER_SECRET }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
