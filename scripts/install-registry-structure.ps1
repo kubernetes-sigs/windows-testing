@@ -55,21 +55,6 @@ $CONTAINERD_NAMESPACE = "k8s.io"
 
 #region Helper Functions
 
-function Write-Info {
-    param([string]$Message)
-    Write-Host "[INFO] $Message" -ForegroundColor Cyan
-}
-
-function Write-Success {
-    param([string]$Message)
-    Write-Host "[SUCCESS] $Message" -ForegroundColor Green
-}
-
-function Write-ErrorMessage {
-    param([string]$Message)
-    Write-Host "[ERROR] $Message" -ForegroundColor Red
-}
-
 function Get-DigestPath {
     <#
     .SYNOPSIS
@@ -174,9 +159,9 @@ function Get-ExtractedBlobPath {
 #region Main Execution
 
 try {
-    Write-Info "Starting registry structure creation"
-    Write-Info "Image: $ImageRef"
-    Write-Info "Target: $RegistryDir"
+    Write-Host "Starting registry structure creation"
+    Write-Host "Image: $ImageRef"
+    Write-Host "Target: $RegistryDir"
 
     # Check for containerd/ctr
     try {
@@ -186,7 +171,7 @@ try {
         }
     }
     catch {
-        Write-ErrorMessage "ctr.exe (containerd CLI) not found in PATH"
+        Write-Host "Error: ctr.exe (containerd CLI) not found in PATH"
         Write-Host "Please ensure containerd is installed and ctr.exe is in your PATH" -ForegroundColor Yellow
         exit 1
     }
@@ -199,7 +184,7 @@ try {
 
     # Clean up existing registry directory
     if (Test-Path -Path $RegistryDir) {
-        Write-Info "Removing existing registry directory"
+        Write-Host "Removing existing registry directory"
         Remove-Item -Path $RegistryDir -Recurse -Force -ErrorAction Stop
     }
 
@@ -212,19 +197,19 @@ try {
     New-Item -Path $blobsDir -ItemType Directory -Force | Out-Null
 
     # Pull the image
-    Write-Info "Pulling image from registry..."
+    Write-Host "Pulling image from registry..."
     & ctr.exe -n $CONTAINERD_NAMESPACE images pull --platform windows/amd64 $ImageRef 2>&1 | ForEach-Object {
-        Write-Host $_
+        Write-Verbose $_
     }
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to pull image: $ImageRef"
     }
 
     # Export the image
-    Write-Info "Exporting image..."
+    Write-Host "Exporting image..."
     $exportPath = Join-Path -Path $env:TEMP -ChildPath "image-export-$(Get-Random).tar"
     & ctr.exe -n $CONTAINERD_NAMESPACE images export $exportPath $ImageRef 2>&1 | ForEach-Object {
-        Write-Host $_
+        Write-Verbose $_
     }
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to export image: $ImageRef"
@@ -232,13 +217,13 @@ try {
 
     try {
         # Extract the tar file
-        Write-Info "Extracting image contents..."
+        Write-Host "Extracting image contents..."
         $extractDir = Join-Path -Path $env:TEMP -ChildPath "image-extract-$(Get-Random)"
         New-Item -Path $extractDir -ItemType Directory -Force | Out-Null
 
         Push-Location $extractDir
         try {
-            & tar.exe -xf $exportPath 2>&1 | ForEach-Object { Write-Host $_ }
+            & tar.exe -xf $exportPath 2>&1 | ForEach-Object { Write-Verbose $_ }
             if ($LASTEXITCODE -ne 0) {
                 throw "Failed to extract image tar"
             }
@@ -259,7 +244,7 @@ try {
         # Process the manifest list (we assume it's always a manifest list)
         $manifestDesc = $index.manifests[0]
         $manifestDigest = $manifestDesc.digest
-        Write-Info "Processing manifest list (digest: $manifestDigest, mediaType: $($manifestDesc.mediaType), size: $($manifestDesc.size))"
+        Write-Host "Processing manifest list (digest: $manifestDigest, mediaType: $($manifestDesc.mediaType), size: $($manifestDesc.size))"
 
         # Read manifest list from blobs
         $manifestBlobPath = Get-ExtractedBlobPath -ExtractDir $extractDir -Digest $manifestDigest
@@ -272,7 +257,7 @@ try {
         $manifest = $manifestContent | ConvertFrom-Json
 
         # Filter for Windows manifests only
-        Write-Info "Filtering Windows manifests..."
+        Write-Host "Filtering Windows manifests..."
         $windowsManifests = $manifest.manifests | Where-Object {
             $_.platform.os -eq "windows"
         }
@@ -307,7 +292,7 @@ try {
         Save-ContentToPath -FilePath $tagFilePath -Content $newDigest
 
         # Process each Windows manifest and copy blobs
-        Write-Info "Copying manifests and blobs..."
+        Write-Host "Copying manifests and blobs..."
         foreach ($winManifest in $windowsManifests) {
             $winDigest = $winManifest.digest
             Write-Host "Processing Windows manifest: $winDigest"
@@ -349,7 +334,7 @@ try {
             }
         }
 
-        Write-Success "Successfully created registry structure at: $RegistryDir"
+        Write-Host "Successfully created registry structure at: $RegistryDir"
     }
     finally {
         # Cleanup temporary files
@@ -365,7 +350,7 @@ try {
     exit 0
 }
 catch {
-    Write-ErrorMessage "Failed to create registry structure: $_"
+    Write-Host "Error: Failed to create registry structure: $_"
     Write-Host $_.ScriptStackTrace
     exit 1
 }
