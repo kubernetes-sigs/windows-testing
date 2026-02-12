@@ -10,7 +10,7 @@ webhookType: hyperv
 
 deployment:
   image:
-    # Uses default registry from values.yaml: ghcr.io/kubernetes-sigs/windows-testing
+    # Uses default registry from values.yaml: sigwindowstools
     # Override with: --set deployment.image.registry=myregistry.io/myorg
     tag: ""  # Uses chart appVersion by default, override with --set deployment.image.tag=$VERSION
 

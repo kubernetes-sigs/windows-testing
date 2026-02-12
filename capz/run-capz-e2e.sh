@@ -76,6 +76,7 @@ main() {
         return ${exit_code}
     fi
 
+    apply_hpc_webhook
     run_e2e_test
 }
 
@@ -265,7 +266,7 @@ create_cluster(){
         log "Install cluster api azure onto management cluster"
         "$TOOLS_BIN_DIR"/clusterctl init --infrastructure azure
         log "wait for core CRDs to be installed"
-        kubectl wait --for=condition=ready pod --all -n capz-system --timeout -300s
+        kubectl wait --for=condition=ready pod --all -n capz-system --timeout=300s
         # Wait for the core CRD resources to be "installed" onto the mgmt cluster before returning control
         timeout --foreground 300 bash -c "until kubectl get clusters -A > /dev/null 2>&1; do sleep 3; done"
         timeout --foreground 300 bash -c "until kubectl get azureclusters -A > /dev/null 2>&1; do sleep 3; done"
@@ -433,6 +434,47 @@ apply_cloud_provider_azure() {
     "$TOOLS_BIN_DIR"/helm upgrade cloud-provider-azure --install --namespace kube-system --repo https://raw.githubusercontent.com/kubernetes-sigs/cloud-provider-azure/master/helm/repo cloud-provider-azure "${CCM_IMG_ARGS[@]}"
 }
 
+apply_hpc_webhook(){
+    log "applying configuration for HPC webhook"
+
+    # ensure cert-manager and webhook pods land on Linux nodes
+    log "untainting control-plane nodes"
+    mapfile -t cp_nodes < <(kubectl get nodes | grep control-plane | awk '{print $1}')
+    kubectl taint nodes "${cp_nodes[@]}" node-role.kubernetes.io/control-plane:NoSchedule- || true
+
+    log "tainting windows nodes"
+    mapfile -t windows_nodes < <(kubectl get nodes -o wide | grep Windows | awk '{print $1}')
+    kubectl taint nodes "${windows_nodes[@]}" os=windows:NoSchedule
+
+    log "installing cert-manager via helm"
+    "$TOOLS_BIN_DIR"/helm install \
+        --repo https://charts.jetstack.io \
+        --namespace cert-manager \
+        --create-namespace \
+        --set crds.enabled=true \
+        --wait \
+        cert-manager cert-manager
+
+    log "wait for cert-manager pods to start"
+    timeout 5m kubectl wait --for=condition=ready pod --all -n cert-manager --timeout -1s
+
+    log "installing HPC mutating webhook via helm"
+    "$TOOLS_BIN_DIR"/helm install hpc-webhook "${SCRIPT_ROOT}/../helpers/helm" \
+        -f "${SCRIPT_ROOT}/../helpers/helm/values-hpc.yaml" \
+        --create-namespace
+
+    log "wait for HPC webhook pods to start"
+    timeout 5m kubectl wait --for=condition=ready pod --all -n hpc-webhook --timeout -1s
+
+    log "untainting Windows agent nodes"
+    kubectl taint nodes "${windows_nodes[@]}" os=windows:NoSchedule-
+
+    log "tainting control-plane nodes again"
+    kubectl taint nodes "${cp_nodes[@]}" node-role.kubernetes.io/control-plane:NoSchedule || true
+
+    log "done configuring HPC webhook"
+}
+
 apply_hyperv_configuration(){
     set -x
     log "applying configuration for testing hyperv isolated containers"
@@ -458,13 +500,13 @@ apply_hyperv_configuration(){
     log "installing admission controller webhook"
     kubectl apply -f "${SCRIPT_ROOT}/../helpers/hyper-v-mutating-webhook/deployment.yaml"
 
-    log "wait for webhook pods to go start"
+    log "wait for webhook pods to start"
     timeout 5m kubectl wait --for=condition=ready pod --all -n hyperv-webhook-system  --timeout -1s
 
     log "untainting Windows agent nodes"
     kubectl taint nodes "${windows_nodes[@]}" os=windows:NoSchedule-
 
-    log "tainting master nodes again"
+    log "tainting control-plane nodes again"
     kubectl taint nodes "${cp_nodes[@]}" node-role.kubernetes.io/control-plane:NoSchedule || true
 
     log "done configuring testing for hyperv isolated containers"

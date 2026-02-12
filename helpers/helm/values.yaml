@@ -21,8 +21,8 @@ deployment:
   strategy: {}
 
   image:
-    # Image registry (set via Makefile's REGISTRY variable)
-    registry: "ghcr.io/kubernetes-sigs/windows-testing"
+    # Image registry (default matches Makefile's REGISTRY variable)
+    registry: "sigwindowstools"
 
     # Full repository path - if set, overrides registry + auto-generated name
     repository: ""
