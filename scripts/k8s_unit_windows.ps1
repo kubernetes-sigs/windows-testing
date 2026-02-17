@@ -65,9 +65,15 @@ function Prepare-TestPackages {
 
     Push-Location "$RepoPath/pkg"
     $packages = ls -Directory | select Name | foreach { "./pkg/" + $_.Name + "/..." }
+    Pop-Location
+
+    # Enumerate staging packages individually so each runs as a separate parallel job
+    Push-Location "$RepoPath/staging/src/k8s.io"
+    $packages = $packages + (ls -Directory | select Name | foreach { "./staging/src/k8s.io/" + $_.Name + "/..." })
+    Pop-Location
+
     $packages = $packages + $EXTRA_PACKAGES
     $EXCLUDED_PACKAGES | foreach { $packages = $packages -ne $_ }
-    Pop-Location
     return $packages
 }
 
