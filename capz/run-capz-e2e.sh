@@ -1,5 +1,6 @@
 #!/bin/bash
 
+#temp change to trigger pr gate checking, will remove before merging
 set -o errexit
 set -o nounset
 set -o pipefail
