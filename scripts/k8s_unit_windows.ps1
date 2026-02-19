@@ -16,7 +16,9 @@ $EXTRA_PACKAGES = @("./cmd/...")
 $EXCLUDED_PACKAGES = @(
     "./pkg/proxy/iptables/...",
     "./pkg/proxy/ipvs/...",
-    "./pkg/proxy/nftables/...")
+    "./pkg/proxy/nftables/...",
+    "./staging/src/k8s.io/apiserver/...",
+    "./staging/src/k8s.io/apiextensions-apiserver/...")
 # Map of packages with test case names to skip.
 $SkipTestsForPackage = @{
     "./cmd/..."         = @(
