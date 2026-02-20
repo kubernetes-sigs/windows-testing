@@ -66,8 +66,6 @@ main() {
     wait_for_nodes
     ensure_cloud_provider_taint_on_windows_nodes
     wait_for_windows_machinedeployment
-    if [[ "${HYPERV}" == "true" ]]; then apply_hyperv_configuration; fi
-
     if [[ ${#post_command[@]} -gt 0 ]]; then
         local exit_code
         log "post command detected; skipping default e2e tests"
@@ -77,6 +75,7 @@ main() {
     fi
 
     apply_hpc_webhook
+    if [[ "${HYPERV}" == "true" ]]; then apply_hyperv_configuration; fi
     run_e2e_test
 }
 
@@ -476,41 +475,17 @@ apply_hpc_webhook(){
 }
 
 apply_hyperv_configuration(){
-    set -x
     log "applying configuration for testing hyperv isolated containers"
 
-    log "installing hyperv runtime class"
-    kubectl apply -f "${SCRIPT_ROOT}/../helpers/hyper-v-mutating-webhook/hyperv-runtimeclass.yaml"
+    log "installing hyperv webhook via helm"
+    "$TOOLS_BIN_DIR"/helm install hyperv-webhook "${SCRIPT_ROOT}/../helpers/helm" \
+        -f "${SCRIPT_ROOT}/../helpers/helm/values-hyperv.yaml" \
+        --create-namespace
 
-    # ensure cert-manager and webhook pods land on Linux nodes
-    log "untainting control-plane nodes"
-    mapfile -t cp_nodes < <(kubectl get nodes | grep control-plane | awk '{print $1}')
-    kubectl taint nodes "${cp_nodes[@]}" node-role.kubernetes.io/control-plane:NoSchedule- || true
-
-    log "tainting windows nodes"
-    mapfile -t windows_nodes < <(kubectl get nodes -o wide | grep Windows | awk '{print $1}')
-    kubectl taint nodes "${windows_nodes[@]}" os=windows:NoSchedule
-
-    log "installing cert-manager"
-    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.5/cert-manager.yaml
-
-    log "wait for cert-manager pods to start"
-    timeout 5m kubectl wait --for=condition=ready pod --all -n cert-manager --timeout -1s
-
-    log "installing admission controller webhook"
-    kubectl apply -f "${SCRIPT_ROOT}/../helpers/hyper-v-mutating-webhook/deployment.yaml"
-
-    log "wait for webhook pods to start"
-    timeout 5m kubectl wait --for=condition=ready pod --all -n hyperv-webhook-system  --timeout -1s
-
-    log "untainting Windows agent nodes"
-    kubectl taint nodes "${windows_nodes[@]}" os=windows:NoSchedule-
-
-    log "tainting control-plane nodes again"
-    kubectl taint nodes "${cp_nodes[@]}" node-role.kubernetes.io/control-plane:NoSchedule || true
+    log "wait for hyperv webhook pods to start"
+    timeout 5m kubectl wait --for=condition=ready pod --all -n hyperv-webhook --timeout -1s
 
     log "done configuring testing for hyperv isolated containers"
-    set +x
 }
 
 run_post_command() {

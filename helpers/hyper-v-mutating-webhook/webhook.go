@@ -37,7 +37,7 @@ var (
 
 type podUpdater struct {
 	Client  client.Client
-	decoder *admission.Decoder
+	decoder admission.Decoder
 }
 
 func (pu *podUpdater) Handle(ctx context.Context, req admission.Request) admission.Response {
@@ -71,7 +71,9 @@ func (pu *podUpdater) Handle(ctx context.Context, req admission.Request) admissi
 
 		// e2e.test does not add nodeSelector fields to pods it schedules so this will
 		// add the hyperv runtime class to ALL pods scheduled to the cluster.
-		pod.Spec.RuntimeClassName = &runtimeClassName
+		if pod.Spec.RuntimeClassName == nil {
+			pod.Spec.RuntimeClassName = &runtimeClassName
+		}
 	}
 
 	marshaledPod, err := json.Marshal(pod)
@@ -83,7 +85,7 @@ func (pu *podUpdater) Handle(ctx context.Context, req admission.Request) admissi
 }
 
 // InjectDecoder injects a decoder into the podUpdater
-func (pu *podUpdater) InjectDecoder(d *admission.Decoder) error {
+func (pu *podUpdater) InjectDecoder(d admission.Decoder) error {
 	pu.decoder = d
 	return nil
 }
@@ -97,6 +99,15 @@ func isHostProcessPod(p *corev1.Pod) bool {
 	// Check if hostProcess is set for any containers
 	if p.Spec.Containers != nil {
 		for _, c := range p.Spec.Containers {
+			if c.SecurityContext != nil && c.SecurityContext.WindowsOptions != nil && c.SecurityContext.WindowsOptions.HostProcess != nil && *c.SecurityContext.WindowsOptions.HostProcess {
+				return true
+			}
+		}
+	}
+
+	// Check if hostProcess is set for any init containers
+	if p.Spec.InitContainers != nil {
+		for _, c := range p.Spec.InitContainers {
 			if c.SecurityContext != nil && c.SecurityContext.WindowsOptions != nil && c.SecurityContext.WindowsOptions.HostProcess != nil && *c.SecurityContext.WindowsOptions.HostProcess {
 				return true
 			}
