@@ -4,10 +4,15 @@ approvers:
   - adelina-t
   - andyzhangx
   - claudiubelu
-  - jayunit100
-  - jsturtevant
   - marosset
+  - zylxjtu
 
 emeritus_approvers:
   - chewong
   - ddebroy
+  - jayunit100
+  - jsturtevant
+
+labels:
+  - tide/merge-method-squash
+
