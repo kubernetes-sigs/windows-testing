@@ -66,46 +66,39 @@ spec:
             }
             Write-Output "Extracting new containerd binaries"
             tar.exe -zxvf c:/k/containerd.tar.gz -C "c:/Program Files/containerd" --strip-components 1
-            # Check if kube-log-runner.exe exists
-            $kubeloggerPath = Join-Path $env:SYSTEMDRIVE "k\kube-log-runner.exe"
-            if ($kubeloggerPath -and (Test-Path -Path $kubeloggerPath)) {
-              Write-Output "Recreating containerd service with kube-log-runner..."
-              $logPath = "\var\log\containerd"
-              # Check if directory exists
-              if (-Not (Test-Path -Path $logPath -PathType Container)) {
-                Write-Host "Creating log directory: $logPath"
-                New-Item -ItemType Directory -Path $logPath -Force | Out-Null
-              } else {
-                Write-Host "Log directory already exists: $logPath"
-              }
-              $ContainerdCommandLine = 'c:\k\kube-log-runner.exe --log-file=/var/log/containerd/containerd.log "c:\Program Files\containerd\containerd.exe" --register-service'
-              Write-Output "Containerd command line: $ContainerdCommandLine"
-              # Stop and delete the existing containerd service
-              Stop-Service -Name 'containerd' -Force -ErrorAction SilentlyContinue
-              $null = sc.exe delete containerd
-              # Wait for service to be fully deleted
-              $serviceCreated = $false
-              for ($i = 0; $i -lt 20; $i++) {
-                  $service = Get-Service -Name containerd -ErrorAction SilentlyContinue
-                  if ($null -eq $service) {
-                      Write-Host "containerd service deleted successfully, recreating with kubelogger"
-                      cmd.exe /c $ContainerdCommandLine
-                      Start-Service Containerd
-                      Write-Output "Successfully started containerd service with kubelogger"
-                      $serviceCreated = $true
-                      break
-                  }
-                  else {
-                      Write-Host "Waiting for containerd service to be fully deleted... (attempt $($i + 1)/20)"
-                  }
-                  Start-Sleep -Seconds 1
-              }
-              if (-not $serviceCreated) {
-                  Write-Error "Failed to delete containerd service after 20 attempts"
-              }
+            # Recreate containerd service with native file logging
+            Write-Output "Recreating containerd service with native file logging..."
+            $logPath = "\var\log\containerd"
+            if (-Not (Test-Path -Path $logPath -PathType Container)) {
+              Write-Host "Creating log directory: $logPath"
+              New-Item -ItemType Directory -Path $logPath -Force | Out-Null
             } else {
-                Write-Output "Starting containerd service without kube-log-runner..."
-                Start-Service containerd
+              Write-Host "Log directory already exists: $logPath"
+            }
+            $ContainerdCommandLine = '"c:\Program Files\containerd\containerd.exe" --register-service --log-file=c:\var\log\containerd\containerd.log'
+            Write-Output "Containerd command line: $ContainerdCommandLine"
+            # Stop and delete the existing containerd service
+            Stop-Service -Name 'containerd' -Force -ErrorAction SilentlyContinue
+            $null = sc.exe delete containerd
+            # Wait for service to be fully deleted
+            $serviceCreated = $false
+            for ($i = 0; $i -lt 20; $i++) {
+                $service = Get-Service -Name containerd -ErrorAction SilentlyContinue
+                if ($null -eq $service) {
+                    Write-Host "containerd service deleted successfully, recreating with native file logging"
+                    cmd.exe /c $ContainerdCommandLine
+                    Start-Service Containerd
+                    Write-Output "Successfully started containerd service with native file logging"
+                    $serviceCreated = $true
+                    break
+                }
+                else {
+                    Write-Host "Waiting for containerd service to be fully deleted... (attempt $($i + 1)/20)"
+                }
+                Start-Sleep -Seconds 1
+            }
+            if (-not $serviceCreated) {
+                Write-Error "Failed to delete containerd service after 20 attempts"
             }
           }
           containerd.exe --version
