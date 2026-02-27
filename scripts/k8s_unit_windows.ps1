@@ -16,7 +16,9 @@ $EXTRA_PACKAGES = @("./cmd/...")
 $EXCLUDED_PACKAGES = @(
     "./pkg/proxy/iptables/...",
     "./pkg/proxy/ipvs/...",
-    "./pkg/proxy/nftables/...")
+    "./pkg/proxy/nftables/...",
+    "./staging/src/k8s.io/apiserver/...",
+    "./staging/src/k8s.io/apiextensions-apiserver/...")
 # Map of packages with test case names to skip.
 $SkipTestsForPackage = @{
     "./cmd/..."         = @(
@@ -65,9 +67,15 @@ function Prepare-TestPackages {
 
     Push-Location "$RepoPath/pkg"
     $packages = ls -Directory | select Name | foreach { "./pkg/" + $_.Name + "/..." }
+    Pop-Location
+
+    # Enumerate staging packages individually so each runs as a separate parallel job
+    Push-Location "$RepoPath/staging/src/k8s.io"
+    $packages = $packages + (ls -Directory | select Name | foreach { "./staging/src/k8s.io/" + $_.Name + "/..." })
+    Pop-Location
+
     $packages = $packages + $EXTRA_PACKAGES
     $EXCLUDED_PACKAGES | foreach { $packages = $packages -ne $_ }
-    Pop-Location
     return $packages
 }
 
