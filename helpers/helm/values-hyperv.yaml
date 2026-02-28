@@ -10,10 +10,6 @@ webhookType: hyperv
 
 deployment:
   image:
-    # TODO: Remove repository override once sigwindowstools/hyperv-webhook image
-    # is built and pushed to the registry via the webhook-build GitHub Action.
-    # The default convention is {registry}/{webhookType}-webhook (sigwindowstools/hyperv-webhook),
-    # but only the old image name exists in the registry for now.
     repository: sigwindowstools/hyperv-runtimeclass-mutating-webhook
     tag: ""  # Uses chart appVersion by default, override with --set deployment.image.tag=$VERSION
 
@@ -24,8 +20,6 @@ deployment:
   certMountPath: /tmp/k8s-webhook-server/serving-certs
 
   service:
-    # TODO: Change to 8443 once the new image is built with the updated port.
-    # The old image uses controller-runtime's default port 9443.
     targetPort: 9443
 
   # controller-runtime serves health checks on a separate HTTP port
@@ -52,8 +46,6 @@ deployment:
     failureThreshold: 3
 
 webhookConfiguration:
-  # TODO: Change to /mutate once the new image is built with the updated path.
-  # The old image uses controller-runtime's kubebuilder default /mutate-v1-pod.
   path: /mutate-v1-pod
   objectSelector:
     matchLabels:

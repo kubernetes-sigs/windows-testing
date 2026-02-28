@@ -68,8 +68,6 @@ func main() {
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
-		// TODO: Change port to 8443 to match Helm chart default once the new
-		// sigwindowstools/hyperv-webhook image is built and pushed to the registry.
 		WebhookServer:          webhook.NewServer(webhook.Options{Port: 9443}),
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
@@ -92,8 +90,6 @@ func main() {
 	}
 
 	decoder := admission.NewDecoder(scheme)
-	// TODO: Change path to "/mutate" to match Helm chart default once the new
-	// sigwindowstools/hyperv-webhook image is built and pushed to the registry.
 	mgr.GetWebhookServer().Register("/mutate-v1-pod", &webhook.Admission{Handler: &podUpdater{Client: mgr.GetClient(), decoder: decoder}})
 
 	//+kubebuilder:scaffold:builder
