@@ -30,6 +30,24 @@ main() {
     export WINDOWS_CONTAINERD_URL="${WINDOWS_CONTAINERD_URL:-"https://github.com/containerd/containerd/releases/download/v1.7.16/containerd-1.7.16-windows-amd64.tar.gz"}"
     export GMSA="${GMSA:-""}" 
     export HYPERV="${HYPERV:-""}"
+
+    # Pin containerd to v2.1.6 for Hyper-V testing to avoid hcsshim SandboxPlatform
+    # validation bug in containerd >= 2.2.1 (hcsshim >= v0.14.0-rc.1).
+    #
+    # Root cause: containerd's config_windows.go sets SandboxIsolation=1 for the
+    # runhcs-wcow-hypervisor runtime but omits SandboxPlatform, making shim options
+    # non-empty. hcsshim PR #2473 added strict validation that calls
+    # platforms.Parse("") on the empty SandboxPlatform, which fails. containerd
+    # v2.1.6 bundles hcsshim v0.13.0 (pre-dates this validation).
+    #
+    # Upstream references:
+    #   - hcsshim validation: https://github.com/microsoft/hcsshim/pull/2473
+    #   - containerd missing default: https://github.com/containerd/containerd/blob/main/internal/cri/config/config_windows.go
+    if [[ "${HYPERV}" == "true" && ("${WINDOWS_CONTAINERD_URL}" == "latest" || -z "${WINDOWS_CONTAINERD_URL}") ]]; then
+        export WINDOWS_CONTAINERD_URL="https://github.com/containerd/containerd/releases/download/v2.1.6/containerd-2.1.6-windows-amd64.tar.gz"
+        log "HYPERV=true: pinning containerd to v2.1.6 to avoid SandboxPlatform bug"
+    fi
+
     export KPNG="${WINDOWS_KPNG:-""}"
     export CALICO_VERSION="${CALICO_VERSION:-"v3.31.0"}"
     export TEMPLATE="${TEMPLATE:-"windows-ci.yaml"}"
@@ -66,8 +84,6 @@ main() {
     wait_for_nodes
     ensure_cloud_provider_taint_on_windows_nodes
     wait_for_windows_machinedeployment
-    if [[ "${HYPERV}" == "true" ]]; then apply_hyperv_configuration; fi
-
     if [[ ${#post_command[@]} -gt 0 ]]; then
         local exit_code
         log "post command detected; skipping default e2e tests"
@@ -77,6 +93,7 @@ main() {
     fi
 
     apply_hpc_webhook
+    if [[ "${HYPERV}" == "true" ]]; then apply_hyperv_configuration; fi
     run_e2e_test
 }
 
@@ -476,41 +493,25 @@ apply_hpc_webhook(){
 }
 
 apply_hyperv_configuration(){
-    set -x
     log "applying configuration for testing hyperv isolated containers"
 
-    log "installing hyperv runtime class"
-    kubectl apply -f "${SCRIPT_ROOT}/../helpers/hyper-v-mutating-webhook/hyperv-runtimeclass.yaml"
-
-    # ensure cert-manager and webhook pods land on Linux nodes
+    # ensure webhook pod lands on Linux control-plane node
     log "untainting control-plane nodes"
     mapfile -t cp_nodes < <(kubectl get nodes | grep control-plane | awk '{print $1}')
     kubectl taint nodes "${cp_nodes[@]}" node-role.kubernetes.io/control-plane:NoSchedule- || true
 
-    log "tainting windows nodes"
-    mapfile -t windows_nodes < <(kubectl get nodes -o wide | grep Windows | awk '{print $1}')
-    kubectl taint nodes "${windows_nodes[@]}" os=windows:NoSchedule
+    log "installing hyperv webhook via helm"
+    "$TOOLS_BIN_DIR"/helm install hyperv-webhook "${SCRIPT_ROOT}/../helpers/helm" \
+        -f "${SCRIPT_ROOT}/../helpers/helm/values-hyperv.yaml" \
+        --create-namespace
 
-    log "installing cert-manager"
-    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.5/cert-manager.yaml
-
-    log "wait for cert-manager pods to start"
-    timeout 5m kubectl wait --for=condition=ready pod --all -n cert-manager --timeout -1s
-
-    log "installing admission controller webhook"
-    kubectl apply -f "${SCRIPT_ROOT}/../helpers/hyper-v-mutating-webhook/deployment.yaml"
-
-    log "wait for webhook pods to start"
-    timeout 5m kubectl wait --for=condition=ready pod --all -n hyperv-webhook-system  --timeout -1s
-
-    log "untainting Windows agent nodes"
-    kubectl taint nodes "${windows_nodes[@]}" os=windows:NoSchedule-
+    log "wait for hyperv webhook pods to start"
+    timeout 5m kubectl wait --for=condition=ready pod --all -n hyperv-webhook --timeout -1s
 
     log "tainting control-plane nodes again"
     kubectl taint nodes "${cp_nodes[@]}" node-role.kubernetes.io/control-plane:NoSchedule || true
 
     log "done configuring testing for hyperv isolated containers"
-    set +x
 }
 
 run_post_command() {

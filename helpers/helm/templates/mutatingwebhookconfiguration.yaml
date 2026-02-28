@@ -16,7 +16,7 @@ webhooks:
     service:
       name: {{ include "webhook.fullname" . }}
       namespace: {{ include "webhook.namespace" . }}
-      path: "/mutate"
+      path: {{ .Values.webhookConfiguration.path | default "/mutate" | quote }}
       port: {{ .Values.deployment.service.port }}
     {{- if not .Values.certificate.useCertManager }}
     caBundle: {{ .Values.certificate.manual.caCert | b64enc }}
