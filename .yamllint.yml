@@ -1,0 +1,3 @@
+---
+ignore: |
+  helpers/helm/templates/
