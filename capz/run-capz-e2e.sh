@@ -291,6 +291,19 @@ create_cluster(){
 
         log "Provision workload cluster"
         "$TOOLS_BIN_DIR"/clusterctl generate cluster "${CLUSTER_NAME}" --kubernetes-version "$KUBERNETES_VERSION" --from "$template" > "$SCRIPT_ROOT"/"${CLUSTER_NAME}-template.yaml"
+
+        # When USE_COMMUNITY_GALLERY is set, strip resourceGroup and subscriptionID from
+        # computeGallery image references and set the public community gallery name
+        # so CAPZ uses the community gallery lookup path.
+        if [[ "${USE_COMMUNITY_GALLERY:-}" == "true" ]]; then
+            log "USE_COMMUNITY_GALLERY=true: switching to public community gallery"
+            sed -i '/computeGallery:/,/^[^ ]/{
+                /^\s*resourceGroup:/d
+                /^\s*subscriptionID:/d
+                s/gallery: .*/gallery: ClusterAPI-f72ceb4f-5159-4c26-a0fe-2ea738f0d019/
+            }' "$SCRIPT_ROOT"/"${CLUSTER_NAME}-template.yaml"
+        fi
+
         kubectl apply -f "$SCRIPT_ROOT"/"${CLUSTER_NAME}-template.yaml"
 
         log "wait for workload cluster config"
