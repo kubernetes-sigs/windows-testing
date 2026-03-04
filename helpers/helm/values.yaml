@@ -34,6 +34,17 @@ deployment:
     tag: ""  # If empty, defaults to chart appVersion
   
   imagePullSecrets: []
+
+  # Container args passed to the webhook binary
+  # Default args are for the HPC webhook pattern (standalone TLS server)
+  # Override in values-hyperv.yaml for controller-runtime based webhooks
+  args:
+    - --tls-cert-file=/etc/webhook/certs/tls.crt
+    - --tls-private-key-file=/etc/webhook/certs/tls.key
+    - --port=8443
+
+  # Path where TLS certificates are mounted in the container
+  certMountPath: /etc/webhook/certs
   
   service:
     type: ClusterIP

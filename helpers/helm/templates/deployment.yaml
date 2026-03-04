@@ -39,10 +39,10 @@ spec:
           {{- toYaml .Values.deployment.securityContext | nindent 12 }}
         image: "{{ include "webhook.imageRepository" . }}:{{ .Values.deployment.image.tag | default .Chart.AppVersion }}"
         imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+        {{- with .Values.deployment.args }}
         args:
-        - --tls-cert-file=/etc/webhook/certs/tls.crt
-        - --tls-private-key-file=/etc/webhook/certs/tls.key
-        - --port={{ .Values.deployment.service.targetPort }}
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         ports:
         - name: webhook
           containerPort: {{ .Values.deployment.service.targetPort }}
@@ -58,7 +58,7 @@ spec:
         {{- end }}
         volumeMounts:
         - name: webhook-certs
-          mountPath: /etc/webhook/certs
+          mountPath: {{ .Values.deployment.certMountPath | default "/etc/webhook/certs" }}
           readOnly: true
         {{- with .Values.deployment.livenessProbe }}
         livenessProbe:
