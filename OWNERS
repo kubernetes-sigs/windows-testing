@@ -1,13 +1,17 @@
 # See the OWNERS docs: https://git.k8s.io/community/contributors/guide/owners.md
 
 approvers:
-  - adelina-t
   - andyzhangx
   - claudiubelu
-  - jayunit100
-  - jsturtevant
   - marosset
+  - zylxjtu
 
 emeritus_approvers:
   - chewong
   - ddebroy
+  - jayunit100
+  - jsturtevant
+
+labels:
+  - tide/merge-method-squash
+
