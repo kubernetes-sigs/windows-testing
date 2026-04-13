@@ -47,9 +47,7 @@ deployment:
 
 webhookConfiguration:
   path: /mutate-v1-pod
-  objectSelector:
-    matchLabels:
-      hyperv-isolation: "true"
+  objectSelector: {}
 
 # RuntimeClass configuration for Hyper-V
 runtimeClass:
