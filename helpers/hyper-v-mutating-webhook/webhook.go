@@ -54,7 +54,14 @@ func (pu *podUpdater) Handle(ctx context.Context, req admission.Request) admissi
 	if isHostProcessPod(pod) {
 		mutatePod = false
 	}
-	
+
+	// Don't apply hyper-v runtime class to hostNetwork pods, as Hyper-V
+	// isolation runs containers inside a utility VM with its own network
+	// namespace which is incompatible with host networking
+	if pod.Spec.HostNetwork {
+		mutatePod = false
+	}
+
 	// Don't apply hyper-v runtime class for linux pods that are explicitly labeled, as this is a windows only supported runtimeclass
 	if osLabel, ok := pod.Spec.NodeSelector["kubernetes.io/os"]; ok && osLabel == "linux" {
 		mutatePod = false
