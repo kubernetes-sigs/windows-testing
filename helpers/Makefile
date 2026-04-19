@@ -24,7 +24,7 @@ REGISTRY ?= sigwindowstools
 VERSION ?= latest
 
 # Constructed image names
-HYPERV_IMG = $(REGISTRY)/hyperv-webhook:$(VERSION)
+HYPERV_IMG = $(REGISTRY)/hyperv-runtimeclass-mutating-webhook:$(VERSION)
 HPC_IMG = $(REGISTRY)/hpc-webhook:$(VERSION)
 
 # Go version for building images

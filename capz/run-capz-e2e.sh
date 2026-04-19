@@ -31,23 +31,6 @@ main() {
     export GMSA="${GMSA:-""}" 
     export HYPERV="${HYPERV:-""}"
 
-    # Pin containerd to v2.1.6 for Hyper-V testing to avoid hcsshim SandboxPlatform
-    # validation bug in containerd >= 2.2.1 (hcsshim >= v0.14.0-rc.1).
-    #
-    # Root cause: containerd's config_windows.go sets SandboxIsolation=1 for the
-    # runhcs-wcow-hypervisor runtime but omits SandboxPlatform, making shim options
-    # non-empty. hcsshim PR #2473 added strict validation that calls
-    # platforms.Parse("") on the empty SandboxPlatform, which fails. containerd
-    # v2.1.6 bundles hcsshim v0.13.0 (pre-dates this validation).
-    #
-    # Upstream references:
-    #   - hcsshim validation: https://github.com/microsoft/hcsshim/pull/2473
-    #   - containerd missing default: https://github.com/containerd/containerd/blob/main/internal/cri/config/config_windows.go
-    if [[ "${HYPERV}" == "true" && ("${WINDOWS_CONTAINERD_URL}" == "latest" || -z "${WINDOWS_CONTAINERD_URL}") ]]; then
-        export WINDOWS_CONTAINERD_URL="https://github.com/containerd/containerd/releases/download/v2.1.6/containerd-2.1.6-windows-amd64.tar.gz"
-        log "HYPERV=true: pinning containerd to v2.1.6 to avoid SandboxPlatform bug"
-    fi
-
     export KPNG="${WINDOWS_KPNG:-""}"
     export CALICO_VERSION="${CALICO_VERSION:-"v3.31.0"}"
     export TEMPLATE="${TEMPLATE:-"windows-ci.yaml"}"
