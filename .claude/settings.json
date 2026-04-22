@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout -b revert-shared-image-gallery-ddce134 master)",
+      "Bash(git revert ddce134 --no-edit)",
+      "Bash(git push -u origin revert-shared-image-gallery-ddce134)",
+      "Bash(git commit -m ' *)"
+    ]
+  }
+}
