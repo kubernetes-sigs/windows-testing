@@ -101,6 +101,37 @@ spec:
                 Write-Error "Failed to delete containerd service after 20 attempts"
             }
           }
+          # Ensure sandbox_image includes Server 2025 variant for Hyper-V compatibility.
+          # pause:3.10 and 3.10.1 lack a Server 2025 manifest, causing Hyper-V UVMs to boot as
+          # Server 2022. containerd then selects the Server 2025 app image variant (based on host OS),
+          # resulting in HCS_E_IMAGE_MISMATCH when mounting 2025 layers inside a 2022 UVM.
+          # pause:3.10.2 includes Server 2025 and is backward-compatible with 2022.
+          if ("${HYPERV}" -eq "true") {
+            $configPath = "C:\Program Files\containerd\config.toml"
+            $configContent = [System.IO.File]::ReadAllText($configPath)
+            $updated = $$false
+            # Config v2 format (containerd 1.x style): sandbox_image = "registry.k8s.io/pause:X.Y.Z"
+            if ($configContent -match 'sandbox_image\s*=\s*"registry\.k8s\.io/pause:3\.10(\.1)?"') {
+              $configContent = $configContent -replace 'sandbox_image\s*=\s*"registry\.k8s\.io/pause:3\.10(\.1)?"', 'sandbox_image = "registry.k8s.io/pause:3.10.2"'
+              $updated = $$true
+            }
+            # Config v3 format (containerd 2.x style): sandbox = 'registry.k8s.io/pause:X.Y.Z'
+            if ($configContent -match "sandbox\s*=\s*'registry\.k8s\.io/pause:3\.10(\.1)?'") {
+              $configContent = $configContent -replace "sandbox\s*=\s*'registry\.k8s\.io/pause:3\.10(\.1)?'", "sandbox = 'registry.k8s.io/pause:3.10.2'"
+              $updated = $$true
+            }
+            if ($updated) {
+              [System.IO.File]::WriteAllText($configPath, $configContent)
+              Write-Output "Updated sandbox image to pause:3.10.2 for Server 2025 Hyper-V compatibility"
+              # Restart containerd so it picks up the new config and re-pins pause:3.10.2
+              # Note: kubelet is not running yet (this is a preKubeadmCommands script)
+              Restart-Service containerd
+              # Pre-pull pause:3.10.2 so containerd can use it for sandboxes immediately
+              Write-Output "Pre-pulling pause:3.10.2..."
+              ctr.exe -n k8s.io images pull registry.k8s.io/pause:3.10.2
+              Write-Output "Restarted containerd with new sandbox image"
+            }
+          }
           containerd.exe --version
           containerd-shim-runhcs-v1.exe --version
         path: C:/replace-containerd.ps1
