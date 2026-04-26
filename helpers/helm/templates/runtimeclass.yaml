@@ -6,4 +6,13 @@ metadata:
   labels:
     {{- include "webhook.labels" . | nindent 4 }}
 handler: {{ .Values.runtimeClass.handler }}
+{{- with .Values.runtimeClass.overhead }}
+overhead:
+  podFixed:
+    {{- toYaml .podFixed | nindent 4 }}
+{{- end }}
+{{- with .Values.runtimeClass.scheduling }}
+scheduling:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
 {{- end }}

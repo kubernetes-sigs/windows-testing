@@ -3,6 +3,10 @@ kind: RuntimeClass
 metadata:
   name: runhcs-wcow-hypervisor
 handler: runhcs-wcow-hypervisor
+overhead:
+  podFixed:
+    memory: "512Mi"
+    cpu: "100m"
 scheduling:
   nodeSelector:
     kubernetes.io/os: 'windows'
