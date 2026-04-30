@@ -1,6 +1,7 @@
 //go:build e2e
 // +build e2e
 
+// Package main configures gMSA on Windows nodes in CAPZ-managed workload clusters.
 package main
 
 import (
@@ -17,7 +18,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
-	. "github.com/onsi/gomega" //nolint:revive
+	"github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh"
 	"sigs.k8s.io/cluster-api/util"
@@ -40,7 +41,7 @@ func Fail(message string, _ ...int) {
 
 func main() {
 	// needed for ginkgo
-	RegisterFailHandler(Fail)
+	gomega.RegisterFailHandler(Fail)
 
 	// using a custom FlagSet here due to the dependency in controller-runtime that is already using this flag
 	// https://github.com/kubernetes-sigs/controller-runtime/blob/c7a98aa706379c4e5c79ea675c7f333192677971/pkg/client/config/config.go#L37-L41
@@ -71,7 +72,7 @@ func getKubeConfigPath() string {
 	config := os.Getenv("KUBECONFIG")
 	if config == "" {
 		d, err := os.UserHomeDir()
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		return path.Join(d, ".kube", "config")
 	}
 
@@ -80,10 +81,10 @@ func getKubeConfigPath() string {
 
 func configureGmsa(ctx context.Context, bootstrapClusterProxy framework.ClusterProxy, namespace, clusterName string) {
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
-	Expect(err).NotTo(HaveOccurred())
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	keyVaultClient, err := azsecrets.NewClient(os.Getenv("GMSA_KEYVAULT_URL"), cred, nil)
-	Expect(err).NotTo(HaveOccurred())
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	workloadProxy := bootstrapClusterProxy.GetWorkloadCluster(ctx, namespace, clusterName)
 
@@ -91,7 +92,7 @@ func configureGmsa(ctx context.Context, bootstrapClusterProxy framework.ClusterP
 	gmsaSpecName := "gmsa-cred-spec-gmsa-e2e-" + os.Getenv("GMSA_ID")
 	fmt.Printf("INFO: Getting the gmsa gmsaSpecFile %s from %s\n", gmsaSpecName, os.Getenv("GMSA_KEYVAULT_URL"))
 	var gmsaSpecFile azsecrets.GetSecretResponse
-	Eventually(func() error {
+	gomega.Eventually(func() error {
 		// empty string for version gets the latest
 		version := ""
 		gmsaSpecFile, err = keyVaultClient.GetSecret(ctx, gmsaSpecName, version, nil)
@@ -105,11 +106,11 @@ func configureGmsa(ctx context.Context, bootstrapClusterProxy framework.ClusterP
 			return err
 		}
 		return nil
-	}, 10*time.Second, 15*time.Minute).Should(Succeed())
-	Expect(gmsaSpecFile.Value).ToNot(BeNil())
+	}, 10*time.Second, 15*time.Minute).Should(gomega.Succeed())
+	gomega.Expect(gmsaSpecFile.Value).ToNot(gomega.BeNil())
 
 	workloadCluster, err := util.GetClusterByName(ctx, bootstrapClusterProxy.GetClient(), namespace, clusterName)
-	Expect(err).NotTo(HaveOccurred())
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	clusterHostName := workloadCluster.Spec.ControlPlaneEndpoint.Host
 
 	gmsaNode, windowsNodes := labelGmsaTestNode(ctx, workloadProxy)
@@ -130,10 +131,12 @@ func updateWorkerNodeDNS(clusterHostName string, workerNodeHostName string) {
 	fmt.Printf("INFO: Update node vm dns to %s\n", os.Getenv("GMSA_DNS_IP"))
 	dnsCmd := fmt.Sprintf("$currentDNS = (Get-DnsClientServerAddress -AddressFamily ipv4); Set-DnsClientServerAddress -InterfaceIndex $currentDNS[0].InterfaceIndex -ServerAddresses %s, $currentDNS[0].Address", os.Getenv("GMSA_DNS_IP"))
 	f, err := fileOnHost(filepath.Join("", "gmsa-spec-writer-output.txt"))
-	Expect(err).NotTo(HaveOccurred())
-	defer f.Close()
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	defer func() {
+		_ = f.Close()
+	}()
 	err = execOnHost(clusterHostName, workerNodeHostName, "22", f, dnsCmd)
-	Expect(err).NotTo(HaveOccurred())
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 }
 
 func configureCoreDNS(ctx context.Context, workloadProxy framework.ClusterProxy) {
@@ -145,10 +148,10 @@ func configureCoreDNS(ctx context.Context, workloadProxy framework.ClusterProxy)
 		Name:      "coredns",
 	}
 	err := workloadProxy.GetClient().Get(ctx, key, corednsConfigMap)
-	Expect(err).NotTo(HaveOccurred())
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	corefile, ok := corednsConfigMap.Data["Corefile"]
-	Expect(ok).Should(BeTrue())
+	gomega.Expect(ok).Should(gomega.BeTrue())
 
 	gmsaDNS := fmt.Sprintf(`k8sgmsa.lan:53 {
 	errors
@@ -160,24 +163,26 @@ func configureCoreDNS(ctx context.Context, workloadProxy framework.ClusterProxy)
 	corefile += gmsaDNS
 	corednsConfigMap.Data["Corefile"] = corefile
 	err = workloadProxy.GetClient().Update(ctx, corednsConfigMap)
-	Expect(err).NotTo(HaveOccurred())
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	// rollout restart to refresh the configuration
 	patch := []byte(`{"spec": {"template":{ "metadata": { "annotations": { "restartedBy": "gmsa" } } } } }`)
 	_, err = workloadProxy.GetClientSet().AppsV1().Deployments("kube-system").Patch(ctx, "coredns", types.MergePatchType, patch, v1.PatchOptions{})
-	Expect(err).NotTo(HaveOccurred())
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 }
 
 func dropGmsaSpecOnTestNode(gmsaNode *corev1.Node, clusterHostName string, value string) {
 	fmt.Printf("INFO: Writing gmsa spec to disk\n")
 	f, err := fileOnHost(filepath.Join("", "gmsa-spec-writer-output.txt"))
-	Expect(err).NotTo(HaveOccurred())
-	defer f.Close()
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	defer func() {
+		_ = f.Close()
+	}()
 	hostname := getHostName(gmsaNode)
 
 	cmd := fmt.Sprintf("mkdir -force /gmsa; rm -force c:/gmsa/gmsa-cred-spec-gmsa-e2e.yml; $input='%s'; [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($input)) >> c:/gmsa/gmsa-cred-spec-gmsa-e2e.yml", value)
 	err = execOnHost(clusterHostName, hostname, "22", f, cmd)
-	Expect(err).NotTo(HaveOccurred())
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 }
 
 func labelGmsaTestNode(ctx context.Context, workloadProxy framework.ClusterProxy) (*corev1.Node, *corev1.NodeList) {
@@ -194,15 +199,15 @@ func labelGmsaTestNode(ctx context.Context, workloadProxy framework.ClusterProxy
 			return err
 		}
 
-		Expect(len(windowsNodes.Items)).Should(BeNumerically(">", 0))
+		gomega.Expect(len(windowsNodes.Items)).Should(gomega.BeNumerically(">", 0))
 		gmsaNode = &windowsNodes.Items[0]
 		gmsaNode.Labels["agentpool"] = "windowsgmsa"
 		fmt.Printf("INFO: Labeling node %s as 'windowsgmsa'\n", gmsaNode.Name)
 		_, err = workloadProxy.GetClientSet().CoreV1().Nodes().Update(ctx, gmsaNode, v1.UpdateOptions{})
 		return err
 	})
-	Expect(err).NotTo(HaveOccurred())
-	Expect(gmsaNode).NotTo(BeNil())
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	gomega.Expect(gmsaNode).NotTo(gomega.BeNil())
 	return gmsaNode, windowsNodes
 }
 
@@ -253,7 +258,9 @@ func execOnHost(controlPlaneEndpoint, hostname, port string, f io.StringWriter, 
 	if err != nil {
 		return errors.Wrap(err, "opening SSH session")
 	}
-	defer session.Close()
+	defer func() {
+		_ = session.Close()
+	}()
 
 	// Run the command and write the captured stdout to the file
 	var stdoutBuf bytes.Buffer
