@@ -55,15 +55,25 @@ runtimeClass:
   name: runhcs-wcow-hypervisor
   handler: runhcs-wcow-hypervisor
 
-# Hyper-V specific configuration
-hypervConfig:
-  # Default Hyper-V isolation settings
-  runtimeClassName: runhcs-wcow-hypervisor
-  
-  # CPU and memory limits for Hyper-V isolated containers
-  defaultResources:
-    cpuLimit: "1000m"
-    memoryLimit: "2Gi"
-  
-  # Enable automatic resource adjustment
-  autoAdjustResources: true
+  # Pod overhead accounts for the Hyper-V Utility VM (UVM) resource consumption
+  # on the host. Each Hyper-V isolated container runs inside a UVM which consumes
+  # host memory and CPU beyond what the container itself requests. Without this,
+  # the scheduler over-commits nodes and the eviction manager cannot correctly
+  # attribute memory pressure to Hyper-V pods.
+  #
+  # KEP-688: https://github.com/kubernetes/enhancements/blob/master/keps/sig-node/688-pod-overhead/README.md
+  # Kubernetes automatically injects these values into pod.spec.overhead when
+  # a pod uses this RuntimeClass (via the built-in RuntimeClass admission controller).
+  overhead:
+    podFixed:
+      memory: "512Mi"
+      cpu: "100m"
+
+  # Scheduling constraints ensure pods using this RuntimeClass are only
+  # scheduled to Windows nodes that support Hyper-V isolation.
+  scheduling:
+    nodeSelector:
+      kubernetes.io/os: windows
+      kubernetes.io/arch: amd64
+
+
