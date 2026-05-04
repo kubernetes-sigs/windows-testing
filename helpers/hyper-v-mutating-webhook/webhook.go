@@ -67,6 +67,15 @@ func (pu *podUpdater) Handle(ctx context.Context, req admission.Request) admissi
 		mutatePod = false
 	}
 
+	// Don't apply hyper-v runtime class for pods that have custom nodeSelectors
+	// but no kubernetes.io/os selector. These are likely test fixture pods
+	// (e.g., ResourceQuota tests with unsatisfiable selectors) that are not
+	// intended to run as Windows workloads. Injecting overhead into them would
+	// break resource accounting in those tests.
+	if _, hasOS := pod.Spec.NodeSelector["kubernetes.io/os"]; !hasOS && len(pod.Spec.NodeSelector) > 0 {
+		mutatePod = false
+	}
+
 	if mutatePod {
 		podName := pod.Name
 		webhookLogger.Info(fmt.Sprintf("Pod %s is being mutated", podName))
