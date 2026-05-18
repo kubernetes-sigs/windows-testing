@@ -14,12 +14,26 @@ patches:
     namespace: default
   path: patches/kubeadm-bootstrap-control-plane-pr.yaml
 - target:
+    group: controlplane.cluster.x-k8s.io
+    version: v1beta1
+    kind: KubeadmControlPlane
+    name: .*-control-plane
+    namespace: default
+  path: ../patches/oot-credential-provider-kcp.yaml
+- target:
     group: bootstrap.cluster.x-k8s.io
     version: v1beta1
     kind: KubeadmConfigTemplate
     name: .*-md-win
     namespace: default
   path: patches/kubeadm-bootstrap-windows-pr.yaml
+- target:
+    group: bootstrap.cluster.x-k8s.io
+    version: v1beta1
+    kind: KubeadmConfigTemplate
+    name: .*-md-win
+    namespace: default
+  path: ../patches/oot-credential-provider-win.yaml
 generatorOptions:
   disableNameSuffixHash: true
   labels:

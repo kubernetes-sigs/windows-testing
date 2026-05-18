@@ -61,6 +61,7 @@ main() {
     if [[ "${GMSA}" == "true" ]]; then create_gmsa_domain; fi
 
     install_tools
+    prepare_cloud_provider_azure
     create_cluster
     apply_workload_configuration
     apply_cloud_provider_azure
@@ -414,12 +415,7 @@ apply_cloud_provider_azure() {
     log "entering apply_cloud_provider_azure"
     echo "KUBERNETES_VERSION = ${KUBERNETES_VERSION}"
 
-    echo "Building cloud provider images"
-    # shellcheck disable=SC1091
-    "${CAPZ_DIR}/hack/ensure-acr-login.sh"
-    # shellcheck disable=SC1091
-    source "${CAPZ_DIR}/scripts/ci-build-azure-ccm.sh" || false
-    trap run_capz_e2e_cleanup EXIT # reset the EXIT trap since ci-build-azure-ccm.sh also sets it.
+    prepare_cloud_provider_azure
     echo "Will use the ${IMAGE_REGISTRY}/${CCM_IMAGE_NAME}:${IMAGE_TAG_CCM} cloud-controller-manager image for external cloud-provider-cluster"
     echo "Will use the ${IMAGE_REGISTRY}/${CNM_IMAGE_NAME}:${IMAGE_TAG_CNM} cloud-node-manager image for external cloud-provider-azure cluster"
 
@@ -432,6 +428,27 @@ apply_cloud_provider_azure() {
 
     echo "Installing cloud-provider-azure components via helm"
     "$TOOLS_BIN_DIR"/helm upgrade cloud-provider-azure --install --namespace kube-system --repo https://raw.githubusercontent.com/kubernetes-sigs/cloud-provider-azure/master/helm/repo cloud-provider-azure "${CCM_IMG_ARGS[@]}"
+}
+
+prepare_cloud_provider_azure() {
+    if [[ "${CLOUD_PROVIDER_AZURE_ARTIFACTS_READY:-}" == "true" ]]; then
+        return
+    fi
+
+    log "preparing cloud-provider-azure images and credential-provider artifacts"
+    # shellcheck disable=SC1091
+    "${CAPZ_DIR}/hack/ensure-acr-login.sh"
+
+    local previous_dir
+    previous_dir="$(pwd)"
+    # shellcheck disable=SC1091
+    source "${CAPZ_DIR}/scripts/ci-build-azure-ccm.sh" || false
+    cd "${previous_dir}"
+    trap run_capz_e2e_cleanup EXIT # reset the EXIT trap since ci-build-azure-ccm.sh also sets it.
+
+    : "${AZURE_BLOB_CONTAINER_NAME:?Environment variable empty or not defined.}"
+    : "${IMAGE_TAG_ACR_CREDENTIAL_PROVIDER:?Environment variable empty or not defined.}"
+    export CLOUD_PROVIDER_AZURE_ARTIFACTS_READY="true"
 }
 
 apply_hpc_webhook(){
