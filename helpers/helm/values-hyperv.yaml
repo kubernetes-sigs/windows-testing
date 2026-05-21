@@ -49,6 +49,26 @@ webhookConfiguration:
   path: /mutate-v1-pod
   objectSelector: {}
 
+  # Namespace selector. Helm replaces lists wholesale, so include
+  # both the baseline system exclusions and the Hyper-V-specific ones.
+  namespaceSelector:
+    matchExpressions:
+      - key: name
+        operator: NotIn
+        values:
+          - kube-system
+          - calico-system
+          - tigera-operator
+      # Skip the e2e suite's img-puller namespace (test/e2e/e2e.go::
+      # prepullImages). Its Linux helper DaemonSets cannot run as
+      # Hyper-V isolated pods. Filtered on the e2e-framework label set
+      # by framework.CreateTestingNS since the namespace name carries a
+      # random suffix.
+      - key: e2e-framework
+        operator: NotIn
+        values:
+          - img-puller
+
 # RuntimeClass configuration for Hyper-V
 runtimeClass:
   enabled: true
