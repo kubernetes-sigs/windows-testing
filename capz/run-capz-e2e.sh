@@ -63,6 +63,7 @@ main() {
     install_tools
     prepare_cloud_provider_azure
     create_cluster
+    export_workload_cluster_resource_group
     apply_workload_configuration
     apply_cloud_provider_azure
     wait_for_nodes
@@ -316,6 +317,30 @@ create_cluster(){
     export KUBECONFIG="$workload_kubeconfig_path"
 
     log "create_cluster complete"
+}
+
+export_workload_cluster_resource_group() {
+    local workload_resource_group=""
+
+    workload_resource_group=$(kubectl --kubeconfig "${MANAGEMENT_KUBECONFIG}" get azurecluster "${CLUSTER_NAME}" -n default -o jsonpath='{.spec.resourceGroup}' 2>/dev/null || true)
+    if [[ -z "${workload_resource_group}" ]]; then
+        workload_resource_group="${CLUSTER_NAME}"
+        log "AzureCluster resource group lookup unavailable or empty; falling back to ${workload_resource_group}"
+    else
+        log "discovered workload cluster Azure resource group: ${workload_resource_group}"
+    fi
+
+    if [[ -n "${AZURE_RESOURCE_GROUP:-}" ]]; then
+        if [[ "${AZURE_RESOURCE_GROUP}" == "${workload_resource_group}" ]]; then
+            export AZURE_RESOURCE_GROUP
+            log "AZURE_RESOURCE_GROUP already matches workload cluster resource group; exporting AZURE_RESOURCE_GROUP=${AZURE_RESOURCE_GROUP}"
+            return
+        fi
+        log "WARNING: AZURE_RESOURCE_GROUP was set to ${AZURE_RESOURCE_GROUP}; exporting workload cluster resource group ${workload_resource_group} for this CAPZ e2e run"
+    fi
+
+    export AZURE_RESOURCE_GROUP="${workload_resource_group}"
+    log "exporting AZURE_RESOURCE_GROUP=${AZURE_RESOURCE_GROUP}"
 }
 
 wait_for_windows_machinedeployment() {
