@@ -458,6 +458,7 @@ spec:
       identity: UserAssigned
       image:
       osDisk:
+        cachingType: ReadWrite
         diskSizeGB: 128
         managedDisk:
           storageAccountType: Premium_LRS
