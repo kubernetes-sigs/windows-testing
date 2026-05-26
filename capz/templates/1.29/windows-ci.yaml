@@ -436,6 +436,7 @@ spec:
           name: ${GALLERY_IMAGE_NAME:=capi-win-2022-containerd}
           version: ${IMAGE_VERSION:=latest}
       osDisk:
+        cachingType: ReadWrite
         diskSizeGB: 128
         managedDisk:
           storageAccountType: Premium_LRS

@@ -566,6 +566,7 @@ spec:
           subscriptionID: ${AZURE_SUBSCRIPTION_ID}
           version: ${IMAGE_VERSION:=0.3.1707767847}
       osDisk:
+        cachingType: ReadWrite
         diskSizeGB: 128
         managedDisk:
           storageAccountType: Premium_LRS
