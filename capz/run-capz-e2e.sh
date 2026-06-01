@@ -30,6 +30,8 @@ main() {
     export WINDOWS_CONTAINERD_URL="${WINDOWS_CONTAINERD_URL:-"https://github.com/containerd/containerd/releases/download/v1.7.16/containerd-1.7.16-windows-amd64.tar.gz"}"
     export GMSA="${GMSA:-""}" 
     export HYPERV="${HYPERV:-""}"
+    # Override kubelet maxPods (e.g. Hyper-V Prow jobs set MAX_PODS=20).
+    export MAX_PODS="${MAX_PODS:-}"
 
     export KPNG="${WINDOWS_KPNG:-""}"
     export CALICO_VERSION="${CALICO_VERSION:-"v3.31.0"}"

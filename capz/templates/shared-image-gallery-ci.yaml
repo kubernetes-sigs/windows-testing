@@ -155,6 +155,11 @@ spec:
             $content += "shutdownGracePeriod: 1m"
             $content += "shutdownGracePeriodCriticalPods: 20s"
           }
+          # Override kubelet maxPods when MAX_PODS is set (envsubst at apply time).
+          if ("${MAX_PODS}" -ne "") {
+            $content = $content | Where-Object { $_ -notmatch "^maxPods:" }
+            $content += "maxPods: ${MAX_PODS}"
+          }
 
           # Write the updated content back to the file
           $content | Set-Content -Path $configFile -Encoding ascii
