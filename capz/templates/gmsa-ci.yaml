@@ -177,6 +177,8 @@ spec:
           } else {
               Write-Host "RestartKubelet.ps1 not found. Running fallback command..."
               & "$env:SYSTEMDRIVE\k\nssm.exe" set kubelet start SERVICE_AUTO_START
+              # Actually restart the running kubelet so config.yaml changes take effect.
+              & "$env:SYSTEMDRIVE\k\nssm.exe" restart kubelet
           }
         path: C:/KubeletRestart_nssm_sc.ps1
         permissions: "0744"
