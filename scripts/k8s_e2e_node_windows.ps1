@@ -63,7 +63,7 @@ function Run-K8se2enodeWindowsTests {
     }
 
     Write-Host "Running e2e node tests"
-    go test ./test/e2e_node `
+    go test ./test/e2e_node_windows `
         --bearer-token=vQIYfdCt7wIFOZtO `
         --test.v `
         --test.paniconexit0 `

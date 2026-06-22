@@ -11,8 +11,12 @@ Stop-Service containerd -ErrorAction Continue
 sc.exe delete containerd -ErrorAction Continue
 
 # Download and extract desired containerd Windows binaries
-curl.exe -LO https://github.com/containerd/containerd/releases/download/v$ContainerdVersion/containerd-$ContainerdVersion-windows-amd64.tar.gz
-tar.exe xvf .\containerd-$ContainerdVersion-windows-amd64.tar.gz
+if ($ContainerdVersion -eq "nightly") {
+    curl.exe -L -o containerd.tar.gz https://github.com/kubernetes-sigs/sig-windows-tools/releases/download/windows-containerd-nightly/windows-containerd.tar.gz
+} else {
+    curl.exe -L -o containerd.tar.gz https://github.com/containerd/containerd/releases/download/v$ContainerdVersion/containerd-$ContainerdVersion-windows-amd64.tar.gz
+}
+tar.exe xvf .\containerd.tar.gz
 
 # Copy
 Copy-Item -Path .\bin -Destination $Env:ProgramFiles\containerd -Recurse -Force
