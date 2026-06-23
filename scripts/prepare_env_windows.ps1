@@ -6,7 +6,7 @@ $PACKAGES= @{ git = ""; golang = $goVersion; make = "" }
 
 Write-Host "Downloading chocolatey package"
 curl.exe -L "https://packages.chocolatey.org/chocolatey.0.10.15.nupkg" -o 'c:\choco.zip'
-Expand-Archive "c:\choco.zip" -DestinationPath "c:\choco"
+Expand-Archive "c:\choco.zip" -DestinationPath "c:\choco" -Force
 
 Write-Host "Installing choco"
 & "c:\choco\tools\chocolateyInstall.ps1"

@@ -12,10 +12,10 @@ SSH_OPTS="-o ServerAliveInterval=20 -o StrictHostKeyChecking=no -o UserKnownHost
 AZURE_IMG="${WIN_VM_IMG:-$AZURE_DEFAULT_IMG}"
 VM_NAME="winTestVM"
 VM_LOCATION="${VM_LOCATION:-westus2}"
-VM_SIZE="${VM_SIZE:-Standard_D8s_v5}"
+VM_SIZE="${VM_SIZE:-Standard_D8ds_v5}"
 ARTIFACTS="${ARTIFACTS:-/var/log/artifacts}"
 CONTAINERD_VERSION="${CONTAINERD_VERSION:-1.7.16}"
-export GINKGO_FOCUS="${GINKGO_FOCUS:-\[sig-windows\]|\[Feature:Windows\]}"
+export GINKGO_FOCUS="${GINKGO_FOCUS:-\[sig-Windows\]|\[Feature:Windows\]}"
 
 SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
 SCRIPT_ROOT=$(dirname "${SCRIPT_PATH}")
@@ -51,17 +51,20 @@ set +e  # Temporarily disable errexit
 trap - ERR   # Temporarily disable the ERR trap
 if [ "${JOB_TYPE}" == "presubmit" ]; then
     if [ "${REPO_NAME}" == "kubernetes" ]; then
-        echo "Running a presubmit job against kubernetes/kubernetes"
+        echo "Running a presubmit job against kubernetes/kubernetes PR ${PULL_NUMBER}"
         run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_e2e_node_windows.ps1 -repoName ${REPO_NAME} -repoOrg ${REPO_OWNER} \
-            -pullRequestNo ${PULL_NUMBER} -pullBaseRef ${PULL_BASE_REF}"
+            -pullRequestNo ${PULL_NUMBER} -pullBaseRef ${PULL_BASE_REF} -ginkgoFocus '${GINKGO_FOCUS}'"
     else
-        echo "Dry-Running a presubmit job against ${REPO_NAME}"
-        run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_e2e_node_windows.ps1 -dryRun 'true'"
+        # PRs against non-kubernetes repos (e.g. this windows-testing repo) cannot
+        # build kubelet from their own source, so test the PR's scripts against
+        # kubernetes/kubernetes master (the .ps1 defaults to that repo/branch).
+        echo "Running a presubmit job for ${REPO_OWNER}/${REPO_NAME} against kubernetes/kubernetes master"
+        run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_e2e_node_windows.ps1 -ginkgoFocus '${GINKGO_FOCUS}'"
     fi
     exit_code=$?
 else
     echo "Running periodic job"
-    run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_e2e_node_windows.ps1"
+    run_remote_cmd ${VM_PUB_IP} ${SSH_KEY_FILE} "c:/k8s_e2e_node_windows.ps1 -ginkgoFocus '${GINKGO_FOCUS}'"
     exit_code=$?
 fi
 set -e  # Re-enable errexit
