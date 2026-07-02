@@ -48,23 +48,41 @@ func (pu *podUpdater) Handle(ctx context.Context, req admission.Request) admissi
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
-	mutatePod := true
+	if !shouldMutatePod(pod) {
+		return admission.Allowed("")
+	}
 
+	webhookLogger.Info(fmt.Sprintf("Pod %s is being mutated", pod.Name))
+
+	marshaledPod, err := mutatePodRaw(req.Object.Raw, runtimeClassName)
+	if err != nil {
+		return admission.Errored(http.StatusInternalServerError, err)
+	}
+
+	return admission.PatchResponseFromRaw(req.Object.Raw, marshaledPod)
+}
+
+// shouldMutatePod reports whether the hyper-v runtime class should be injected
+// into the given pod. It returns false for pods that are incompatible with
+// Hyper-V isolation (hostProcess, hostNetwork), explicitly Linux pods, and pods
+// carrying a custom nodeSelector with no kubernetes.io/os key (likely test
+// fixtures whose resource accounting would break if overhead were injected).
+func shouldMutatePod(pod *corev1.Pod) bool {
 	// Don't apply hyper-v runtime class to hostProcess pods
 	if isHostProcessPod(pod) {
-		mutatePod = false
+		return false
 	}
 
 	// Don't apply hyper-v runtime class to hostNetwork pods, as Hyper-V
 	// isolation runs containers inside a utility VM with its own network
 	// namespace which is incompatible with host networking
 	if pod.Spec.HostNetwork {
-		mutatePod = false
+		return false
 	}
 
 	// Don't apply hyper-v runtime class for linux pods that are explicitly labeled, as this is a windows only supported runtimeclass
 	if osLabel, ok := pod.Spec.NodeSelector["kubernetes.io/os"]; ok && osLabel == "linux" {
-		mutatePod = false
+		return false
 	}
 
 	// Don't apply hyper-v runtime class for pods that have custom nodeSelectors
@@ -73,32 +91,47 @@ func (pu *podUpdater) Handle(ctx context.Context, req admission.Request) admissi
 	// intended to run as Windows workloads. Injecting overhead into them would
 	// break resource accounting in those tests.
 	if _, hasOS := pod.Spec.NodeSelector["kubernetes.io/os"]; !hasOS && len(pod.Spec.NodeSelector) > 0 {
-		mutatePod = false
+		return false
 	}
 
-	if mutatePod {
-		podName := pod.Name
-		webhookLogger.Info(fmt.Sprintf("Pod %s is being mutated", podName))
+	return true
+}
 
-		if pod.Annotations == nil {
-			pod.Annotations = make(map[string]string)
-		}
-
-		pod.Annotations["hyperv-runtimeclass-mutating-webhook"] = "mutated"
-
-		// e2e.test does not add nodeSelector fields to pods it schedules so this will
-		// add the hyperv runtime class to ALL pods scheduled to the cluster.
-		if pod.Spec.RuntimeClassName == nil {
-			pod.Spec.RuntimeClassName = &runtimeClassName
-		}
+// mutatePodRaw injects the hyper-v mutation annotation and, when unset, the
+// runtimeClassName into the raw pod JSON, preserving all other fields. It
+// operates on the raw request bytes rather than a re-marshaled typed Pod so that
+// fields newer than the vendored k8s.io/api (e.g. container-level
+// restartPolicyRules) are not dropped.
+func mutatePodRaw(rawObject []byte, runtimeClassName string) ([]byte, error) {
+	raw := map[string]interface{}{}
+	if err := json.Unmarshal(rawObject, &raw); err != nil {
+		return nil, err
 	}
 
-	marshaledPod, err := json.Marshal(pod)
-	if err != nil {
-		return admission.Errored(http.StatusInternalServerError, err)
+	metadata, _ := raw["metadata"].(map[string]interface{})
+	if metadata == nil {
+		metadata = map[string]interface{}{}
+		raw["metadata"] = metadata
+	}
+	annotations, _ := metadata["annotations"].(map[string]interface{})
+	if annotations == nil {
+		annotations = map[string]interface{}{}
+		metadata["annotations"] = annotations
+	}
+	annotations["hyperv-runtimeclass-mutating-webhook"] = "mutated"
+
+	spec, _ := raw["spec"].(map[string]interface{})
+	if spec == nil {
+		spec = map[string]interface{}{}
+		raw["spec"] = spec
+	}
+	// e2e.test does not add nodeSelector fields to pods it schedules so this
+	// will add the hyperv runtime class to ALL pods scheduled to the cluster.
+	if v, ok := spec["runtimeClassName"]; !ok || v == nil || v == "" {
+		spec["runtimeClassName"] = runtimeClassName
 	}
 
-	return admission.PatchResponseFromRaw(req.Object.Raw, marshaledPod)
+	return json.Marshal(raw)
 }
 
 // InjectDecoder injects a decoder into the podUpdater
