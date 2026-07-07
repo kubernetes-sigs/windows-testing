@@ -18,6 +18,7 @@ package main
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -94,9 +95,8 @@ func TestMutatePodRaw(t *testing.T) {
 	})
 
 	t.Run("preserves container-level restartPolicyRules", func(t *testing.T) {
-		// restartPolicyRules (KEP-5307) is unknown to the vendored typed API;
-		// this guards against the regression where re-marshaling a typed Pod
-		// dropped it. mutatePodRaw must leave it intact.
+		// restartPolicyRules (KEP-5307) must survive mutation; mutatePodRaw
+		// operates on raw JSON so it is preserved regardless of API version.
 		in := []byte(`{
 			"metadata":{"name":"p1"},
 			"spec":{
@@ -178,6 +178,57 @@ func TestMutatePodRaw(t *testing.T) {
 }
 
 func boolPtr(b bool) *bool { return &b }
+
+// TestTypedAPIKnowsRestartPolicyRules asserts the bumped k8s.io/api recognizes
+// container-level restartPolicyRules on the typed corev1.Pod. Before the bump
+// the field did not exist, so typed decode+re-marshal silently dropped it (Bug #1).
+func TestTypedAPIKnowsRestartPolicyRules(t *testing.T) {
+	in := []byte(`{
+		"metadata":{"name":"p1"},
+		"spec":{
+			"restartPolicy":"Never",
+			"containers":[{
+				"name":"main-container",
+				"image":"busybox",
+				"restartPolicy":"Never",
+				"restartPolicyRules":[{"action":"Restart","exitCodes":{"operator":"In","values":[42]}}]
+			}]
+		}
+	}`)
+
+	pod := &corev1.Pod{}
+	if err := json.Unmarshal(in, pod); err != nil {
+		t.Fatalf("failed to decode into typed Pod: %v", err)
+	}
+	if len(pod.Spec.Containers) != 1 {
+		t.Fatalf("expected 1 container, got %d", len(pod.Spec.Containers))
+	}
+	rules := pod.Spec.Containers[0].RestartPolicyRules
+	if len(rules) != 1 {
+		t.Fatalf("typed API did not decode restartPolicyRules (API too old?): %#v", rules)
+	}
+	if rules[0].Action != corev1.ContainerRestartRuleActionRestart {
+		t.Errorf("expected action Restart, got %q", rules[0].Action)
+	}
+	if rules[0].ExitCodes == nil {
+		t.Fatalf("expected exitCodes to be decoded, got nil")
+	}
+	if op := rules[0].ExitCodes.Operator; op != corev1.ContainerRestartRuleOnExitCodesOpIn {
+		t.Errorf("expected exitCodes operator In, got %q", op)
+	}
+	if len(rules[0].ExitCodes.Values) != 1 || rules[0].ExitCodes.Values[0] != 42 {
+		t.Errorf("expected exitCodes values [42], got %v", rules[0].ExitCodes.Values)
+	}
+
+	// And the field survives a typed round-trip.
+	out, err := json.Marshal(pod)
+	if err != nil {
+		t.Fatalf("failed to marshal typed Pod: %v", err)
+	}
+	if !strings.Contains(string(out), "restartPolicyRules") {
+		t.Errorf("restartPolicyRules dropped on typed round-trip: %s", out)
+	}
+}
 
 func TestShouldMutatePod(t *testing.T) {
 	tests := []struct {

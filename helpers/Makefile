@@ -28,7 +28,7 @@ HYPERV_IMG = $(REGISTRY)/hyperv-runtimeclass-mutating-webhook:$(VERSION)
 HPC_IMG = $(REGISTRY)/hpc-webhook:$(VERSION)
 
 # Go version for building images
-GOLANG_VERSION ?= 1.24
+GOLANG_VERSION ?= 1.25
 
 # Default target - build all images
 .PHONY: all
