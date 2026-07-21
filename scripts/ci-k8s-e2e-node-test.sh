@@ -14,7 +14,7 @@ VM_NAME="winTestVM"
 VM_LOCATION="${VM_LOCATION:-westus2}"
 VM_SIZE="${VM_SIZE:-Standard_D8ds_v5}"
 ARTIFACTS="${ARTIFACTS:-/var/log/artifacts}"
-CONTAINERD_VERSION="${CONTAINERD_VERSION:-1.7.16}"
+CONTAINERD_VERSION="${CONTAINERD_VERSION:-2.3.3}"
 export GINKGO_FOCUS="${GINKGO_FOCUS:-\[sig-Windows\]|\[Feature:Windows\]}"
 
 SCRIPT_PATH=$(realpath "${BASH_SOURCE[0]}")
