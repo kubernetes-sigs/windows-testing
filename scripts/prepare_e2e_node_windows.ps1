@@ -12,10 +12,12 @@ sc.exe delete containerd -ErrorAction Continue
 
 # Download and extract desired containerd Windows binaries
 if ($ContainerdVersion -eq "nightly") {
-    curl.exe -L -o containerd.tar.gz https://github.com/kubernetes-sigs/sig-windows-tools/releases/download/windows-containerd-nightly/windows-containerd.tar.gz
+    $ContainerdDownloadUrl = "https://github.com/kubernetes-sigs/sig-windows-tools/releases/download/windows-containerd-nightly/windows-containerd.tar.gz"
 } else {
-    curl.exe -L -o containerd.tar.gz https://github.com/containerd/containerd/releases/download/v$ContainerdVersion/containerd-$ContainerdVersion-windows-amd64.tar.gz
+    $ContainerdDownloadUrl = "https://github.com/containerd/containerd/releases/download/v$ContainerdVersion/containerd-$ContainerdVersion-windows-amd64.tar.gz"
 }
+Write-Output "Downloading containerd from $ContainerdDownloadUrl"
+curl.exe -L -o containerd.tar.gz $ContainerdDownloadUrl
 tar.exe xvf .\containerd.tar.gz
 
 # Copy
@@ -26,6 +28,10 @@ $Path = [Environment]::GetEnvironmentVariable("PATH", "Machine") + [IO.Path]::Pa
 [Environment]::SetEnvironmentVariable( "Path", $Path, "Machine")
 # reload path, so you don't have to open a new PS terminal later if needed
 $Env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+
+# print the installed containerd version
+Write-Output "Installed containerd version:"
+containerd.exe --version
 
 # configure
 containerd.exe config default | Out-File $Env:ProgramFiles\containerd\config.toml -Encoding ascii

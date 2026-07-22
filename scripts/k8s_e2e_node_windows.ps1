@@ -71,6 +71,10 @@ function Run-K8se2enodeWindowsTests {
     $testArgs = @(
         "test"
         "./test/e2e_node_windows"
+        # Raise the Go test binary timeout from its 10m default so long-running
+        # e2e suites aren't killed mid-run (which also prevents the JUnit report
+        # from being written).
+        "-timeout=30m"
         "--bearer-token=vQIYfdCt7wIFOZtO"
         "--test.v"
         "--test.paniconexit0"
@@ -79,6 +83,8 @@ function Run-K8se2enodeWindowsTests {
         "--k8s-bin-dir=$env:KUBELET_PATH"
         "--report-dir=$LogsDirPath"
         "--report-complete-junit"
+        # Keep Ginkgo's own suite deadline in sync with the Go test timeout.
+        "--ginkgo.timeout=30m"
     )
 
     if (-not [string]::IsNullOrEmpty($ginkgoFocus)) {
@@ -96,10 +102,22 @@ function Run-K8se2enodeWindowsTests {
     Pop-Location
 }
 
+function Gather-ServiceLogs {
+    # Gather service logs (containerd, kubelet, etc.) into the Logs dir so they
+    # can be uploaded as artifacts. Best-effort: a missing log must not fail the
+    # run, so ignore errors here.
+    Write-Host "Gathering service logs into $LogsDirPath"
+    Copy-Item -Path "$Env:ProgramFiles\containerd\*.log" -Destination $LogsDirPath -Force -ErrorAction SilentlyContinue
+    # kube-log-runner writes kubelet.log next to the kubelet binary (the build
+    # output dir), not the report dir, so collect it explicitly.
+    Copy-Item -Path "$env:KUBELET_PATH\kubelet.log" -Destination $LogsDirPath -Force -ErrorAction SilentlyContinue
+}
+
 Prepare-LogsDir
 Clone-TestRepo
 Build-Kubelet
 Run-K8se2enodeWindowsTests
+Gather-ServiceLogs
 
 Write-Host "e2e node tests exited with code $script:testExitCode"
 exit $script:testExitCode

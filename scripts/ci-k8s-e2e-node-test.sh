@@ -71,5 +71,6 @@ set -e  # Re-enable errexit
 trap onError ERR  # Re-enable the ERR trap
 
 copy_from 'c:/Logs/*.xml' ${ARTIFACTS} ${VM_PUB_IP}
+copy_from 'c:/Logs/*.log' ${ARTIFACTS} ${VM_PUB_IP} || true
 destroy_resource_group
 exit $exit_code
