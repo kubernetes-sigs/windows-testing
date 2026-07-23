@@ -206,7 +206,26 @@ create_cluster(){
             fi
         fi
         echo "Using $template"
-        
+
+        # Resolve the AKS management cluster Kubernetes version.
+        # Hard-pinning this (previously --kubernetes-version 1.33.5) breaks CI every
+        # time AKS retires an old minor version. Set MGMT_K8S_VERSION to pin explicitly,
+        # otherwise use the region's current default GA version, falling back to the
+        # highest available version.
+        if [[ -z "${MGMT_K8S_VERSION:-}" ]]; then
+            MGMT_K8S_VERSION=$(az aks get-versions --location "$AZURE_LOCATION" --query "values[?isDefault].version | [0]" --output tsv 2>/dev/null || true)
+            if [[ -z "${MGMT_K8S_VERSION}" || "${MGMT_K8S_VERSION}" == "None" ]]; then
+                MGMT_K8S_VERSION=$(az aks get-versions --location "$AZURE_LOCATION" --query "values[].version | sort(@) | [-1]" --output tsv 2>/dev/null || true)
+            fi
+        fi
+        # az CLI may emit the literal "None" for a null result; normalize it so the guard below catches it
+        if [[ "${MGMT_K8S_VERSION:-}" == "None" ]]; then
+            MGMT_K8S_VERSION=""
+        fi
+        : "${MGMT_K8S_VERSION:?Unable to resolve an AKS management cluster Kubernetes version}"
+        export MGMT_K8S_VERSION
+        log "using AKS management cluster Kubernetes version: ${MGMT_K8S_VERSION}"
+
         log "create resource group and management cluster"
         if [[ "$(az group exists --name "${CLUSTER_NAME}" --output tsv)" == "false" ]]; then
             az group create --name "${CLUSTER_NAME}" --location "$AZURE_LOCATION" --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
@@ -216,7 +235,7 @@ create_cluster(){
                 --node-count 1 \
                 --generate-ssh-keys \
                 --vm-set-type VirtualMachineScaleSets \
-                --kubernetes-version 1.33.5 \
+                --kubernetes-version "${MGMT_K8S_VERSION}" \
                 --network-plugin azure \
                 --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')")
             
@@ -233,7 +252,7 @@ create_cluster(){
                     --node-count 1 \
                     --generate-ssh-keys \
                     --vm-set-type VirtualMachineScaleSets \
-                    --kubernetes-version 1.33.5 \
+                    --kubernetes-version "${MGMT_K8S_VERSION}" \
                     --network-plugin azure \
                     --tags creationTimestamp="$(date -u '+%Y-%m-%dT%H:%M:%SZ')")
             fi
