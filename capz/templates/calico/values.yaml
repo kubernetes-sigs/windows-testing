@@ -1,4 +1,5 @@
 installation:
+  registry: capzcicommunity.azurecr.io
   cni:
     type: Calico
   calicoNetwork:
