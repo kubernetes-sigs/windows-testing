@@ -21,10 +21,28 @@ function Set-SSHPublicKey {
     $acl | Set-Acl
 }
 
+function Install-OpenSSHCapability {
+    # Add-WindowsCapability downloads OpenSSH from Windows Update, which can be
+    # transiently unavailable (kubernetes/kubernetes#140900). Retry with backoff.
+    $attempts = 3
+    for ($i = 1; $i -le $attempts; $i++) {
+        try {
+            Get-WindowsCapability -Online -Name OpenSSH* | Add-WindowsCapability -Online
+            return
+        } catch {
+            Write-Output "Add-WindowsCapability attempt ${i}/${attempts} failed: $_"
+            if ($i -ge $attempts) {
+                throw
+            }
+            Start-Sleep -Seconds (15 * $i)
+        }
+    }
+}
+
 # Install OpenSSH
 $(
 
-Get-WindowsCapability -Online -Name OpenSSH* | Add-WindowsCapability -Online
+Install-OpenSSHCapability
 Set-Service -Name sshd -StartupType Automatic
 Start-Service sshd
 
