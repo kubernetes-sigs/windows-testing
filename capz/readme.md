@@ -62,20 +62,20 @@ export AZURE_SSH_PUBLIC_KEY_FILE="$HOME/.ssh/id_rsa.pub"
 
 #### Optional
 
-| ENV variable  | Description  |
+| ENV variable | Description |
 | ------------- | ------------ |
 | `API_SERVER_FEATURE_GATES` | Comma-separated list of feature-gates and their values to pass to the kube-apiserver (Defaults to "") |
 | `AZURE_LOCATION` | The azure region to deploy resources into. If not specified a random region will be selected) |
-| `KUBERNETES_VERSION`  | Valid values are `latest` (default) and  `latest-1.xx` where x is valid kubernetes minor version such as `latest-1.24` |
+| `KUBERNETES_VERSION` | Valid values are `latest` (default) and `latest-1.xx` where x is valid kubernetes minor version such as `latest-1.24` |
 | `NODE_FEATURE_GATES` | Comma-seperated list of feature-gates and their values to pass to the kubelet (Defaults to "") |
-| `NODE_MACHINE_TYPE` | The [Azure vm size](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes) to use for the nodes  |
+| `NODE_MACHINE_TYPE` | The [Azure vm size](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes) to use for the nodes |
 | `RUN_SERIAL_TESTS` | If set to `true` then serial slow tests will be run with default ginkgo settings |
 | `SKIP_CREATE` | Don't create a cluster.  Must set `CLUSTER_NAME` and have current a workload cluster kubeconfig file with name `./"${CLUSTER_NAME}".kubeconfig` |
 | `SKIP_LOG_COLLECTION` | If set to `true` don't collect logs from the cluster |
-| `SKIP_TEST`  | If set to `true` only creates the cluster, will not run tests |
+| `SKIP_TEST` | If set to `true` only creates the cluster, will not run tests |
 | `SKIP_CLEANUP` | If set to `true` don't delete the cluster / resource group after script executions |
 | `SCHEDULER_FEATURE_GATES` | Comma-separated list of feature-gates and their values to pass to the kube-scheduler (Defaults to "") |
-| `WINDOWS_CONTAINERD_URL` | URL to a containerd release tarball to use for the Windows nodes (defaults to containerd v1.7.0)|
+| `WINDOWS_CONTAINERD_URL` | URL to a containerd release tarball to use for the Windows nodes (defaults to containerd v1.7.0) |
 | `WINDOWS_KPNG` | If specified, will create a cluster using an out-of-tree kube-proxy implementation from [k-sigs/windows-service-proxy](https://github.com/kubernetes-sigs/windows-service-proxy) |
 | `WINDOWS_SERVER_VERSION` | Set to `windows-2019` (default) or `windows-2022` to test Windows Server 2019 or Windows Server 2022 |
 | `WINDOWS_WORKER_MACHINE_COUNT` | Number of **Windows** worker nodes to provision in the cluster (Defaults to 2) |
@@ -100,7 +100,7 @@ To do so ensure your local K8s repository is:
 
 Additionally the following environment variables will need to be set:
 
-| ENV variable | Description  |
+| ENV variable | Description |
 | ------------- | ------------ |
 | `AZURE_STORAGE_ACCOUNT` | The name of the Azure storage account to use for the custom builds |
 | `JOB_NAME` | A unique job name used as a subpath in the AZURE_STORAGE_ACCOUNT to store the custom builds |
