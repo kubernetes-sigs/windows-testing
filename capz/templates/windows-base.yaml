@@ -420,7 +420,10 @@ spec:
       - /var/lib/etcddisk
     postKubeadmCommands:
     - bash -c /tmp/node-log-query-kubelet-config.sh
-    preKubeadmCommands: []
+    preKubeadmCommands:
+    - mkdir -p /var/lib/containerd/tmpmounts
+    - timeout 2m bash -c 'until mdatp health >/dev/null 2>&1; do sleep 2; done'
+    - mdatp exclusion folder add --path /var/lib/containerd/tmpmounts --scope global
     useExperimentalRetryJoin: true
   machineTemplate:
     infrastructureRef:
