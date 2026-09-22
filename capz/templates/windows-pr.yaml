@@ -26,30 +26,6 @@ spec:
         permissions: "0744"
       - content: |
           $ErrorActionPreference = 'Stop'
-          function Convert-ContainerdCniBinDir {
-            param([string]$ConfigContent)
-
-            $cniSectionPattern = '(?ms)^[ \t]*\[plugins\.(?:"io\.containerd\.cri\.v1\.runtime"|''io\.containerd\.cri\.v1\.runtime'')\.cni\][ \t]*(?:#.*)?\r?\n.*?(?=^[ \t]*\[|\z)'
-            $cniSectionMatch = [regex]::Match($ConfigContent, $cniSectionPattern)
-            if (-not $cniSectionMatch.Success) {
-              throw "Could not locate the containerd CRI CNI section"
-            }
-
-            $cniSection = $cniSectionMatch.Value
-            if ($cniSection -match '(?m)^[ \t]*bin_dirs[ \t]*=') {
-              return $ConfigContent
-            }
-
-            $binDirPattern = '(?m)^([ \t]*)bin_dir[ \t]*=[ \t]*("[^"\r\n]*"|''[^''\r\n]*'')([ \t]*(?:#.*)?)(\r?)$'
-            $binDirRegex = [regex]::new($binDirPattern)
-            if (-not $binDirRegex.IsMatch($cniSection)) {
-              throw "Could not locate the containerd CNI bin directory setting"
-            }
-
-            $updatedCniSection = $binDirRegex.Replace($cniSection, '$1bin_dirs = [$2]$3$4', 1)
-            return $ConfigContent.Remove($cniSectionMatch.Index, $cniSectionMatch.Length).Insert($cniSectionMatch.Index, $updatedCniSection)
-          }
-
           $$CONTAINERD_URL="${WINDOWS_CONTAINERD_URL}"
           if($$CONTAINERD_URL -ne ""){
             # Kubelet service depends on contianerd service so make a best effort attempt to stop it
@@ -90,31 +66,6 @@ spec:
             }
             Write-Output "Extracting new containerd binaries"
             tar.exe -zxvf c:/k/containerd.tar.gz -C "c:/Program Files/containerd" --strip-components 1
-
-            # Keep config compatible across containerd upgrades. Older releases and config v2 remain
-            # unchanged; for containerd 2.4+, convert legacy bin_dir in config v3 before startup.
-            # Remove this conversion after baked Windows images configure the CRI CNI plugin with
-            # bin_dirs instead of bin_dir.
-            $configPath = Join-Path $dir "config.toml"
-            $containerdVersionOutput = & "$dir/containerd.exe" --version
-            if ($containerdVersionOutput -notmatch '\bv?(\d+)\.(\d+)\.(\d+)') {
-              throw "Could not determine installed containerd version from: $containerdVersionOutput"
-            }
-            $containerdVersion = [version]::new($Matches[1], $Matches[2], $Matches[3])
-            Write-Output "Installed containerd version: $containerdVersion"
-
-            if ($containerdVersion -ge [version]"2.4.0") {
-              $configContent = [System.IO.File]::ReadAllText($configPath)
-              if ($configContent -match '(?m)^\s*version\s*=\s*3\s*(?:#.*)?$') {
-                $updatedConfigContent = Convert-ContainerdCniBinDir $configContent
-                if ($updatedConfigContent -eq $configContent) {
-                  Write-Output "Containerd CNI bin_dirs is already configured"
-                } else {
-                  [System.IO.File]::WriteAllText($configPath, $updatedConfigContent)
-                  Write-Output "Updated containerd CNI bin_dir to bin_dirs for containerd $containerdVersion"
-                }
-              }
-            }
             # Recreate containerd service with native file logging
             Write-Output "Recreating containerd service with native file logging..."
             $logPath = "\var\log\containerd"
