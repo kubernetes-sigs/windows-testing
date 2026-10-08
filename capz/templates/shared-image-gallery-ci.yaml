@@ -474,8 +474,16 @@ spec:
     - bash -c /tmp/node-log-query-kubelet-config.sh
     preKubeadmCommands:
     - mkdir -p /var/lib/containerd/tmpmounts
-    - timeout 2m bash -c 'until mdatp health >/dev/null 2>&1; do sleep 2; done'
-    - mdatp exclusion folder add --path /var/lib/containerd/tmpmounts --scope global
+    - |
+      if ! command -v mdatp >/dev/null 2>&1; then
+        echo "mdatp is not installed; skipping Microsoft Defender exclusion"
+      elif timeout 2m bash -c 'until mdatp health >/dev/null 2>&1; do sleep 2; done'; then
+        mdatp exclusion folder add \
+          --path /var/lib/containerd/tmpmounts \
+          --scope global
+      else
+        echo "mdatp is installed but did not become healthy within 2 minutes; skipping Microsoft Defender exclusion"
+      fi
     - bash -c /tmp/kubeadm-bootstrap.sh
     useExperimentalRetryJoin: true
   machineTemplate:
