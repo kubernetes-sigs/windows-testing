@@ -12,7 +12,9 @@ $RepoPath = "c:/$repoName"
 $RepoURL = "https://github.com/$repoOrg/$repoName"
 $LocalPullBranch = "testBranch"
 $JUNIT_FILE_NAME = "junit"
-$EXTRA_PACKAGES = @("./cmd/...")
+$EXTRA_PACKAGES = @(
+    "./cmd/...",
+    "./staging/src/k8s.io/client-go/tools/clientcmd/...")
 $EXCLUDED_PACKAGES = @(
     "./pkg/proxy/iptables/...",
     "./pkg/proxy/ipvs/...",
