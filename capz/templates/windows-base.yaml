@@ -14,11 +14,6 @@ spec:
         owner: root:root
         path: c:/k/azure.json
         permissions: "0644"
-      - content: |-
-          Add-MpPreference -ExclusionProcess C:/opt/cni/bin/calico.exe
-          Add-MpPreference -ExclusionProcess C:/opt/cni/bin/calico-ipam.exe
-        path: C:/defender-exclude-calico.ps1
-        permissions: "0744"
       - content: |
           # /tmp is assumed created and required for upstream e2e tests to pass
           New-Item -ItemType Directory -Force -Path C:\tmp\
@@ -278,7 +273,6 @@ spec:
       postKubeadmCommands:
       - powershell C:/updateKubeletConfig.ps1
       - powershell C:/KubeletRestart_nssm_sc.ps1
-      - powershell C:/defender-exclude-calico.ps1
       - powershell C:/setup-registry-structure.ps1
       preKubeadmCommands:
       - powershell C:/create-temp-folder.ps1
@@ -294,7 +288,6 @@ apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
   labels:
-    cni: ${CLUSTER_NAME}-calico
     containerd-logger: enabled
     csi-proxy: enabled
     metrics-server: enabled

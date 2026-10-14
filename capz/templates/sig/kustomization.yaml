@@ -3,6 +3,8 @@ kind: Kustomization
 namespace: default
 resources:
 - ../windows-base.yaml
+components:
+- ../networking/calico
 patches:
 - path: patches/shared-gallery.yaml
 - target:

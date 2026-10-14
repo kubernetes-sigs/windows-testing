@@ -1,0 +1,19 @@
+# Insert at the original positions so generated Calico templates stay unchanged.
+# The test operations fail the build if windows-base.yaml list ordering changes.
+- op: test
+  path: /spec/template/spec/files/0/path
+  value: c:/k/azure.json
+- op: add
+  path: /spec/template/spec/files/1
+  value:
+    content: |-
+      Add-MpPreference -ExclusionProcess C:/opt/cni/bin/calico.exe
+      Add-MpPreference -ExclusionProcess C:/opt/cni/bin/calico-ipam.exe
+    path: C:/defender-exclude-calico.ps1
+    permissions: "0744"
+- op: test
+  path: /spec/template/spec/postKubeadmCommands/1
+  value: powershell C:/KubeletRestart_nssm_sc.ps1
+- op: add
+  path: /spec/template/spec/postKubeadmCommands/2
+  value: powershell C:/defender-exclude-calico.ps1
