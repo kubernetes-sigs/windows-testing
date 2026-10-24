@@ -12,21 +12,38 @@ function onError(){
 
 
 
+# Microsoft does not publish an azure-cli apt repo for every Debian release
+# (e.g. trixie), so fall back to bookworm when the host's codename has none.
+azure_cli_repo_codename() {
+    local codename
+    codename=$(lsb_release -cs)
+    if ! curl -fsSL -o /dev/null "https://packages.microsoft.com/repos/azure-cli/dists/${codename}/Release"; then
+        echo "No azure-cli apt repo for '${codename}', using bookworm" >&2
+        codename=bookworm
+    fi
+    echo "${codename}"
+}
+
 ensure_azure_cli() {
     if [[ -z "$(command -v az)" ]]; then
         echo "installing Azure CLI v2.76.0"
         apt-get update && apt-get install -y ca-certificates curl apt-transport-https lsb-release gnupg
         curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
-        AZ_REPO=$(lsb_release -cs)
+        AZ_REPO=$(azure_cli_repo_codename)
         echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ ${AZ_REPO} main" | tee /etc/apt/sources.list.d/azure-cli.list
-        apt-get update && apt-get install -y azure-cli=2.76.0-1~${AZ_REPO}
+        # Fail here: a failed `apt-get update` on the left of && does not trip errexit,
+        # and the job would otherwise die later with a misleading "az: command not found".
+        if ! { apt-get update && apt-get install -y "azure-cli=2.76.0-1~${AZ_REPO}"; }; then
+            echo "Failed to install Azure CLI 2.76.0 from the '${AZ_REPO}' apt repo" >&2
+            exit 1
+        fi
     else
         # Check if we have the correct version
         CURRENT_VERSION=$(az version --query '."azure-cli"' -o tsv 2>/dev/null || echo "unknown")
         REQUIRED_VERSION="2.76.0"
         if [[ "$CURRENT_VERSION" != "$REQUIRED_VERSION" ]]; then
             echo "Warning: Azure CLI version is $CURRENT_VERSION, but $REQUIRED_VERSION is required"
-            echo "Consider running: apt-get install -y azure-cli=${REQUIRED_VERSION}-1~$(lsb_release -cs)"
+            echo "Consider running: apt-get install -y azure-cli=${REQUIRED_VERSION}-1~$(azure_cli_repo_codename)"
         else
             echo "Azure CLI version $CURRENT_VERSION is correct"
         fi
