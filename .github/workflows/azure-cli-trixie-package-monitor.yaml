@@ -1,0 +1,121 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: Azure CLI trixie package monitor
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+concurrency:
+  group: azure-cli-trixie-package-monitor
+  cancel-in-progress: false
+
+jobs:
+  check-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      # Keep this baseline aligned with the version pinned in scripts/ci-k8s-common.sh.
+      AZURE_CLI_VERSION: '2.76.0'
+    steps:
+      - name: Check the trixie package index
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          dpkg --validate-version "$AZURE_CLI_VERSION"
+          index_url="https://packages.microsoft.com/repos/azure-cli/dists/trixie/main/binary-amd64/Packages.gz"
+          index=$(mktemp)
+          trap 'rm -f "$index"' EXIT
+
+          status=$(curl --silent --show-error --location \
+            --retry 2 --connect-timeout 10 --max-time 30 \
+            --output "$index" --write-out '%{http_code}' "$index_url")
+          latest_version=""
+          case "$status" in
+            200)
+              versions=$(gzip -dc "$index" | awk '
+                BEGIN { RS = ""; FS = "\n" }
+                {
+                  package = version = arch = ""
+                  for (i = 1; i <= NF; i++) {
+                    if ($i ~ /^Package: /) package = substr($i, 10)
+                    if ($i ~ /^Version: /) version = substr($i, 10)
+                    if ($i ~ /^Architecture: /) arch = substr($i, 15)
+                  }
+                  if (package == "" || version == "" || arch == "") {
+                    print "Invalid package metadata" > "/dev/stderr"
+                    exit 2
+                  }
+                  if (package == "azure-cli" && (arch == "amd64" || arch == "all")) {
+                    print version
+                  }
+                }')
+              if [[ -n "$versions" ]]; then
+                while IFS= read -r candidate_version; do
+                  dpkg --validate-version "$candidate_version"
+                  upstream_version=${candidate_version#*:}
+                  upstream_version=${upstream_version%-*}
+                  if dpkg --compare-versions "$upstream_version" gt "$AZURE_CLI_VERSION"; then
+                    if [[ -z "$latest_version" ]] ||
+                        dpkg --compare-versions "$candidate_version" gt "$latest_version"; then
+                      latest_version=$candidate_version
+                    fi
+                  fi
+                done <<< "$versions"
+              fi
+              ;;
+            404)
+              echo "The trixie package index is not available yet (HTTP 404)."
+              ;;
+            *)
+              echo "::error::Failed to fetch the trixie package index: HTTP $status"
+              exit 1
+              ;;
+          esac
+
+          if [[ -n "$latest_version" ]]; then
+            available=true
+            message="Azure CLI ${latest_version} is listed for amd64 (newer than ${AZURE_CLI_VERSION})."
+          else
+            available=false
+            message="No Azure CLI version newer than ${AZURE_CLI_VERSION} is available for trixie yet; keep the bookworm fallback."
+          fi
+          printf 'available=%s\nversion=%s\n' "$available" "$latest_version" >> "$GITHUB_OUTPUT"
+          echo "$message"
+          printf '%s\n\n[Package index](%s)\n' "$message" "$index_url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Open an availability issue once
+        if: steps.package.outputs.available == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          AVAILABLE_VERSION: ${{ steps.package.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          title="Azure CLI newer than ${AZURE_CLI_VERSION} is available for Debian trixie"
+          existing_issue=$(gh api --paginate --method GET "repos/${GH_REPO}/issues" \
+            -f state=all -f per_page=100 \
+            --jq ".[] | select(.pull_request == null and .title == \"$title\") | .html_url")
+          if [[ -n "$existing_issue" ]]; then
+            printf '\nAvailability already reported: %s\n' "$existing_issue" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          body=$(cat <<EOF
+          The Microsoft Azure CLI repository now lists \`azure-cli=${AVAILABLE_VERSION}\` for \`amd64\`, with an upstream version newer than the configured baseline \`${AZURE_CLI_VERSION}\`.
+
+          Before removing the bookworm fallback, evaluate the newer CLI version, update the version pin, validate installation in the current Prow runner image, and rerun the node e2e and unit jobs.
+
+          [Package index](https://packages.microsoft.com/repos/azure-cli/dists/trixie/main/binary-amd64/Packages.gz)
+          [Monitoring workflow run](${RUN_URL})
+          EOF
+          )
+          issue_url=$(gh issue create --repo "$GH_REPO" --title "$title" --body "$body")
+          printf '\nAvailability reported: %s\n' "$issue_url" >> "$GITHUB_STEP_SUMMARY"
