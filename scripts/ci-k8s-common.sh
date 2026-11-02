@@ -18,8 +18,13 @@ ensure_azure_cli() {
         apt-get update && apt-get install -y ca-certificates curl apt-transport-https lsb-release gnupg
         curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
         AZ_REPO=$(lsb_release -cs)
+        # Use bookworm packages while Azure CLI is unavailable for trixie.
+        if [[ "$AZ_REPO" == "trixie" ]]; then
+            AZ_REPO="bookworm"
+        fi
         echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ ${AZ_REPO} main" | tee /etc/apt/sources.list.d/azure-cli.list
-        apt-get update && apt-get install -y azure-cli=2.76.0-1~${AZ_REPO}
+        apt-get update || return 1
+        apt-get install -y "azure-cli=2.76.0-1~${AZ_REPO}" || return 1
     else
         # Check if we have the correct version
         CURRENT_VERSION=$(az version --query '."azure-cli"' -o tsv 2>/dev/null || echo "unknown")
