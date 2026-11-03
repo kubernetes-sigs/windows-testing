@@ -33,7 +33,6 @@ main() {
     # Override kubelet maxPods (e.g. Hyper-V Prow jobs set MAX_PODS=20).
     export MAX_PODS="${MAX_PODS:-}"
 
-    export KPNG="${WINDOWS_KPNG:-""}"
     export CALICO_VERSION="${CALICO_VERSION:-"v3.31.0"}"
     export TEMPLATE="${TEMPLATE:-"windows-ci.yaml"}"
     export CAPI_VERSION="${CAPI_VERSION:-"v1.12.2"}"
@@ -56,6 +55,7 @@ main() {
     set_ci_version
     IS_PRESUBMIT="$(capz::util::should_build_kubernetes)"
     echo "IS_PRESUBMIT=$IS_PRESUBMIT"
+    set_kube_proxy_image_version
     if [[ "${IS_PRESUBMIT}" == "true" ]]; then
         "${CAPZ_DIR}/scripts/ci-build-kubernetes.sh";
         trap run_capz_e2e_cleanup EXIT # reset the EXIT trap since ci-build-kubernetes.sh also sets it.
@@ -439,16 +439,12 @@ data:
   KUBERNETES_SERVICE_PORT: "${port}"
 EOF
 
-    # Only patch up kube-proxy if $WINDOWS_KPNG is unset
-    if [[ -z "$KPNG" ]]; then
-        log "installing kube-proxy for windows"
-        # apply kube-proxy for windows with a version (it doesn't matter what version it is replaced with the patch below)
-        KUBERNETES_VERSION=v1.30.1 "$TOOLS_BIN_DIR"/clusterctl generate yaml --from "${CAPZ_DIR}"/templates/addons/windows/calico/kube-proxy-windows.yaml | kubectl apply -f -
+    log "installing kube-proxy for windows"
+    KUBERNETES_VERSION="${KUBE_PROXY_IMAGE_VERSION}" "$TOOLS_BIN_DIR"/clusterctl generate yaml --from "${CAPZ_DIR}"/templates/addons/windows/calico/kube-proxy-windows.yaml | kubectl apply -f -
 
-        # A patch is needed to tell kube-proxy to use CI binaries.  This could go away once we have build scripts for kubeproxy HostProcess image.
-        kubectl apply -f "${CAPZ_DIR}"/templates/test/ci/patches/windows-kubeproxy-ci.yaml
-        kubectl rollout restart ds -n kube-system kube-proxy-windows
-    fi
+    # A patch is needed to tell kube-proxy to use CI binaries. 
+    kubectl apply -f "${CAPZ_DIR}"/templates/test/ci/patches/windows-kubeproxy-ci.yaml
+    kubectl rollout restart ds -n kube-system kube-proxy-windows
     # apply additional helper manifests (logger etc)
     if [[ -n "$CONTAINERD_LOGGER" ]]; then
         kubectl apply -f "${CAPZ_DIR}"/templates/addons/windows/containerd-logging/containerd-logger.yaml
@@ -764,6 +760,31 @@ get_random_region() {
     # temp remove northEurope as there are capacity related issue
     local REGIONS=("australiaeast" "canadacentral" "francecentral" "germanywestcentral" "switzerlandnorth" "uksouth")
     echo "${REGIONS[${RANDOM} % ${#REGIONS[@]}]}"
+}
+
+set_kube_proxy_image_version() {
+    local version="${KUBERNETES_VERSION}"
+    if [[ "${IS_PRESUBMIT}" == "true" ]]; then
+        # Source builds can use an older CI version to bootstrap the cluster.
+        version="${KUBE_GIT_VERSION:?KUBE_GIT_VERSION must be set for source builds}"
+    fi
+
+    if [[ ! "${version}" =~ ^v?([0-9]+)\.([0-9]+)(\.|$) ]]; then
+        log "ERROR: Cannot parse Kubernetes version: ${version}" >&2
+        return 1
+    fi
+
+    local major minor
+    major=$((10#${BASH_REMATCH[1]}))
+    minor=$((10#${BASH_REMATCH[2]}))
+
+    KUBE_PROXY_IMAGE_VERSION="v1.30.1"
+    KUBE_PROXY_VERSION_1_38_PLUS="v1.38.0-alpha.3"
+    if (( major > 1 || (major == 1 && minor >= 38) )); then
+        KUBE_PROXY_IMAGE_VERSION="${KUBE_PROXY_VERSION_1_38_PLUS}"
+    fi
+
+    log "Using Windows kube-proxy image version ${KUBE_PROXY_IMAGE_VERSION} for Kubernetes ${version}"
 }
 
 set_ci_version() {
