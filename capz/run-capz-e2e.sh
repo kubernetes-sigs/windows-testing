@@ -757,8 +757,8 @@ log() {
 
 # all test regions must support AvailabilityZones
 get_random_region() {
-    # temp remove northEurope as there are capacity related issue
-    local REGIONS=("australiaeast" "canadacentral" "francecentral" "germanywestcentral" "switzerlandnorth" "uksouth")
+    # temp remove northEurope germanywestcentral as there are capacity related issue
+    local REGIONS=("australiaeast" "canadacentral" "francecentral" "switzerlandnorth" "uksouth")
     echo "${REGIONS[${RANDOM} % ${#REGIONS[@]}]}"
 }
 
