@@ -52,56 +52,72 @@ spec:
 
           $$CONTAINERD_URL="${WINDOWS_CONTAINERD_URL}"
           if($$CONTAINERD_URL -ne ""){
-            # Kubelet service depends on contianerd service so make a best effort attempt to stop it
-            Stop-Service kubelet -Force -ErrorAction SilentlyContinue
-            Stop-Service containerd -Force
-            echo "downloading containerd: $$CONTAINERD_URL"
             # If the URL is set to "latest", we will query the GitHub API for the latest containerd release
             if ($$CONTAINERD_URL.ToLower() -eq "latest") {
-              # Query GitHub API for latest containerd release for Windows
-              $githubApiUrl = "https://api.github.com/repos/containerd/containerd/releases/latest"
               Write-Output "Fetching latest containerd release from GitHub..."
-              $releaseInfo = Invoke-RestMethod -Uri $githubApiUrl -UseBasicParsing
+              $releaseInfo = Invoke-RestMethod -Uri "https://api.github.com/repos/containerd/containerd/releases/latest" -UseBasicParsing
               $asset = $releaseInfo.assets | Where-Object { $_.name -like "*windows-amd64.tar.gz" } | Select-Object -First 1
               if ($null -eq $asset) {
-                Write-Output "Could not find a Windows containerd release asset in the latest GitHub release."
-                exit 1
+                throw "Could not find a Windows containerd release asset in the latest GitHub release."
               }
               $$CONTAINERD_URL = $asset.browser_download_url
             }
-            curl.exe --retry 10 --retry-delay 5 -L "$$CONTAINERD_URL" --output "c:/k/containerd.tar.gz"
-            # Log service state and if any files under containerd director are locked
-            Get-Service -Name containerd, kubelet
-            $dir = "c:/Program Files/containerd"
-            $files = Get-ChildItem $dir -Recurse
-            Write-Output "Checking if any files under $dir are locked"
-            foreach ($file in $files) {
-                $f = $file.FullName
-                Write-output "$f"
-                $fi = New-Object System.IO.FileInfo $f
-                try {
-                    $fStream = $fi.Open([System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
-                    if ($fStream) {
-                        $fStream.Close()
-                    }
-                } catch {
-                    Write-Output "Unable to open file: $f"
-                }
+            if ($$CONTAINERD_URL -notmatch 'containerd-(\d+\.\d+\.\d+[^/]*)-windows-amd64\.tar\.gz$') {
+              throw "Could not determine the requested containerd version from: $$CONTAINERD_URL"
             }
+            $requestedVersion = "v" + $Matches[1]
+
+            # 1. Download and validate the archive before stopping any services.
+            echo "downloading containerd $requestedVersion from $$CONTAINERD_URL"
+            $archive = "c:/k/containerd.tar.gz"
+            curl.exe --fail --retry 10 --retry-delay 5 -L "$$CONTAINERD_URL" --output $archive
+            if ($LASTEXITCODE -ne 0) { throw "Failed to download containerd: curl exit code $LASTEXITCODE" }
+            tar.exe -tzf $archive | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "Downloaded containerd archive is invalid: tar exit code $LASTEXITCODE" }
+
+            # 2. Disable containerd before stopping it so SCM recovery cannot restart it mid-upgrade.
+            # Kubelet service depends on containerd service so make a best effort attempt to stop it.
+            Stop-Service kubelet -Force -ErrorAction SilentlyContinue
+            Set-Service containerd -StartupType Disabled
+            try {
+              # -NoWait so a hung StopPending cannot block; the bounded wait below enforces the timeout.
+              Stop-Service containerd -Force -NoWait
+            } catch {
+              # Stop can report error 1067 when containerd exits during shutdown; the wait below confirms it stopped.
+              Write-Output "Stop-Service containerd reported: $($_.Exception.Message)"
+            }
+
+            # 3. Wait for the service to stop and every containerd process to exit (covers recovery restarts).
+            $deadline = (Get-Date).AddSeconds(60)
+            while ((Get-Service containerd).Status -ne 'Stopped' -or (Get-Process -Name containerd -ErrorAction SilentlyContinue)) {
+              if ((Get-Date) -gt $deadline) {
+                throw "containerd did not stop within 60 seconds"
+              }
+              Start-Sleep -Seconds 1
+            }
+
+            # 4. Extract the new binaries.
+            $dir = "c:/Program Files/containerd"
             Write-Output "Extracting new containerd binaries"
-            tar.exe -zxvf c:/k/containerd.tar.gz -C "c:/Program Files/containerd" --strip-components 1
+            tar.exe -zxvf $archive -C $dir --strip-components 1
+            if ($LASTEXITCODE -ne 0) { throw "Failed to extract containerd: tar exit code $LASTEXITCODE" }
+
+            # 5. Verify the installed version exactly matches the requested version.
+            $containerdVersionOutput = & "$dir/containerd.exe" --version
+            if (($containerdVersionOutput -split '\s+') -notcontains $requestedVersion) {
+              throw "Installed containerd does not match requested $requestedVersion (got '$containerdVersionOutput')"
+            }
+            Write-Output "Installed containerd version: $containerdVersionOutput"
 
             # Keep config compatible across containerd upgrades. Older releases and config v2 remain
             # unchanged; for containerd 2.4+, convert legacy bin_dir in config v3 before startup.
             # Remove this conversion after baked Windows images configure the CRI CNI plugin with
             # bin_dirs instead of bin_dir.
             $configPath = Join-Path $dir "config.toml"
-            $containerdVersionOutput = & "$dir/containerd.exe" --version
             if ($containerdVersionOutput -notmatch '\bv?(\d+)\.(\d+)\.(\d+)') {
               throw "Could not determine installed containerd version from: $containerdVersionOutput"
             }
             $containerdVersion = [version]::new($Matches[1], $Matches[2], $Matches[3])
-            Write-Output "Installed containerd version: $containerdVersion"
 
             if ($containerdVersion -ge [version]"2.4.0") {
               $configContent = [System.IO.File]::ReadAllText($configPath)
@@ -115,40 +131,25 @@ spec:
                 }
               }
             }
-            # Recreate containerd service with native file logging
-            Write-Output "Recreating containerd service with native file logging..."
+            # 6. Recreate the service with native file logging, restore automatic startup/recovery, and start it.
             $logPath = "\var\log\containerd"
-            if (-Not (Test-Path -Path $logPath -PathType Container)) {
-              Write-Host "Creating log directory: $logPath"
-              New-Item -ItemType Directory -Path $logPath -Force | Out-Null
-            } else {
-              Write-Host "Log directory already exists: $logPath"
-            }
+            New-Item -ItemType Directory -Path $logPath -Force | Out-Null
             $ContainerdCommandLine = '"c:\Program Files\containerd\containerd.exe" --register-service --log-file=c:\var\log\containerd\containerd.log'
-            Write-Output "Containerd command line: $ContainerdCommandLine"
-            # Stop and delete the existing containerd service
-            Stop-Service -Name 'containerd' -Force -ErrorAction SilentlyContinue
+            Write-Output "Recreating containerd service: $ContainerdCommandLine"
             $null = sc.exe delete containerd
-            # Wait for service to be fully deleted
-            $serviceCreated = $false
-            for ($i = 0; $i -lt 20; $i++) {
-                $service = Get-Service -Name containerd -ErrorAction SilentlyContinue
-                if ($null -eq $service) {
-                    Write-Host "containerd service deleted successfully, recreating with native file logging"
-                    cmd.exe /c $ContainerdCommandLine
-                    Start-Service Containerd
-                    Write-Output "Successfully started containerd service with native file logging"
-                    $serviceCreated = $true
-                    break
-                }
-                else {
-                    Write-Host "Waiting for containerd service to be fully deleted... (attempt $($i + 1)/20)"
-                }
-                Start-Sleep -Seconds 1
+            for ($i = 0; $i -lt 20 -and (Get-Service -Name containerd -ErrorAction SilentlyContinue); $i++) {
+              Start-Sleep -Seconds 1
             }
-            if (-not $serviceCreated) {
-                Write-Error "Failed to delete containerd service after 20 attempts"
+            if (Get-Service -Name containerd -ErrorAction SilentlyContinue) {
+              throw "Failed to delete containerd service after 20 seconds"
             }
+            cmd.exe /c $ContainerdCommandLine
+            if ($LASTEXITCODE -ne 0) { throw "Failed to register containerd service: exit code $LASTEXITCODE" }
+            Set-Service containerd -StartupType Automatic
+            sc.exe failure containerd reset= 86400 actions= restart/15000/restart/15000
+            if ($LASTEXITCODE -ne 0) { throw "Failed to configure containerd service recovery: exit code $LASTEXITCODE" }
+            Start-Service containerd
+            Write-Output "Successfully started containerd $requestedVersion with native file logging"
           }
           # Ensure sandbox_image includes Server 2025 variant for Hyper-V compatibility.
           # pause:3.10 and 3.10.1 lack a Server 2025 manifest, causing Hyper-V UVMs to boot as
