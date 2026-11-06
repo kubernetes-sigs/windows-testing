@@ -6,7 +6,7 @@ This repo is a collection of scripts, containers, and documentation needed to ru
 
 - It leverages the existing upstream e2e tests, which live in Kubernetes.
 
-- If you're looking for the latest test results, look at [TestGrid](https://testgrid.k8s.io/sig-windows) for the SIG-Windows results. These are the periodic test passes scheduled by Prow ([see: config](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml)).
+- If you're looking for the latest test results, look at [TestGrid](https://testgrid.k8s.io/sig-windows) for the SIG-Windows results. These are the periodic test passes scheduled by Prow ([see: config](https://github.com/kubernetes/test-infra/tree/master/config/jobs/kubernetes-sigs/sig-windows)).
 
 - If you have questions interpreting the results, please join us on Slack in #SIG-Windows.
 
@@ -23,7 +23,7 @@ To manually trigger Windows E2E tests to run against your PR add the following a
 /test pull-kubernetes-e2e-aks-engine-windows-containerd
 ```
 
-A full list of Windows PR jobs can be found at https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml
+A full list of Windows PR jobs can be found at https://github.com/kubernetes/test-infra/tree/master/config/jobs/kubernetes-sigs/sig-windows
 
 ## Building the tests
 
@@ -74,7 +74,7 @@ NOTE: `e2e.test` also needs a few environment variables set to connect to the cl
 
 ### Running the test-grid tests exactly as run in CI
 
-The full list of what is run for TestGrid is in the [sig-windows-config.yaml](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/sig-windows-config.yaml) after `--test-args`. You can copy the parameters there for a full test to pass.
+The full list of what is run for TestGrid is in the [sig-windows job configurations](https://github.com/kubernetes/test-infra/tree/master/config/jobs/kubernetes-sigs/sig-windows) after `--test-args`. You can copy the parameters there for a full test to pass.
 
 You can run these similarly to the above tests, just modifying the ginkgo.focus flag like so, and adding the `--ginkgo-skip` flag so as to skip a few tests which are known to fail.  This is thus suitable for CI deployments.
 
@@ -169,7 +169,7 @@ kubetest
     --aksengine-public-key=$K8S_SSH_PUBLIC_KEY_PATH \
     --aksengine-private-key=$K8S_SSH_PRIVATE_KEY_PATH \
     --aksengine-orchestratorRelease=1.18 \
-    --aksengine-template-url=https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/job-templates/kubernetes_release_1_18.json \
+    --aksengine-template-url=https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/18d489230feddf16573cb56035a771084b10d316/job-templates/kubernetes_release_1_18.json \
     --aksengine-agentpoolcount=2 \
     --test_args="--ginkgo.flakeAttempts=2 --node-os-distro=windows --ginkgo.focus=\[Conformance\]|\[NodeConformance\]|\[sig-windows\]|\[sig-apps\].CronJob|\[sig-api-machinery\].ResourceQuota|\[sig-scheduling\].SchedulerPreemption|\[sig-autoscaling\].\[Feature:HPA\]  --ginkgo.skip=\[LinuxOnly\]|\[Serial\]|GMSA|Guestbook.application.should.create.and.stop.a.working.application" \
     --ginkgo-parallel=6
@@ -208,13 +208,16 @@ will usually have a `exec format error`.
 #### Install golang on Windows machine
 
 Pick the Go version that is [compatible](https://github.com/kubernetes/community/blob/master/contributors/devel/development.md)
-with the Kubernetes version you intend to build. Download the MSI file to the Windows machine for development.
+with the Kubernetes version you intend to build. Download the MSI file to the Windows machine for development:
 
-```
-Invoke-Webrequest https://dl.google.com/go/go-<version>.windows-amd64.msi -Outfile go<version>.windows-amd64.msi
+```powershell
+# Set the Go version compatible with your Kubernetes version (e.g. 1.22.0)
+$GO_VERSION = "1.22.0"
+$installer = "go${GO_VERSION}.windows-amd64.msi"
+Invoke-WebRequest "https://dl.google.com/go/$installer" -Outfile $installer
 ```
 
-Start the MSI installer, e.g. `Start-Process .\go<version.windows-amd64.msi` and finish the installation.
+Start the MSI installer, e.g. `Start-Process .\$installer` and finish the installation.
 
 Add go path to the `PATH` environment variable:
 
