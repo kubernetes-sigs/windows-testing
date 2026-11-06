@@ -5,8 +5,31 @@ on:
     branches: [ "master" ]
     paths: 
       - 'capz/**'
+      - 'README.md'
       - '.github/workflows/capz.yml'
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      code_changed: ${{ steps.filter.outputs.code_changed }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Detect non-Markdown changes
+        id: filter
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          changed_files=$(git diff --name-only "$BASE_SHA...$HEAD_SHA" -- . ':(glob,icase,exclude)**/*.md')
+          if [[ -n "$changed_files" ]]; then
+            echo "code_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "code_changed=false" >> "$GITHUB_OUTPUT"
+          fi
   run-lint:
     runs-on: ubuntu-latest
     steps:
@@ -27,6 +50,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   # using golangci-linter directly becuase of issues with go modules in super-linter
   golangci:
+    needs: changes
+    if: needs.changes.outputs.code_changed == 'true'
     name: lint go
     runs-on: ubuntu-latest
     steps:
@@ -48,6 +73,8 @@ jobs:
           working-directory: capz/gmsa/configuration
           args: --build-tags=e2e --timeout=10m 
   build-gmsa-configuration:
+    needs: changes
+    if: needs.changes.outputs.code_changed == 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -61,6 +88,8 @@ jobs:
         go build -tags e2e .
         popd
   capz-templates:
+    needs: changes
+    if: needs.changes.outputs.code_changed == 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
