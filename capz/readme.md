@@ -66,6 +66,7 @@ export AZURE_SSH_PUBLIC_KEY_FILE="$HOME/.ssh/id_rsa.pub"
 | ------------- | ------------ |
 | `API_SERVER_FEATURE_GATES` | Comma-separated list of feature-gates and their values to pass to the kube-apiserver (Defaults to "") |
 | `AZURE_LOCATION` | The azure region to deploy resources into. If not specified a random region will be selected) |
+| `CAPZ_VERSION` | CAPZ provider release to install on a new management cluster, using an exact tag such as `v1.27.0` (default: `v1.27.0`). Does not upgrade an existing installation. |
 | `KUBERNETES_VERSION`  | Valid values are `latest` (default) and  `latest-1.xx` where x is valid kubernetes minor version such as `latest-1.24` |
 | `NODE_FEATURE_GATES` | Comma-seperated list of feature-gates and their values to pass to the kubelet (Defaults to "") |
 | `NODE_MACHINE_TYPE` | The [Azure vm size](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes) to use for the nodes  |
