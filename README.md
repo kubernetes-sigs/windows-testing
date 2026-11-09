@@ -18,12 +18,12 @@ The rest of this page has a summary of those steps tailored for testing clusters
 
 To manually trigger Windows E2E tests to run against your PR add the following as comments on your PR:
 
-```
+```text
 /test pull-kubernetes-e2e-aks-engine-windows-dockershim
 /test pull-kubernetes-e2e-aks-engine-windows-containerd
 ```
 
-A full list of Windows PR jobs can be found at https://github.com/kubernetes/test-infra/tree/master/config/jobs/kubernetes-sigs/sig-windows
+A full list of Windows PR jobs can be found at <https://github.com/kubernetes/test-infra/tree/master/config/jobs/kubernetes-sigs/sig-windows>
 
 ## Building the tests
 
@@ -31,8 +31,8 @@ Testing windows is not different from regular testing of k8s clusters.  If you h
 
 Some resources introducing the e2e test framework:
 
-- https://kubernetes.io/blog/2019/03/22/kubernetes-end-to-end-testing-for-everyone/
-- https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/e2e-tests.md#building-kubernetes-and-running-the-tests
+- <https://kubernetes.io/blog/2019/03/22/kubernetes-end-to-end-testing-for-everyone/>
+- <https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/e2e-tests.md#building-kubernetes-and-running-the-tests>
 
 Now, assuming you are able to build an e2e.test binary, we'll proceed with how windows the tests work.
 
@@ -49,7 +49,9 @@ If you already have a cluster, you will likely just need to build e2e.test, and 
 All of the tests are built into the `e2e.test` binary, which you can as a standalone binary to test an existing cluster.
 If you don't know how to build `e2e.test`, instructions for this are at the bottom of this doc.
 
-Note that, when running these **You need to set the KUBE_TEST_REPO_LIST** environment variable when running the windows end to end tests, otherwise, windows images will not be pullable and all your tests will fail! You will need to download the appropriate image-repo-list depending on which Kubernetes version/Windows OS version you are using. See the [image repository list](images/README.md#image-repository-list) table on which image-repo-list to use
+Note that, when running these **You need to set the KUBE_TEST_REPO_LIST** environment variable when running the windows end to end tests, otherwise, windows images will not be pullable and all your tests will fail!
+You will need to download the appropriate image-repo-list depending on which Kubernetes version/Windows OS version you are using.
+See the [image repository list](images/README.md#image-repository-list) table on which image-repo-list to use
 
 - There are a few important parameters that you need to use, including:
 
@@ -59,11 +61,11 @@ Note that, when running these **You need to set the KUBE_TEST_REPO_LIST** enviro
 - `--ginkgo.skip="..."` - this regex chooses what tests to skip
 - If you're not sure what test cases will run, add `--gingkgo.dryRun=true` and it will give a list of test cases selected without actually running them.
 
-### Running the full suite of tests:
+### Running the full suite of tests
 
 You can thus run all of the `[SIG-Windows]` tests like so:
 
-```
+```bash
 export KUBECONFIG=path/to/kubeconfig
 curl https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list -o repo_list
 export KUBE_TEST_REPO_LIST=$(pwd)/repo_list
@@ -79,7 +81,7 @@ The full list of what is run for TestGrid is in the [sig-windows job configurati
 You can run these similarly to the above tests, just modifying the ginkgo.focus flag like so, and adding the `--ginkgo-skip` flag so as to skip a few tests which are known to fail.  This is thus suitable for CI deployments.
 
 This is an example:
-```
+```text
 --ginkgo.focus=\\[Conformance\\]|\\[NodeConformance\\]|\\[sig-windows\\]|\\[sig-apps\\].CronJob --ginkgo.skip=\\[LinuxOnly\\]|\\[k8s.io\\].Pods.*should.cap.back-off.at.MaxContainerBackOff.\\[Slow\\]\\[NodeConformance\\]|\\[k8s.io\\].Pods.*should.have.their.auto-restart.back-off.timer.reset.on.image.update.\\[Slow\\]\\[NodeConformance\\]"
 ```
 
@@ -93,19 +95,19 @@ If you don't yet have a cluster up, you can use `kubetest` to
 
 This is useful, for example, for contributing CI results upstream.
 
-#### Build kubetest
+### Build kubetest
 
 Refer to the [kubetest documentation](https://github.com/kubernetes/test-infra/tree/master/kubetest) for full details.
 
-```
+```bash
 git clone https://github.com/kubernetes/test-infra.git
 cd test-infra
 GO111MODULE=on go install ./kubetest
 ```
 
-#### Azure
+### Azure
 
-##### Pre-requisites
+#### Pre-requisites
 
 - Link to AKS engine [release tar file](https://github.com/Azure/aks-engine/releases) or clone aks-engine and build your own using `make dist` then upload to public location.
 - Container registery (ACR or dockerhub). See the [dockerlogin code](https://github.com/kubernetes/test-infra/blob/dd6a466605560e9cbe9a4a2975673cf61dfc7c59/kubetest/aksengine.go#L794) for how it works.
@@ -113,7 +115,7 @@ GO111MODULE=on go install ./kubetest
 - [Service Principal](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli?view=azure-cli-latest)
 - Clone [kubernetes/kubernetes](https://github.com/kubernetes/kubernetes)
 
-## Configuration
+#### Configuration
 Create a toml file with Azure Authorization information:
 
 ```toml
@@ -197,7 +199,7 @@ A few other parameters you should be aware of:
 Unit tests for files that have a `// +build windows` at the first line should be
 running on windows environment. Running in Linux with command
 
-```
+```bash
 GOOS=windows GOARCH=amd64 go test
 ```
 
@@ -221,22 +223,22 @@ Start the MSI installer, e.g. `Start-Process .\$installer` and finish the instal
 
 Add go path to the `PATH` environment variable:
 
-```
+```powershell
 $env:PATH=$env:PATH+";C:\go\bin"
 ```
 
 Set the `GOPATH` environment variable:
 
-```
+```powershell
 $env:GOPATH="C:\go\pkg"
 ```
 
 #### Install git using chocolatey
 
-Follow the instruction [here](https://chocolatey.org/install) to install
+Follow the [Chocolatey installation instructions](https://chocolatey.org/install) to install
 chocolatey on Windows node. Then run
 
-```
+```powershell
 choco install git.install
 $env:PATH=$env:PATH+";C:\Program Files\Git\bin"
 ```
@@ -248,7 +250,7 @@ to install git.
 Set up the Kubernetes repository on the node by following the instructions in
 [Github workflow](https://github.com/kubernetes/community/blob/master/contributors/guide/github-workflow.md).
 
-```
+```powershell
 go get  # Install the required packages
 go test  # Run the tests
 ```
@@ -261,17 +263,20 @@ go test  # Run the tests
 
 See [images/](images/README.md) for details regarding selecting the correct test images based on the Kubernetes/Windows versions.
 
-# Questions
+## Questions
 
-## Is there an equivalent to a Conformance test suite for windows ?
+### Is there an equivalent to a Conformance test suite for windows ?
 
-There is not yet a formal equivalent.  The purpose of this repo is to store existing tests which sig-windows currently runs, and to provide CI signal for windows to upstream Kubernetes.  If you run the e2e.test suite with the `sig-windows` ginkgo filter and the `--ginkgo.dryRun` option, you'll see the list of tests which are currently in upstream.  these are listed below.  In order to implement Conformance tests for windows - we would need to, on a large scale, implement windows specific logic for certain things.  There has been made some progress on this (for example, with the agnhost container), but by in large the ability to run most tests on windows/linux interchangeably doesn't yet exist.
+There is not yet a formal equivalent.  The purpose of this repo is to store existing tests which sig-windows currently runs, and to provide CI signal for windows to upstream Kubernetes.
+If you run the e2e.test suite with the `sig-windows` ginkgo filter and the `--ginkgo.dryRun` option, you'll see the list of tests which are currently in upstream.  these are listed below.
+In order to implement Conformance tests for windows - we would need to, on a large scale, implement windows specific logic for certain things.
+There has been made some progress on this (for example, with the agnhost container), but by in large the ability to run most tests on windows/linux interchangeably doesn't yet exist.
 
-## Can I run sonobuoy as a way to test windows Conformance ?
+### Can I run sonobuoy as a way to test windows Conformance ?
 
 Sonobuoy can be used as a way to test windows Conformance. Checkout for [Running E2E Tests On Windows Clusters](https://sonobuoy.io/windows-e2e-tests-with-sonobuoy/) reference.
 
-## How many tests run ?
+### How many tests run ?
 
 As of Kubernetes 1.19, there are currently ~15 tests in upstream Kubernetes (1.19) which specifically target the windows feature.
 
@@ -306,9 +311,9 @@ As of Kubernetes 1.19, there are currently ~15 tests in upstream Kubernetes (1.1
 
 • [sig-windows] Windows volume mounts  check volume mount permissions container should have readOnly permissions
 
-## How do i build the e2e.test binary?
+### How do i build the e2e.test binary?
 
-### Build the Kubernetes generic e2e.test binary
+#### Build the Kubernetes generic e2e.test binary
 
 This is just a short summary
 
@@ -321,7 +326,7 @@ cd $GOPATH/src/k8s.io/kubernetes
 ```
 Once complete, the binary will be available at: `~/go/src/k8s.io/kubernetes/_output/dockerized/bin/linux/amd64/e2e.test`
 
-#### Cross-building for Mac or Windows
+##### Cross-building for Mac or Windows
 
 To build a binary to run on Mac or Windows, you can add `KUBE_BUILD_PLATFORMS`.
 
